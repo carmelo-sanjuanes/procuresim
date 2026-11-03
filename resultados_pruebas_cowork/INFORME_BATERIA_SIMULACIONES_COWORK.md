@@ -159,3 +159,53 @@ Nuevos: `SpecialModalitiesEngine.ts`, `AnticipoFiduciaEngine.ts`. Modificados: `
 2. Fuente del límite del 50 % de subcontratación (Ley 2195) y del plazo de 3 días hábiles de la urgencia manifiesta.
 3. ¿Implemento "Mis procesos" para que el flujo guarde, reanude y exporte expedientes?
 4. El Art. 35 Ley 2069 (desempate) y el radicado 65.412 siguen sin verificar (ronda 1).
+
+
+---
+
+# RONDA 3 — «Mis Procesos»: persistencia y gestión multi-expediente
+**Fecha:** 3 de noviembre de 2026 · **Compilación:** `tsc -b` y `npm run build` sin errores de TypeScript.
+
+## A. Qué se implementó (los 5 puntos de la orden)
+
+| # | Requisito | Cómo quedó |
+|---|---|---|
+| 1 | Persistencia reactiva del flujo | Cada cambio del flujo paso a paso se guarda solo (espera de 350 ms) en el almacén `useProcurementStore`, que ya persistía en `procuresim-storage-v3`. Se guardan 68 campos del flujo más la ruta jurídica y el arquetipo elegidos. Cada expediente tiene: identificador único (`EXP-…`), fecha de creación y de actualización, entidad, objeto/necesidad, presupuesto, modalidad, paso actual y etiqueta del paso. |
+| 2 | Bandeja «Mis expedientes» | Botón discreto «Mis expedientes (n)» en la cabecera (vista limpia y Vista Experta). Cada tarjeta muestra objeto, entidad y presupuesto, rol y modalidad, barra y etiqueta del paso (p. ej. «Paso 9: Estudios previos», «Paso 13: Recibo y liquidación», «Paso 8: Estudio de mercado (CDP en trámite)») y los botones **Reanudar, Duplicar, Exportar y Eliminar** (la eliminación pide una segunda pulsación para confirmar). |
+| 3 | Selector de cabecera sincronizado | El selector «Proceso» tiene dos grupos: «Mis expedientes» (los reales) y «Casos de demostración». Al elegir un expediente, el flujo se remonta y reanuda en su paso. En Modo Aprendizaje, si hay expedientes guardados, el selector reemplaza la etiqueta fija «LP-001-2025». |
+| 4 | Exportar / importar | Exportar uno o todos a `.json` (formato `procuresim-expedientes`, versión 1) e importar. La importación valida el formato, limita el tamaño (8 MB) y la cantidad (200), elimina claves de prototipo y, si un identificador ya existe, crea una copia «(importado)» en lugar de pisar el original. |
+| 5 | «Estructurar un proceso nuevo desde cero» | Guarda el expediente actual y abre un lienzo en blanco. Los anteriores no se tocan. |
+
+## B. Pruebas en navegador (Playwright, Chromium)
+
+| Prueba | Resultado |
+|---|---|
+| Pantalla inicial | Sin expedientes guardados; solo aparece el enlace discreto «Mis expedientes» además de lo que ya había. |
+| Avanzar al Paso 5 y recargar | Se conservan rol, autor, entidad y régimen, y se reabre en «¿Qué necesitas contratar hoy?». El contador pasa a «Mis expedientes (1)». |
+| Avanzar al Paso 8 con $180 M y recargar | Reabre en el Paso 8 con el CDP marcado «en trámite»; la bandeja muestra «Paso 8: Estudio de mercado (CDP en trámite)». Continuar desde ahí funciona y actualiza a «Paso 9». |
+| Escribir en la necesidad y recargar de inmediato (sin esperar el guardado) | El texto se conserva (guardado al cerrar la pestaña). |
+| Duplicar / Exportar todos / Eliminar con confirmación / Importar | 1→2 expedientes; el `.json` trae 2 expedientes; tras eliminar 1; tras importar 3 (sin colisión de identificadores). Un archivo inválido muestra «no es un respaldo de expedientes de ProcureSim». |
+| Selector de cabecera | Lista «Mis expedientes» y «Casos de demostración»; al conmutar, el expediente activo cambia. |
+| Paso 13 + «Estructurar un proceso nuevo desde cero» | El expediente queda guardado en «Paso 13: Recibo y liquidación» y se abre el lienzo en blanco. Un segundo proceso (papelería $40 M) convive con el primero y sobrevive a la recarga con su valor. |
+| Reanudar un expediente liquidado | Vuelve al Paso 13. |
+| Errores de página (`pageerror`) | 0 en todas las pruebas. |
+| Regresión de rondas anteriores | Triangulación (60 % alerta / 40 % ok), ESAL (20 % insuficiente / 30 % cumple), nota de anticipo en Paso 11, fiducia obligatoria/no obligatoria, capacidad residual ($1.400 M y recorte E = 500 → $1.600 M), barra de herramientas: sin cambios. |
+
+## C. Decisiones de diseño y limitaciones (léelas)
+1. **Dónde se guarda:** en el almacenamiento local de este navegador (`localStorage`). No hay servidor: si cambias de navegador, de equipo o borras los datos del sitio, los expedientes no viajan. Para eso sirve **Exportar**. Recomiendo exportar un respaldo al terminar cada proceso.
+2. **Cuándo nace un expediente:** apenas el usuario elige el rol (Compro/Vendo) o pasa del Paso 1, para no llenar la bandeja con lienzos vacíos.
+3. **Límite del almacenamiento local:** ~5 MB por sitio. Un expediente pesa pocos KB, pero los respaldos conviene archivarlos fuera del navegador.
+4. **Compatibilidad:** los campos se restauran por nombre. Si en el futuro se agrega un campo al flujo, un expediente antiguo simplemente lo abre con su valor por defecto. Un archivo importado con tipos de datos incorrectos se ignora campo a campo.
+5. **Ruta jurídica:** se guarda solo su identificador y se vuelve a buscar en el catálogo actual al reanudar, de modo que el texto normativo que se muestra siempre es el vigente en la aplicación.
+6. **Pantalla limpia:** la vista inicial agrega un único enlace discreto («Mis expedientes») en la cabecera. Si prefieres que aparezca solo cuando ya exista al menos un expediente, es un cambio de una línea (en ese caso no habría forma de importar desde la pantalla limpia).
+7. **No incluido (no estaba en la orden):** los 5 procesos de demostración siguen siendo datos de ejemplo del almacén; no se mezclaron con los expedientes. No hay sincronización en la nube ni edición simultánea.
+
+## D. Archivos de esta ronda
+Nuevos: `src/core/domain/expedientes.ts` (modelo, etiquetas de paso, validación de importación), `src/components/MisExpedientesModal.tsx` (bandeja).
+Modificados: `src/store/useProcurementStore.ts` (expedientes, expediente activo, acciones guardar/reanudar/nuevo/duplicar/eliminar/exportar/importar), `src/modules/flowchart/ContractFlowchartView.tsx` (autoguardado, reanudación, botón «nuevo desde cero»), `src/components/TopHeader.tsx` (botón y selector), `src/App.tsx` (bandeja y remontaje del flujo por lienzo).
+
+## E. Pendientes que necesitan tu decisión
+1. ¿Mostrar «Mis expedientes» siempre (como está) o solo cuando exista alguno?
+2. Fuente del límite del 50 % de subcontratación (Ley 2195) y del plazo de 3 días hábiles de la urgencia manifiesta (ronda 2).
+3. Confirmar el divisor 100 de la fórmula de capacidad residual con la imagen del PDF de CCE (ronda 2).
+4. El Art. 35 Ley 2069 (desempate) y el radicado 65.412 siguen sin verificar (ronda 1).

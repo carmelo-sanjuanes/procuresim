@@ -15,6 +15,13 @@ import type {
   AsociacionPlural,
   ModoOperativoSuite
 } from '../core/domain/types';
+import {
+  type Expediente,
+  type DatosExpediente,
+  crearIdExpediente,
+  serializarExpedientes,
+  leerExpedientes
+} from '../core/domain/expedientes';
 import { ENTIDADES_DEMO } from '../mock-data/entidadesDemo';
 import { PROVEEDORES_DEMO } from '../mock-data/proveedoresDemo';
 import { PROCESOS_DEMO } from '../mock-data/procesosDemo';
@@ -58,6 +65,18 @@ interface ProcurementState {
   iniciarRutaMision: (mision: MisionEntrenamiento) => void;
   toggleGuiaAsistente: () => void;
   setDensidadVisual: (densidad: 'ENFOCADA_SIMPLE' | 'EXPERTO_AVANZADA') => void;
+
+  // Mis Procesos: expedientes del flujo paso a paso (persistentes)
+  expedientes: Expediente[];
+  expedienteActivoId: string | null;
+  lienzoVersion: number; // cambia al reanudar/abrir un lienzo nuevo para remontar el flujo
+  guardarExpediente: (datos: DatosExpediente, id?: string | null) => string | null;
+  reanudarExpediente: (id: string) => void;
+  nuevoLienzo: () => void;
+  duplicarExpediente: (id: string) => string | null;
+  eliminarExpediente: (id: string) => void;
+  exportarExpedientesJSON: (ids?: string[]) => string;
+  importarExpedientesJSON: (json: string) => { ok: boolean; importados: number; omitidos: number };
 
   // Acciones Generales
   setModoOperativo: (modo: ModoOperativoSuite) => void;
@@ -562,6 +581,74 @@ export const useProcurementStore = create<ProcurementState>()(
     );
   },
 
+  expedientes: [],
+  expedienteActivoId: null,
+  lienzoVersion: 0,
+
+  guardarExpediente: (datos, id) => {
+    const ahora = new Date().toISOString();
+    if (id) {
+      if (!get().expedientes.some((e) => e.id === id)) return null; // fue eliminado
+      set((st) => ({
+        expedientes: st.expedientes.map((e) => (e.id === id ? { ...e, ...datos, id: e.id, creadoEn: e.creadoEn, actualizadoEn: ahora } : e))
+      }));
+      return id;
+    }
+    const nuevo: Expediente = { ...datos, id: crearIdExpediente(), creadoEn: ahora, actualizadoEn: ahora };
+    set((st) => ({ expedientes: [nuevo, ...st.expedientes], expedienteActivoId: nuevo.id }));
+    return nuevo.id;
+  },
+
+  reanudarExpediente: (id) => {
+    if (!get().expedientes.some((e) => e.id === id)) return;
+    set((st) => ({ expedienteActivoId: id, lienzoVersion: st.lienzoVersion + 1, vistaActual: 'FLUJOGRAMA_PASO_A_PASO' }));
+  },
+
+  nuevoLienzo: () => {
+    set((st) => ({ expedienteActivoId: null, lienzoVersion: st.lienzoVersion + 1, vistaActual: 'FLUJOGRAMA_PASO_A_PASO' }));
+  },
+
+  duplicarExpediente: (id) => {
+    const origen = get().expedientes.find((e) => e.id === id);
+    if (!origen) return null;
+    const ahora = new Date().toISOString();
+    const copia: Expediente = {
+      ...origen,
+      id: crearIdExpediente(),
+      creadoEn: ahora,
+      actualizadoEn: ahora,
+      objeto: origen.objeto.endsWith('(copia)') ? origen.objeto : `${origen.objeto} (copia)`,
+      estado: JSON.parse(JSON.stringify(origen.estado))
+    };
+    set((st) => ({ expedientes: [copia, ...st.expedientes] }));
+    return copia.id;
+  },
+
+  eliminarExpediente: (id) => {
+    const eraActivo = get().expedienteActivoId === id;
+    set((st) => ({
+      expedientes: st.expedientes.filter((e) => e.id !== id),
+      expedienteActivoId: eraActivo ? null : st.expedienteActivoId,
+      lienzoVersion: eraActivo ? st.lienzoVersion + 1 : st.lienzoVersion
+    }));
+  },
+
+  exportarExpedientesJSON: (ids) => {
+    const todos = get().expedientes;
+    return serializarExpedientes(ids ? todos.filter((e) => ids.includes(e.id)) : todos);
+  },
+
+  importarExpedientesJSON: (json) => {
+    const leidos = leerExpedientes(json);
+    if (!leidos) return { ok: false, importados: 0, omitidos: 0 };
+    const existentes = new Set(get().expedientes.map((e) => e.id));
+    const nuevos = leidos.expedientes.map((e) =>
+      existentes.has(e.id) ? { ...e, id: crearIdExpediente(), objeto: `${e.objeto} (importado)` } : e
+    );
+    set((st) => ({ expedientes: [...nuevos, ...st.expedientes] }));
+    return { ok: true, importados: nuevos.length, omitidos: leidos.omitidos };
+  },
+
   exportarEstadoJSON: () => {
     const state = get();
     const data = {
@@ -629,7 +716,9 @@ export const useProcurementStore = create<ProcurementState>()(
         eventosAuditoria: state.eventosAuditoria,
         bitacoraObservaciones: state.bitacoraObservaciones,
         procesoSeleccionadoId: state.procesoSeleccionadoId,
-        proveedorActivoId: state.proveedorActivoId
+        proveedorActivoId: state.proveedorActivoId,
+        expedientes: state.expedientes,
+        expedienteActivoId: state.expedienteActivoId
       })
     }
   )

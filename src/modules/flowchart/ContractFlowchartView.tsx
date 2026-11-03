@@ -5,7 +5,7 @@
 // 2. Pregunta clave de régimen: ¿Cuentan con Manual de Contratación Propio o se rigen por la Ley 80?
 // 3. Estudio de mercado empático: Sugerencia de proveedores calificados, procesos similares de SECOP o NIT propio.
 import { SMMLV_2026 } from '../../core/domain/constants';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Building2,
   Briefcase,
@@ -38,6 +38,7 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { useProcurementStore } from '../../store/useProcurementStore';
+import { etiquetaPaso, type Expediente } from '../../core/domain/expedientes';
 import { soundEffects } from '../../utils/soundEffects';
 import { launchConfetti } from '../../utils/confetti';
 import { DocumentEngine } from '../../core/engines/DocumentEngine';
@@ -712,6 +713,117 @@ export const ContractFlowchartView: React.FC = () => {
     if (recomendada) setAlternativaSeleccionada(recomendada);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [idsAlternativas]);
+
+  // ===== MIS PROCESOS: persistencia reactiva del flujo (autoguardado y reanudación) =====
+  const [expedienteInicial] = useState<Expediente | null>(() => {
+    const st = useProcurementStore.getState();
+    return st.expedientes.find((e) => e.id === st.expedienteActivoId) ?? null;
+  });
+  const [hidratado, setHidratado] = useState<boolean>(!expedienteInicial);
+  const camposPersistidos: Record<string, unknown> = {
+    paso, mostrarFlujogramaVisual, modoChecklist, tipoOperacion, nombre, cargo, busquedaLugar, entidadesCoincidentes, entidadSeleccionada, busquedaSinResultados, areaResponsable, codigoCentroCostos, regimenSeleccionado, necesidad, numeroCdp, valorCdp, cdpPendiente, metodoMercado, proveedorSeleccionado, procesoHistoricoRef, precioHistoricoRef, nitManual, mercadoSoportado, fleteEstimado, porcentajeEstampillas, mostrarValidacionesSoberanas, proveedoresDinamicos, estampillasInfo, faseSecop, adendaPublicada, sobresAbiertos, evaluacionPublicada, adjudicacionFinalizada, incidenteActivo, mostrarSelectorIncidentes, accionIncidenteTomada, dilemaEleccion, rpExpedido, numeroRP, polizaAprobada, supervisorNombre, actaInicioSuscrita, avanceEjecucionPct, mostrarSimuladorAdicion, valorAdicionInput, anioSuscripcion, anticipoPct, tipoSancion, espValorContrato, espSubcontratado, espAporteDinero, espAporteEspecie, multaRetrasoPct, multaPlazoDias, multaTasaDiaria, multaTope, resultadoAdicion, mostrarSimuladorSancionatorio, sancionSimulada, tipoLiquidacion, incluyeSalvedades, textoSalvedades, presupuestoAnualEntidad, liquidacionCompletada, tipologiaManual, antiAlucinacionChecks, situacionInicial, mostrarCasosEspeciales,
+    arquetipoId: arquetipoActivo.id,
+    alternativaId: alternativaSeleccionada?.id ?? null
+  };
+  const settersPersistidos: Record<string, (v: any) => void> = { paso: setPaso, mostrarFlujogramaVisual: setMostrarFlujogramaVisual, modoChecklist: setModoChecklist, tipoOperacion: setTipoOperacion, nombre: setNombre, cargo: setCargo, busquedaLugar: setBusquedaLugar, entidadesCoincidentes: setEntidadesCoincidentes, entidadSeleccionada: setEntidadSeleccionada, busquedaSinResultados: setBusquedaSinResultados, areaResponsable: setAreaResponsable, codigoCentroCostos: setCodigoCentroCostos, regimenSeleccionado: setRegimenSeleccionado, necesidad: setNecesidad, numeroCdp: setNumeroCdp, valorCdp: setValorCdp, cdpPendiente: setCdpPendiente, metodoMercado: setMetodoMercado, proveedorSeleccionado: setProveedorSeleccionado, procesoHistoricoRef: setProcesoHistoricoRef, precioHistoricoRef: setPrecioHistoricoRef, nitManual: setNitManual, mercadoSoportado: setMercadoSoportado, fleteEstimado: setFleteEstimado, porcentajeEstampillas: setPorcentajeEstampillas, mostrarValidacionesSoberanas: setMostrarValidacionesSoberanas, proveedoresDinamicos: setProveedoresDinamicos, estampillasInfo: setEstampillasInfo, faseSecop: setFaseSecop, adendaPublicada: setAdendaPublicada, sobresAbiertos: setSobresAbiertos, evaluacionPublicada: setEvaluacionPublicada, adjudicacionFinalizada: setAdjudicacionFinalizada, incidenteActivo: setIncidenteActivo, mostrarSelectorIncidentes: setMostrarSelectorIncidentes, accionIncidenteTomada: setAccionIncidenteTomada, dilemaEleccion: setDilemaEleccion, rpExpedido: setRpExpedido, numeroRP: setNumeroRP, polizaAprobada: setPolizaAprobada, supervisorNombre: setSupervisorNombre, actaInicioSuscrita: setActaInicioSuscrita, avanceEjecucionPct: setAvanceEjecucionPct, mostrarSimuladorAdicion: setMostrarSimuladorAdicion, valorAdicionInput: setValorAdicionInput, anioSuscripcion: setAnioSuscripcion, anticipoPct: setAnticipoPct, tipoSancion: setTipoSancion, espValorContrato: setEspValorContrato, espSubcontratado: setEspSubcontratado, espAporteDinero: setEspAporteDinero, espAporteEspecie: setEspAporteEspecie, multaRetrasoPct: setMultaRetrasoPct, multaPlazoDias: setMultaPlazoDias, multaTasaDiaria: setMultaTasaDiaria, multaTope: setMultaTope, resultadoAdicion: setResultadoAdicion, mostrarSimuladorSancionatorio: setMostrarSimuladorSancionatorio, sancionSimulada: setSancionSimulada, tipoLiquidacion: setTipoLiquidacion, incluyeSalvedades: setIncluyeSalvedades, textoSalvedades: setTextoSalvedades, presupuestoAnualEntidad: setPresupuestoAnualEntidad, liquidacionCompletada: setLiquidacionCompletada, tipologiaManual: setTipologiaManual, antiAlucinacionChecks: setAntiAlucinacionChecks, situacionInicial: setSituacionInicial, mostrarCasosEspeciales: setMostrarCasosEspeciales };
+  const instantanea = JSON.stringify(camposPersistidos);
+  const valoresInicialesRef = useRef<Record<string, unknown>>(camposPersistidos);
+  const instRef = useRef<string>(instantanea);
+  const metaRef = useRef<Record<string, any>>({});
+  const idExpedienteRef = useRef<string | null>(expedienteInicial?.id ?? null);
+  const ultimaGuardadaRef = useRef<string>(expedienteInicial ? JSON.stringify(expedienteInicial.estado) : '');
+  const hidratadoRef = useRef<boolean>(hidratado);
+  const sucioRef = useRef<boolean>(false);
+  const altRestauradaRef = useRef<boolean>(false);
+  instRef.current = instantanea;
+  hidratadoRef.current = hidratado;
+  metaRef.current = {
+    objeto: necesidad.trim() || 'Proceso sin objeto definido',
+    entidad: entidadSeleccionada?.nombreCompleto ?? '',
+    presupuestoCOP: parseFloat((valorCdp || '0').replace(/\D/g, '')) || 0,
+    modalidad: paso >= 7 ? alternativaSeleccionada?.titulo ?? '' : '',
+    tipoOperacion,
+    paso,
+    etiquetaPaso: etiquetaPaso(paso, { cdpPendiente, liquidado: liquidacionCompletada }),
+    liquidado: liquidacionCompletada
+  };
+
+  const persistirAhora = (permitirCrear: boolean) => {
+    if (!hidratadoRef.current) return;
+    const m = metaRef.current;
+    const hayProgreso = m.paso > 1 || m.tipoOperacion !== null;
+    if (!hayProgreso) return;
+    if (instRef.current === ultimaGuardadaRef.current) {
+      sucioRef.current = false;
+      return;
+    }
+    const st = useProcurementStore.getState();
+    const id = idExpedienteRef.current;
+    if (!id && !permitirCrear) return;
+    const resultado = st.guardarExpediente({ ...(m as any), estado: JSON.parse(instRef.current) }, id);
+    if (resultado) {
+      idExpedienteRef.current = resultado;
+      ultimaGuardadaRef.current = instRef.current;
+    }
+    sucioRef.current = false;
+  };
+
+  // Reanudación: restaura el estado exacto donde quedó el expediente (solo al montar)
+  useEffect(() => {
+    if (!expedienteInicial) return;
+    const snap = expedienteInicial.estado;
+    const ini = valoresInicialesRef.current;
+    const compatible = (def: unknown, v: unknown) => {
+      if (v === undefined) return false;
+      if (def === null) return true;
+      if (v === null) return typeof def === 'object';
+      return typeof def === typeof v && Array.isArray(def) === Array.isArray(v);
+    };
+    try {
+      Object.keys(settersPersistidos).forEach((k) => {
+        if (k in snap && compatible(ini[k], snap[k])) settersPersistidos[k](snap[k]);
+      });
+      const a = Object.values(ARQUETIPOS_ESTRUCTURACION).find((x) => x.id === snap.arquetipoId);
+      if (a) setArquetipoActivo(a);
+    } catch {
+      /* si el expediente está dañado, se abre con los valores por defecto */
+    }
+    setHidratado(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // La ruta elegida se restaura después de que las alternativas recomendadas se recalculen
+  useEffect(() => {
+    if (!hidratado || !expedienteInicial || altRestauradaRef.current) return;
+    altRestauradaRef.current = true;
+    const id = expedienteInicial.estado.alternativaId;
+    const alt = [...alternativasActivas, ...ALTERNATIVAS_LEY_80, ...ALTERNATIVAS_MANUAL_PROPIO, ...ALTERNATIVAS_MULTILATERAL].find((x) => x.id === id);
+    if (alt) setAlternativaSeleccionada(alt);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hidratado]);
+
+  // Autoguardado con pequeña espera tras cada cambio
+  useEffect(() => {
+    if (!hidratado) return;
+    sucioRef.current = true;
+    const t = window.setTimeout(() => persistirAhora(true), 350);
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [instantanea, hidratado]);
+
+  // Guardado inmediato al cerrar la pestaña, al cambiar de lienzo o cuando la bandeja lo solicita
+  useEffect(() => {
+    const alCerrar = () => { if (sucioRef.current) persistirAhora(true); };
+    const alSolicitar = () => persistirAhora(true);
+    window.addEventListener('pagehide', alCerrar);
+    window.addEventListener('procuresim:guardar-expediente', alSolicitar);
+    return () => {
+      window.removeEventListener('pagehide', alCerrar);
+      window.removeEventListener('procuresim:guardar-expediente', alSolicitar);
+      if (sucioRef.current) persistirAhora(false);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSeleccionarRegimen = (nuevoRegimen: 'LEY_80' | 'MANUAL_PROPIO' | 'MULTILATERAL') => {
     soundEffects.playClick();
@@ -4767,17 +4879,8 @@ export const ContractFlowchartView: React.FC = () => {
                 type="button"
                 onClick={() => {
                   soundEffects.playClick();
-                  setPaso(1);
-                  setEntidadSeleccionada(null);
-                  setMetodoMercado(null);
-                  setProveedorSeleccionado(null);
-                  setAdendaPublicada(false);
-                  setSobresAbiertos(false);
-                  setAdjudicacionFinalizada(false);
-                  setActaInicioSuscrita(false);
-                  setPolizaAprobada(false);
-                  setLiquidacionCompletada(false);
-                  setModoChecklist(false);
+                  persistirAhora(true);
+                  useProcurementStore.getState().nuevoLienzo();
                 }}
                 className="text-xs text-slate-400 hover:text-slate-900 font-bold cursor-pointer"
               >

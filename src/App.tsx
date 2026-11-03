@@ -7,6 +7,7 @@ import { MultiRoleAuditModal } from './components/MultiRoleAuditModal';
 import { CceComplianceModal } from './components/CceComplianceModal';
 import { WelcomeBriefingModal } from './components/WelcomeBriefingModal';
 import { CommandPaletteModal } from './components/CommandPaletteModal';
+import { MisExpedientesModal } from './components/MisExpedientesModal';
 import { RegulatoryWatchdogModal } from './components/RegulatoryWatchdogModal';
 import { GuidedWorkflowBar } from './components/GuidedWorkflowBar';
 import { AwwwardsFloatingHud } from './components/AwwwardsFloatingHud';
@@ -36,7 +37,7 @@ import { AutomaticTimelineView } from './modules/production/AutomaticTimelineVie
 import { ContractFlowchartView } from './modules/flowchart/ContractFlowchartView';
 
 export function App() {
-  const { vistaActual, densidadVisual, modoOperativo, setDensidadVisual, setVista } = useProcurementStore();
+  const { vistaActual, densidadVisual, modoOperativo, setDensidadVisual, setVista, lienzoVersion } = useProcurementStore();
   const [sidebarColapsado, setSidebarColapsado] = useState(true);
   const [modalAuditoria, setModalAuditoria] = useState(false);
   const [modalMultirol, setModalMultirol] = useState(false);
@@ -44,6 +45,7 @@ export function App() {
   const [modalBienvenida, setModalBienvenida] = useState(false);
   const [modalCommandPalette, setModalCommandPalette] = useState(false);
   const [modalRadarRegulatorio, setModalRadarRegulatorio] = useState(false);
+  const [modalExpedientes, setModalExpedientes] = useState(false);
 
   // Apertura directa en el Flujograma Limpio (Lienzo en blanco)
   useEffect(() => {
@@ -90,6 +92,7 @@ export function App() {
           onAbrirBienvenida={() => setModalBienvenida(true)}
           onAbrirCommandPalette={() => setModalCommandPalette(true)}
           onAbrirRadarRegulatorio={() => setModalRadarRegulatorio(true)}
+          onAbrirExpedientes={() => setModalExpedientes(true)}
         />
 
         {/* 3. Barra de Flujo Guiado: Solo visible en Modo Experto */}
@@ -103,7 +106,7 @@ export function App() {
         {/* 4. Contenedor de la Vista Activa: Diagrama de Flujo Paso a Paso por defecto */}
         <main className="flex-1 overflow-y-auto flex flex-col relative pb-8 bg-white">
           {densidadVisual === 'ENFOCADA_SIMPLE' || vistaActual === 'FLUJOGRAMA_PASO_A_PASO' ? (
-            <ContractFlowchartView />
+            <ContractFlowchartView key={lienzoVersion} />
           ) : (
             <>
               {vistaActual === 'LINEA_TIEMPO_AUTOMATICA' && <AutomaticTimelineView />}
@@ -165,6 +168,7 @@ export function App() {
         abierto={modalMentorCCE}
         onCerrar={() => setModalMentorCCE(false)}
       />
+      <MisExpedientesModal abierto={modalExpedientes} onCerrar={() => setModalExpedientes(false)} />
       <RegulatoryWatchdogModal
         abierto={modalRadarRegulatorio}
         onCerrar={() => setModalRadarRegulatorio(false)}

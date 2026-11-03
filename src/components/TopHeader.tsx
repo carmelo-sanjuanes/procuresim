@@ -13,7 +13,8 @@ import {
   Search,
   Scale,
   GraduationCap,
-  ArrowLeft
+  ArrowLeft,
+  FolderOpen
 } from 'lucide-react';
 import { useProcurementStore } from '../store/useProcurementStore';
 import { soundEffects } from '../utils/soundEffects';
@@ -27,6 +28,7 @@ interface TopHeaderProps {
   onAbrirBienvenida?: () => void;
   onAbrirCommandPalette?: () => void;
   onAbrirRadarRegulatorio?: () => void;
+  onAbrirExpedientes?: () => void;
 }
 
 export const TopHeader: React.FC<TopHeaderProps> = ({
@@ -37,13 +39,17 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
   onAbrirAuditoria,
   onAbrirBienvenida,
   onAbrirCommandPalette,
-  onAbrirRadarRegulatorio
+  onAbrirRadarRegulatorio,
+  onAbrirExpedientes
 }) => {
   const {
     vistaActual,
     procesos,
     procesoSeleccionadoId,
     seleccionarProceso,
+    expedientes,
+    expedienteActivoId,
+    reanudarExpediente,
     proveedores,
     proveedorActivoId,
     setProveedorActivo,
@@ -117,6 +123,20 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
 
         {/* Derecha: Botón de cambio de modo y acceso a vista experta */}
         <div className="flex items-center gap-2">
+          {onAbrirExpedientes && (
+            <button
+              onClick={() => {
+                soundEffects.playClick();
+                onAbrirExpedientes();
+              }}
+              className="flex items-center gap-1 text-[11px] font-mono text-slate-400 hover:text-slate-700 px-2.5 py-1 transition-colors cursor-pointer"
+              title="Ver, reanudar, duplicar, exportar o importar tus expedientes guardados"
+            >
+              <FolderOpen className="w-3.5 h-3.5" />
+              <span>Mis expedientes{expedientes.length > 0 ? ` (${expedientes.length})` : ''}</span>
+            </button>
+          )}
+
           <button
             onClick={() => {
               soundEffects.playClick();
@@ -142,6 +162,46 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
       </header>
     );
   }
+
+  const selectorProceso = (
+      <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 px-3 py-1 rounded-xl shadow-2xs">
+        <Building2 className="w-3.5 h-3.5 text-slate-600" />
+        <span className="text-[11px] font-semibold text-slate-400">Proceso:</span>
+        <select
+          value={expedienteActivoId ? `exp:${expedienteActivoId}` : procesoSeleccionadoId}
+          aria-label="Proceso activo"
+          onChange={(e) => {
+            soundEffects.playClick();
+            const v = e.target.value;
+            if (v.startsWith('exp:')) {
+              window.dispatchEvent(new Event('procuresim:guardar-expediente'));
+              reanudarExpediente(v.slice(4));
+            } else {
+              seleccionarProceso(v);
+            }
+          }}
+          className="bg-transparent font-extrabold text-slate-900 text-[11px] focus:outline-none cursor-pointer font-mono"
+          title="Seleccionar el proceso de contratación pública activo"
+        >
+          {expedientes.length > 0 && (
+            <optgroup label="Mis expedientes">
+              {expedientes.map((x) => (
+                <option key={x.id} value={`exp:${x.id}`} className="bg-white text-slate-900">
+                  {x.objeto.slice(0, 32)} · {x.etiquetaPaso.split(":")[0]} · …{x.id.slice(-4)}
+                </option>
+              ))}
+            </optgroup>
+          )}
+          <optgroup label="Casos de demostración">
+            {procesos.map((p) => (
+              <option key={p.id} value={p.id} className="bg-white text-slate-900">
+                {p.numeroProceso} (${(p.presupuestoOficial / 1_000_000).toFixed(0)}M COP)
+              </option>
+            ))}
+          </optgroup>
+        </select>
+      </div>
+  );
 
   return (
     <header className="h-14 bg-white border-b border-slate-200 px-4 flex items-center justify-between text-xs text-slate-800 z-30 shrink-0 transition-all">
@@ -199,13 +259,17 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
               <span>🎓 Aprender</span>
             </button>
 
-            <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 px-3 py-1 rounded-xl shadow-2xs">
+            {expedientes.length > 0 ? (
+              selectorProceso
+            ) : (
+              <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 px-3 py-1 rounded-xl shadow-2xs">
               <Building2 className="w-3.5 h-3.5 text-slate-600" />
               <span className="text-[11px] font-semibold text-slate-400">Expediente:</span>
               <span className="font-extrabold text-slate-800 text-[11px] font-mono">
                 LP-001-2025 ($450M COP)
               </span>
-            </div>
+              </div>
+            )}
 
             <div className="flex items-center gap-1.5 bg-white text-slate-800 px-3 py-1 rounded-xl border border-slate-200 shadow-2xs">
               <img
@@ -237,25 +301,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
               <span>🏢 Producir</span>
             </button>
 
-            <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 px-3 py-1 rounded-xl shadow-2xs">
-              <Building2 className="w-3.5 h-3.5 text-slate-600" />
-              <span className="text-[11px] font-semibold text-slate-400">Proceso:</span>
-              <select
-                value={procesoSeleccionadoId}
-                onChange={(e) => {
-                  soundEffects.playClick();
-                  seleccionarProceso(e.target.value);
-                }}
-                className="bg-transparent font-extrabold text-slate-900 text-[11px] focus:outline-none cursor-pointer font-mono"
-                title="Seleccionar el proceso de contratación pública activo"
-              >
-                {procesos.map((p) => (
-                  <option key={p.id} value={p.id} className="bg-white text-slate-900">
-                    {p.numeroProceso} (${(p.presupuestoOficial / 1_000_000).toFixed(0)}M COP)
-                  </option>
-                ))}
-              </select>
-            </div>
+            {selectorProceso}
           </>
         )}
 
@@ -293,6 +339,23 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
 
         {densidadVisual === 'EXPERTO_AVANZADA' && (
           <>
+            {onAbrirExpedientes && (
+              <button
+                onClick={() => {
+                  soundEffects.playClick();
+                  onAbrirExpedientes();
+                }}
+                className="flex items-center gap-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 px-2.5 py-1 rounded-xl font-bold transition-all text-xs shadow-2xs active:scale-95 cursor-pointer"
+                title="Mis expedientes guardados"
+              >
+                <FolderOpen className="w-3.5 h-3.5 text-slate-500" />
+                <span className="hidden sm:inline">Mis expedientes</span>
+                {expedientes.length > 0 && (
+                  <span className="bg-slate-200 text-slate-800 font-mono text-[10px] font-black px-1.5 rounded-full">{expedientes.length}</span>
+                )}
+              </button>
+            )}
+
             {onAbrirRadarRegulatorio && (
               <button
                 onClick={() => {
