@@ -1,0 +1,320 @@
+Aquí tienes el **mapeo integral y exhaustivo de todos los flujogramas de interacción de ambos métodos** (Modo Entrenamiento y Modo Producción Real), detallando **cada una de las bifurcaciones, decisiones condicionales (Sí / No), caminos de error, penalizaciones legales y rutas de éxito**.
+
+---
+
+# 🗺️ Diagrama 0: El Selector Maestro de Modo (Bifurcación Inicial)
+
+Este es el punto de partida absoluto de la aplicación. El usuario nunca debe quedar a la deriva; siempre sabe en qué mundo se encuentra.
+
+```mermaid
+flowchart TD
+    Inicio(["Inicio: Usuario ingresa a ProcureSim v2.0"]) --> Portal["Selector Maestro de Experiencia (Modal de 2 Puertas)"]
+    
+    Portal --> DecisionModo{"¿Cuál es tu objetivo hoy?"}
+    
+    %% Camino 1: Modo Entrenamiento
+    DecisionModo -->|"Quiero aprender con tutor y caso guiado"| M_Entrenamiento["🎓 MODO ENTRENAMIENTO (Sandbox Didáctico)"]
+    M_Entrenamiento --> SelRol{"Elige tu Rol / Personaje:"}
+    SelRol -->|"Rol 1"| R_Entidad["🏛️ Entidad Estatal (Estructurador)"]
+    SelRol -->|"Rol 2"| R_Oferente["💼 Oferente Licitante (Empresario)"]
+    SelRol -->|"Rol 3"| R_Auditor["⚖️ Auditor Forense (Ente de Control)"]
+    SelRol -->|"Rol 4"| R_Libre["🚀 Exploración Libre (21 Módulos)"]
+    
+    %% Camino 2: Modo Producción
+    DecisionModo -->|"Quiero operar desde cero con mis propios datos"| M_Produccion["🏢 MODO PRODUCCIÓN REAL (Lienzo en Blanco)"]
+    M_Produccion --> SelPerfil{"¿Qué tipo de expediente vas a crear?"}
+    SelPerfil -->|"Soy Comprador Público"| P_Entidad["🏛️ Estructurar Proceso de Cero (Estudios Previos, Pliego, CDP)"]
+    SelPerfil -->|"Soy Proveedor Privado"| P_Oferente["💼 Estructurar Propuesta de Cero (Balances RUP, AIU, Oferta)"]
+    
+    %% Salidas hacia los flujogramas detallados
+    R_Entidad -.-> D1["Ir a Diagrama 1: Entrenamiento Entidad"]
+    R_Oferente -.-> D2["Ir a Diagrama 2: Entrenamiento Oferente"]
+    R_Auditor -.-> D3["Ir a Diagrama 3: Entrenamiento Auditor"]
+    P_Entidad -.-> D4["Ir a Diagrama 4: Producción Real Entidad"]
+    P_Oferente -.-> D5["Ir a Diagrama 5: Producción Real Oferente"]
+```
+
+---
+
+# 🎓 MÉTODO 1: MODO ENTRENAMIENTO (Simulador Guiado)
+
+---
+
+## 🏛️ Diagrama 1: Flujograma de Entrenamiento — Rol Entidad Estatal
+* **Objetivo del usuario:** Estructurar la licitación de \$450M de San Pedro del Valle, superar observaciones, evaluar ofertas y adjudicar sin violar la Ley 80 ni incurrir en pliego sastre.
+
+```mermaid
+flowchart TD
+    E1_Start(["Inicio: Rol Entidad Estatal"]) --> E1_P1["Etapa 1: Planeación y Estudios Previos ($450M COP)"]
+    
+    %% Decisión CDP
+    E1_P1 --> E1_CDP{"¿Se expidió el CDP No. 2025-00189 amparando el 100%?"}
+    E1_CDP -->|"No / Presupuesto Parcial"| E1_CDP_Err["❌ ERROR BLOQUEANTE:<br/>Violación al principio de planeación y Art. 25 Ley 80.<br/>(Sanción fiscal y disciplinaria)."]
+    E1_CDP_Err --> E1_P1
+    E1_CDP -->|"Sí: $450.000.000 COP Garantizados"| E1_UNSPSC["Clasificación UNSPSC de Ítems (43211500, 43211503, 43222600)"]
+    
+    %% Decisión Pliego Sastre
+    E1_UNSPSC --> E1_Sastre{"¿El pliego exige tener sede física obligatoria en el municipio?"}
+    E1_Sastre -->|"Sí: Exigencia local restrictiva"| E1_Sastre_Bad["⚠️ ALERTA TUTOR: 'Pliego Sastre'.<br/>Vulnera libre concurrencia (Dec. 1082/2015).<br/>Demanda de nulidad inminente."]
+    E1_Sastre_Bad -->|"Corregir requisito"| E1_P2["Etapa 2: Publicación de Prepliegos y Consulta Pública"]
+    E1_Sastre -->|"No: Libre concurrencia respetada"| E1_P2
+    
+    %% Etapa 2: Observaciones
+    E1_P2 --> E1_Obs["Se reciben 2 observaciones:<br/>OBS-01: Sanjuanés (eliminar experiencia no RUP)<br/>OBS-02: Ingelec (aplicar regla BIC Ley 2069)"]
+    E1_Obs --> E1_DecObs{"¿Cómo responde la Entidad a OBS-01 y OBS-02?"}
+    E1_DecObs -->|"Rechazar con evasivas ('Estése al pliego')"| E1_Obs_Fail["❌ PENALIZACIÓN TUTOR:<br/>Falta de motivación jurídica.<br/>Riesgo de tutela y pliego direccionado."]
+    E1_Obs_Fail --> E1_DecObs
+    E1_DecObs -->|"Acoger observaciones y proyectar Adenda 01"| E1_AdendaTime{"¿Cuándo se publica la Adenda 01 frente al cierre?"}
+    
+    %% Decisión Límite de Adendas Ley 1882
+    E1_AdendaTime -->|"A menos de 3 días hábiles del cierre"| E1_Adenda_Ilegal["❌ ILEGAL (Art. 4 Ley 1882/2018):<br/>Prohibido adendar a menos de 3 días.<br/>Causal de revocatoria directa."]
+    E1_Adenda_Ilegal -->|"Prorrogar cronograma legalmente"| E1_P3["Etapa 3: Cierre, Apertura de Ofertas y Evaluación RUP"]
+    E1_AdendaTime -->|"Con 4 o más días de antelación"| E1_P3
+    
+    %% Etapa 3: RUP y Capacidad Financiera
+    E1_P3 --> E1_VerifRUP["Verificar Balances RUP:<br/>Liquidez >= 1.50 | Endeudamiento <= 70% | Cobertura >= 2.50"]
+    E1_VerifRUP --> E1_CumpRUP{"¿Los proponentes cumplen los 3 índices?"}
+    E1_CumpRUP -->|"Falla balance o falta firma de Revisor Fiscal"| E1_Subsanar{"¿El requisito es subsanable?"}
+    E1_Subsanar -->|"Es subsanable (ej. certificado aclaratorio)"| E1_PlazoSub["Se otorga término de traslado para subsanar"] --> E1_P4["Etapa 4: Calificación Económica y Audiencia de Adjudicación"]
+    E1_Subsanar -->|"Insubsanable (mejora de propuesta económica)"| E1_Rechazo["Propuesta Rechazada de Plano"] --> E1_P4
+    E1_CumpRUP -->|"Sanjuanés y Ingelec cumplen holgadamente"| E1_P4
+    
+    %% Etapa 4: Desempate
+    E1_P4 --> E1_Temerario{"¿Hay oferta con precio artificialmente bajo (-27%)?"}
+    E1_Temerario -->|"Sí: Oferta de $279M"| E1_ReqTem["Requerir sustento de costos directos (CCE)"]
+    E1_ReqTem --> E1_Justif{"¿Justifica costos razonablemente?"}
+    E1_Justif -->|"No justifica"| E1_RechazoTem["Rechazo formal de la oferta temeraria"] --> E1_Empate
+    E1_Justif -->|"Sí justifica"| E1_Empate
+    
+    E1_Empate["Empate Técnico a 100 Puntos:<br/>Sanjuanés Soluciones vs. Ingelecgroup BIC"]
+    E1_Empate --> E1_ReglaEmpate{"¿Cómo resuelve el Comité el empate?"}
+    E1_ReglaEmpate -->|"Hacer sorteo por balotas de inmediato"| E1_Sorteo_Err["❌ ERROR GRAVÍSIMO:<br/>El sorteo es el último recurso.<br/>Viola la cascada obligatoria de la Ley 2069."]
+    E1_Sorteo_Err --> E1_ReglaEmpate
+    E1_ReglaEmpate -->|"Aplicar Cascada Art. 35 Ley 2069 / Dcto. 1860"| E1_BIC_Check{"¿Se aplica factor de desempate Sociedades BIC?"}
+    E1_BIC_Check -->|"Sí (Regla BIC Activa)"| E1_GanaBIC["🏆 Adjudicación legítima a INGELECGROUP S.A.S. BIC"]
+    E1_BIC_Check -->|"No (Regla de Género / Víctimas)"| E1_GanaSanjuanes["🏆 Adjudicación legítima a SANJUANÉS SOLUCIONES S.A.S."]
+    
+    %% Etapa 5: Contrato
+    E1_GanaBIC --> E1_P5["Etapa 5: Perfeccionamiento del Contrato y Liquidación"]
+    E1_GanaSanjuanes --> E1_P5
+    
+    E1_P5 --> E1_Polizas{"¿Se aprobaron las pólizas y el Registro Presupuestal (RP)?"}
+    E1_Polizas -->|"No: Iniciar ejecución sin póliza aprobada"| E1_Pol_Err["❌ RESPONSABILIDAD FISCAL:<br/>No se puede iniciar sin amparo de garantías ni RP."]
+    E1_Pol_Err --> E1_Polizas
+    E1_Polizas -->|"Sí: Pólizas aprobadas y acta de inicio firmada"| E1_Supervision["Ejecución al 100% y Recibo a Satisfacción"]
+    E1_Supervision --> E1_Liq{"¿Existen saldos o litigios pendientes?"}
+    E1_Liq -->|"No hay controversias"| E1_FinExito(["🎉 FIN: Acta de Liquidación Bilateral Suscrita (100% Blindado)"])
+    E1_Liq -->|"El contratista no se presenta a liquidar"| E1_LiqUni["Liquidación Unilateral por Resolución (Art. 11 Ley 1150)"] --> E1_FinExito
+```
+
+---
+
+## 💼 Diagrama 2: Flujograma de Entrenamiento — Rol Oferente / Licitante
+* **Objetivo del usuario:** Preparar la propuesta, validar si cumple los indicadores financieros, objetar pliegos amañados, presentar oferta económica blindada y ganar la adjudicación en audiencia pública.
+
+```mermaid
+flowchart TD
+    O_Start(["Inicio: Rol Oferente Licitante"]) --> O_SelEmpresa{"Elige con qué empresa compites:"}
+    
+    O_SelEmpresa -->|"SANJUANÉS SOLUCIONES S.A.S."| O_Sanj["Perfil: Pyme Regional, Liquidez 2.67, 60% Mujeres"]
+    O_SelEmpresa -->|"INGELECGROUP S.A.S. BIC"| O_Inge["Perfil: Sociedad BIC Ley 1901, Liquidez 2.15, Dcto 1860"]
+    O_SelEmpresa -->|"Crear Consorcio / UT"| O_Cons["Gestor de Asociaciones Plurales (Sanjuanés + Ingelec)"]
+    
+    O_Sanj --> O_P1["Etapa 1: Análisis Go / No-Go de la Oportunidad"]
+    O_Inge --> O_P1
+    O_Cons --> O_P1
+    
+    %% Decisión Go / No Go
+    O_P1 --> O_Go{"¿La empresa cumple la experiencia en SMMLV y el K residual?"}
+    O_Go -->|"No cumple experiencia requerida"| O_Go_No["Decisión: NO-GO (Retirarse o buscar socio en Consorcio)"] --> O_SelEmpresa
+    O_Go -->|"Sí cumple con solvencia"| O_P2["Etapa 2: Auditoría del Pliego de Condiciones"]
+    
+    %% Detección de Pliego Sastre
+    O_P2 --> O_CheckSastre{"¿Detectas un requisito restrictivo o direccionado?"}
+    O_CheckSastre -->|"No revisar pliego a fondo"| O_Sastre_Trap["⚠️ EMBOSCADA:<br/>La entidad te descalificará más adelante por no objetar a tiempo."]
+    O_CheckSastre -->|"Detectar exigencia extra-RUP en prepliegos"| O_RadObs["Radicar Observación Formal en SECOP II"]
+    
+    O_RadObs --> O_RespEntidad{"¿La Entidad acogió la observación en la Adenda?"}
+    O_RespEntidad -->|"Rechazó injustificadamente"| O_AccionTutela["Alerta al Ente de Control / Posible Acción Popular"]
+    O_RespEntidad -->|"Acogió: Pliego definitivo corregido"| O_P3["Etapa 3: Preparación de Oferta y Validación RUP"]
+    
+    %% Estructuración de Oferta
+    O_P3 --> O_CalculoAIU["Estructurar AIU bajo Art. 462-1 E.T.:<br/>Administración 15%, Imprevistos 3%, Utilidad 5%"]
+    O_CalculoAIU --> O_CheckIVA{"¿Liquidaste el IVA del 19% sobre todo el contrato o solo sobre la Utilidad?"}
+    O_CheckIVA -->|"Sobre todo el contrato"| O_IVA_Bad["❌ ERROR DE COSTOS:<br/>Sobrecosto innecesario de $18.6M.<br/>Tu oferta quedará fuera de mercado."]
+    O_IVA_Bad --> O_CalculoAIU
+    O_CheckIVA -->|"IVA solo sobre la Utilidad (Art. 462-1)"| O_P4["Etapa 4: Radicación de Oferta y Audiencia Pública"]
+    
+    %% Audiencia de Desempate
+    O_P4 --> O_InformeEval["Publicación del Informe de Evaluación: Empate a 100 Puntos"]
+    O_InformeEval --> O_Defensa{"Estrategia en la Audiencia de Adjudicación:"}
+    
+    O_Defensa -->|"Si juegas con INGELECGROUP BIC"| O_ArgBIC["Acreditar Certificado de Cámara de Comercio con condición BIC.<br/>Exigir aplicación del Decreto 1860 de 2021."]
+    O_Defensa -->|"Si juegas con SANJUANÉS SOLUCIONES"| O_ArgMujer["Acreditar 60% de mujeres en nómina directiva y víctimas.<br/>Exigir aplicación del Numeral 3 Art. 35 Ley 2069."]
+    
+    O_ArgBIC --> O_GanaLicitacion["🏆 ¡ADJUDICACIÓN OBTENIDA! El contrato es tuyo."]
+    O_ArgMujer --> O_GanaLicitacion
+    
+    O_GanaLicitacion --> O_P5["Etapa 5: Firma del Contrato, Garantías y Facturación"]
+    O_P5 --> O_FinOferente(["🎉 Éxito Comercial: Contrato ejecutado y liquidado a satisfacción"])
+```
+
+---
+
+## ⚖️ Diagrama 3: Flujograma de Entrenamiento — Rol Auditor Forense (26 Stakeholders)
+* **Objetivo del usuario:** Auditar el expediente completo simulando el escrutinio de Contraloría, Procuraduría, Veeduría Ciudadana y Gremios para detectar hallazgos antes de que se pierdan recursos públicos.
+
+```mermaid
+flowchart TD
+    A_Start(["Inicio: Rol Auditor Forense"]) --> A_Expediente["Cargar Expediente OCDS: Licitación LP-001-2025"]
+    
+    A_Expediente --> A_Escrutinio{"Selecciona la Lente de Control:"}
+    
+    %% Lente 1: Fiscal
+    A_Escrutinio -->|"1. Contraloría General (Control Fiscal)"| A_Fiscal["Auditoría de Daño Patrimonial y Precios"]
+    A_Fiscal --> A_F1{"¿El presupuesto tiene 3 cotizaciones reales de mercado?"}
+    A_F1 -->|"No / Cotizaciones ficticias"| A_HallazgoFiscal["🚨 HALLAZGO FISCAL:<br/>Presunto sobrecosto y detrimento patrimonial (Ley 610/2000)."]
+    A_F1 -->|"Sí: Estudio de mercado válido"| A_F2{"¿La oferta temeraria de $279M fue adjudicada?"}
+    A_F2 -->|"Sí: Se adjudicó a precio artificial"| A_RiesgoRuptura["🚨 RIESGO RUINOSO:<br/>Incumplimiento contractual inminente por precio insostenible."]
+    A_F2 -->|"No: Fue requerida y rechazada motivadamente"| A_Fiscal_OK["✅ Conforme: Sin hallazgo fiscal"]
+    
+    %% Lente 2: Disciplinario
+    A_Escrutinio -->|"2. Procuraduría General (Control Disciplinario)"| A_Disc["Auditoría del Régimen de Contratación"]
+    A_Disc --> A_D1{"¿Se modificó el pliego fuera del plazo de la Ley 1882?"}
+    A_D1 -->|"Sí: Adenda a menos de 3 días"| A_HallazgoDisc["🚨 HALLAZGO DISCIPLINARIO:<br/>Falta gravísima del ordenador del gasto (Código Disciplinario)."]
+    A_D1 -->|"No: Cronograma legal respetado"| A_D2{"¿Se vulneró el principio de selección objetiva?"}
+    A_D2 -->|"No: Pliegos tipo aplicados estrictamente"| A_Disc_OK["✅ Conforme: Sin pliego de cargos"]
+    
+    %% Lente 3: Social
+    A_Escrutinio -->|"3. Veeduría Ciudadana (Control Social)"| A_Social["Auditoría de Publicidad y Transparencia"]
+    A_Social --> A_S1{"¿Todos los documentos y anexos están visibles en SECOP II?"}
+    A_S1 -->|"Ocultamiento de anexos técnicos"| A_Denuncia["🚨 DENUNCIA CIUDADANA:<br/>Violación al principio de publicidad y transparencia."]
+    A_S1 -->|"100% de datos abiertos en OCDS"| A_Social_OK["✅ Conforme: Aprobado por la ciudadanía"]
+    
+    %% Consolidación
+    A_Fiscal_OK & A_Disc_OK & A_Social_OK --> A_Dictamen["Emisión del Dictamen Forense de 26 Auditores"]
+    A_Dictamen --> A_ScoreAuditor{"¿El expediente tiene 0 hallazgos sancionatorios?"}
+    A_ScoreAuditor -->|"Tiene hallazgos"| A_Reprobar["❌ Expediente en Riesgo Jurídico / Medidas Cautelares"]
+    A_ScoreAuditor -->|"Cero hallazgos (100% Blindado)"| A_Certificado(["🏆 Expediente Blindado: Certificación de Conformidad Legal Total"])
+```
+
+---
+
+# 🏢 MÉTODO 2: MODO PRODUCCIÓN REAL (Operación Desde Cero)
+
+---
+
+## 🏛️ Diagrama 4: Flujograma de Producción Real — Entidad Estatal (Desde Cero)
+* **Objetivo:** Un funcionario o consultor ingresa con un **lienzo en blanco**, crea su propio proceso de contratación, define su CDP, genera minutas en Word (.docx) descargables y gestiona el proceso real.
+
+```mermaid
+flowchart TD
+    P_Ent_Start(["Inicio: Producción Real (Entidad Estatal)"]) --> P_Nuevo["Hacer clic en: '+ Nuevo Proceso de Contratación'"]
+    
+    P_Nuevo --> P_Formulario["Lienzo en Blanco: Formulario de Datos Reales"]
+    P_Formulario --> P_Datos["Digitar:<br/>1. Número de Proceso real<br/>2. Objeto contractual detallado<br/>3. Modalidad (Licitación, SAMC, Mínima, Directa)<br/>4. Presupuesto Oficial Techo ($ COP)<br/>5. Número y Fecha del CDP amparado"]
+    
+    %% Validación Presupuestal
+    P_Datos --> P_ValCDP{"Validación de Amparo Presupuestal:"}
+    P_ValCDP -->|"Sin CDP registrado"| P_ErrCDP["⛔ SISTEMA BLOQUEA PUBLICACIÓN:<br/>No es legal publicar sin amparo previo (Estatuto Orgánico de Presupuesto)."]
+    P_ErrCDP --> P_Datos
+    P_ValCDP -->|"CDP válido y verificado"| P_UNSPSC_Build["Añadir Ítems Técnicos y Codificación UNSPSC Oficial"]
+    
+    %% Matriz de Riesgos
+    P_UNSPSC_Build --> P_Riesgos["Construir Matriz de Riesgos (Metodología CONPES 3714 & CCE)"]
+    P_Riesgos --> P_GenDoc["Módulo Generador de Documentos Ley 80:"]
+    P_GenDoc --> P_Word[".docx Generado y Descargable:<br/>1. Estudios Previos Oficiales (.docx)<br/>2. Pliego de Condiciones Tipo (.docx)<br/>3. Matriz de Riesgos (.xlsx / .docx)"]
+    
+    %% Publicación en Consola
+    P_Word --> P_PubSecop["Publicación en Consola SECOP II Simulada"]
+    P_PubSecop --> P_BandejaObs["Recepción de Observaciones de Interesados Reales"]
+    
+    P_BandejaObs --> P_ObsDecision{"¿Existen observaciones técnicas o jurídicas radicadas?"}
+    P_ObsDecision -->|"Sí hay observaciones"| P_ResponderObs["Redactar Documento de Respuesta a Observaciones"]
+    P_ResponderObs --> P_ExpAdenda{"¿La respuesta requiere modificar el pliego?"}
+    P_ExpAdenda -->|"Sí"| P_GenAdenda["Generar Adenda Modificatoria Oficial con nuevo cronograma"] --> P_CierreOfertas
+    P_ExpAdenda -->|"No (Aclaración simple)"| P_CierreOfertas
+    P_ObsDecision -->|"No hay observaciones"| P_CierreOfertas["Cierre de Plazo y Recepción de Propuestas"]
+    
+    %% Evaluación Real
+    P_CierreOfertas --> P_VerifComite["Comité Evaluador: Cargar Ofertas de Proponentes"]
+    P_VerifComite --> P_MatrizEval["Matriz de Evaluación Integral: Jurídica, Financiera (RUP) y Técnica"]
+    
+    P_MatrizEval --> P_FormulaEcon{"Elegir Fórmula Matemática de Calificación (Pliegos Tipo):"}
+    P_FormulaEcon -->|"Media Aritmética"| P_CalcMedia
+    P_FormulaEcon -->|"Media Aritmética Alta"| P_CalcAlta
+    P_FormulaEcon -->|"Media Geométrica"| P_CalcGeo
+    P_FormulaEcon -->|"Menor Valor"| P_CalcMenor
+    
+    P_CalcMedia & P_CalcAlta & P_CalcGeo & P_CalcMenor --> P_ActoAdjudicacion["Generar Resolución de Adjudicación Oficial (.docx)"]
+    P_ActoAdjudicacion --> P_MinutaContrato["Generar Minuta Contractual Ley 80 (.docx) con Cláusulas Excepcionales"]
+    P_MinutaContrato --> P_RegistroPresupuestal["Vincular Registro Presupuestal (RP) y Aprobación de Garantías"]
+    P_RegistroPresupuestal --> P_Ent_Fin(["🎉 Proceso Estructurado, Adjudicado y Perfeccionado en Producción Real"])
+```
+
+---
+
+## 💼 Diagrama 5: Flujograma de Producción Real — Oferente / Proveedor (Desde Cero)
+* **Objetivo:** Un licitante privado ingresa con sus propios datos financieros, evalúa su RUP real, liquida sus costos AIU y genera la propuesta formal para ganar el negocio.
+
+```mermaid
+flowchart TD
+    P_Of_Start(["Inicio: Producción Real (Oferente / Licitante)"]) --> P_Of_Perfil["Paso 1: Configurar Datos de Mi Empresa"]
+    
+    P_Of_Perfil --> P_Of_RUP["Digitar Balances Reales de Cámara de Comercio:<br/>1. Activo Total ($ COP)<br/>2. Pasivo Total ($ COP)<br/>3. Patrimonio Neto ($ COP)<br/>4. Utilidad Operacional ($ COP)<br/>5. Gastos de Intereses ($ COP)"]
+    
+    %% Motor de RUP
+    P_Of_RUP --> P_Of_CalcRUP["Motor Validador RUP Automático calcula:"]
+    P_Of_CalcRUP --> P_Of_Indices["📊 Resultados en Pantalla:<br/>• Índice de Liquidez = Activo Cte / Pasivo Cte<br/>• Índice de Endeudamiento = Pasivo Total / Activo Total<br/>• Cobertura de Intereses = Utilidad Op / Gastos Interés<br/>• Capacidad Residual K de Contratación"]
+    
+    P_Of_Indices --> P_Of_CheckHab{"¿Cumple los requisitos del pliego?"}
+    P_Of_CheckHab -->|"No cumple (ej. Endeudamiento > 70%)"| P_Of_ConsorcioRoute["Ruta de Salvamento:<br/>Ir al Módulo de Consorcios y Uniones Temporales.<br/>Vincular un socio con músculo financiero para sumar balances."]
+    P_Of_ConsorcioRoute --> P_Of_UT_Doc["Generar Documento de Constitución de Consorcio / UT (Art. 7 Ley 80)"] --> P_Of_Paso2
+    P_Of_CheckHab -->|"Sí cumple holgadamente"| P_Of_Paso2["Paso 2: Ingeniería Económica y Análisis de Precios Unitarios (APU)"]
+    
+    %% Liquidación AIU
+    P_Of_Paso2 --> P_Of_CostosDirectos["Ingresar Costos Directos de Personal, Materiales y Equipos"]
+    P_Of_CostosDirectos --> P_Of_AIUEngine["Calcular Factor Multiplicador y AIU:<br/>% Administración + % Imprevistos + % Utilidad"]
+    P_Of_AIUEngine --> P_Of_Tributario["Optimización Tributaria Art. 462-1 E.T.:<br/>Liquidar IVA del 19% únicamente sobre la Utilidad esperada."]
+    
+    %% Generación de Oferta
+    P_Of_Tributario --> P_Of_DocGen["Generador de Oferta Oficial (.docx):<br/>1. Carta de Presentación de la Oferta (Firmada por Rep. Legal)<br/>2. Certificación de Acreditación Mipyme / Sociedad BIC<br/>3. Desglose Económico y Formulario de Precios"]
+    
+    P_Of_DocGen --> P_Of_Radicacion["Simulación de Radicación de Oferta en SECOP II"]
+    P_Of_Radicacion --> P_Of_Traslado["Etapa de Traslado: Monitoreo del Informe de Evaluación"]
+    
+    P_Of_Traslado --> P_Of_RequiereSub{"¿La entidad pública emitió requerimiento de subsanación?"}
+    P_Of_RequiereSub -->|"Sí requiere subsanar"| P_Of_SubsanarDoc["Generar Memorial de Subsanación dentro del plazo perentorio"] --> P_Of_Audiencia
+    P_Of_RequiereSub -->|"No requiere (Propuesta Habilitada)"| P_Of_Audiencia["Asistencia a Audiencia Pública de Adjudicación"]
+    
+    %% Audiencia
+    P_Of_Audiencia --> P_Of_Resultado{"Resultado de la Audiencia Pública:"}
+    P_Of_Resultado -->|"Adjudicado a tu favor"| P_Of_Adjudicado["🏆 Contrato Ganado: Suscribir pólizas con la aseguradora y firmar acta"]
+    P_Of_Resultado -->|"Adjudicado a competidor con irregularidad"| P_Of_Impugnar["Presentar observaciones al informe y recursos de Ley 1437 (CPACA)"]
+    
+    P_Of_Adjudicado --> P_Of_Fin(["🎉 Fin: Propuesta Real Adjudicada y Ejecutable"])
+```
+
+---
+
+# 📊 Matriz de Decisiones Críticas y Bifurcaciones Legales
+
+Esta tabla resume **todas las bifurcaciones clave de la aplicación**, la pregunta que se le hace al usuario, la opción que elija y el impacto en la simulación:
+
+| # | Etapa / Módulo | Pregunta de Decisión | Si elige Opción A | Si elige Opción B | Sustento Legal Colombiano |
+|---|---|---|---|---|---|
+| **1** | **Planeación** | ¿El CDP cubre el 100% del presupuesto? | **Sí:** Avanza a clasificar ítems en UNSPSC. | **No:** Bloqueo total. Riesgo fiscal. | Art. 25 Num. 6 Ley 80 de 1993 y Estatuto de Presupuesto. |
+| **2** | **Estudios Previos** | ¿Exigir sede física en el municipio en el pliego? | **Sí:** Alerta de Pliego Sastre. Pérdida de puntos del tutor. | **No:** Pliego transparente con libre concurrencia. | Art. 2.2.1.1.2.1.1 Decreto 1082 de 2015. |
+| **3** | **Observaciones** | ¿Publicar adenda modificatoria a menos de 3 días del cierre? | **Sí:** Ilegal. Nulidad absoluta de la adenda. | **No:** Válida si se publica con 3+ días o se prorroga. | Art. 4 de la Ley 1882 de 2018. |
+| **4** | **Requisitos RUP** | ¿El proponente incumple un índice financiero? | **Si es subsanable:** Plazo de traslado para aportar soporte. | **Si es insubsanable:** Rechazo de plano (mejora de oferta). | Art. 5 Num. 1 Ley 1150 de 2007 y Pliegos Tipo. |
+| **5** | **Precios Bajos** | ¿Hay oferta 27% por debajo del promedio del mercado? | **Requerir costos:** Si no justifica, se rechaza. | **Adjudicar directo:** Falla grave por riesgo de abandono. | Guía de Precios Artificialmente Bajos de CCE. |
+| **6** | **Desempate** | ¿Hay empate técnico a 100 puntos entre oferentes? | **Aplicar Ley 2069 (BIC):** Gana oferente con criterio preferente. | **Hacer balotas directo:** Ilegal. El sorteo es el último recurso. | Art. 35 Ley 2069 de 2020 y Decreto 1860 de 2021. |
+| **7** | **Tributario AIU** | ¿Sobre qué base se liquida el IVA del 19% en servicios? | **Solo sobre la Utilidad:** Ahorro legal de impuestos. | **Sobre todo el contrato:** Sobrecosto e incompetitividad. | Art. 462-1 del Estatuto Tributario Nacional. |
+| **8** | **Liquidación** | ¿El contratista no comparece a la liquidación bilateral? | **Liquidación Unilateral:** La entidad liquida por Resolución. | **Dejar vencer términos:** Riesgo de caducidad de la acción. | Art. 11 de la Ley 1150 de 2007. |
+
+---
+
+### 💡 Conclusión del Ecosistema de Navegación
+Con estos flujogramas:
+1. **El Modo Entrenamiento** guía al usuario paso a paso con datos precargados (\$450M), tutor didáctico y salvavidas ante errores.
+2. **El Modo Producción** le entrega al usuario un lienzo en blanco para que ingrese sus propios datos reales, formule sus balances, genere documentos oficiales de Ley 80 en Word (.docx) y ejecute procesos reales con rigor profesional.

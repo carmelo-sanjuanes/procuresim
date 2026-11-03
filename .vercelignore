@@ -1,0 +1,7 @@
+node_modules
+dist
+.git
+*.pdf
+*.zip
+*.log
+.DS_Store
