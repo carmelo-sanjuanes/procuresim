@@ -1,6 +1,12 @@
 # ProcureSim: Suite Universal de Contratación Pública & Privada
 
+[![GitHub Pages Deployment](https://img.shields.io/badge/Demo%20en%20Vivo-GitHub%20Pages-2ea44f?style=for-the-badge&logo=github)](https://carmelo-sanjuanes.github.io/procuresim/)
+[![Versión Portátil](https://img.shields.io/badge/Versi%C3%B3n%20Offline-ProcureSim__portatil.html-blue?style=for-the-badge)](ProcureSim_portatil.html)
+
 **ProcureSim** es una plataforma integral desarrollada para el entrenamiento, simulación y gestión de procesos contractuales tanto en el **sector público colombiano (SECOP I y SECOP II)** como en las **tres plataformas privadas más populares (Suplos, SAP Ariba y Coupa)**.
+
+🌐 **Demo en vivo:** [https://carmelo-sanjuanes.github.io/procuresim/](https://carmelo-sanjuanes.github.io/procuresim/)  
+📁 **Versión Autónoma Offline:** Puedes descargar y abrir [`ProcureSim_portatil.html`](ProcureSim_portatil.html) directamente en cualquier navegador (Chrome, Edge, Safari, Firefox) sin internet ni instalación.
 
 Diseñada con **Clean Architecture (Domain-Driven Design)** en TypeScript y React, la aplicación funciona como un entorno de entrenamiento interactivo y, al mismo tiempo, como un **motor de contratación listo para ser conectado a bases de datos relacionales o APIs reales de producción**.
 
