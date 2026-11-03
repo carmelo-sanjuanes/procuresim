@@ -3,8 +3,10 @@ import { ProcesoContratacion } from '../core/domain/types';
 import { ENTIDADES_DEMO } from './entidadesDemo';
 import { PROVEEDORES_DEMO } from './proveedoresDemo';
 import { RiskMatrixEngine } from '../core/engines/RiskMatrixEngine';
+import { CASOS_SIMULADOS_MAESTROS, casoAProcesoContratacion } from './casosSimuladosMaestros';
 
 export const PROCESOS_DEMO: ProcesoContratacion[] = [
+  ...CASOS_SIMULADOS_MAESTROS.map(casoAProcesoContratacion),
   {
     id: 'PROC-SECOP2-01',
     numeroProceso: 'LP-001-2025',
