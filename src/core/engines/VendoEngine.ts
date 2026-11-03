@@ -364,6 +364,7 @@ export const LISTA_CIERRE: CasillaSobre[] = [
 
 // ================= Evaluación, adjudicación y ejecución (pasos 23 a 28) =================
 import type { ActaPago } from '../domain/vendo';
+import { esFechaValida } from './TerminosProcesalesEngine';
 
 export interface ItemSubsanacion { id: string; etiqueta: string; subsanable: boolean }
 export const CATALOGO_SUBSANACION: ItemSubsanacion[] = [
@@ -445,8 +446,8 @@ export function redactarDescargos(d: DatosVendo): string {
 }
 
 export function sumarMeses(iso: string, meses: number): string {
+  if (!esFechaValida(iso) || !Number.isFinite(meses) || Math.abs(meses) > 1200) return '';
   const [y, m, dd] = iso.split('-').map(Number);
-  if (!y || !m || !dd) return '';
   const f = new Date(y, m - 1 + meses, 1);
   const ultimo = new Date(f.getFullYear(), f.getMonth() + 1, 0).getDate();
   f.setDate(Math.min(dd, ultimo));

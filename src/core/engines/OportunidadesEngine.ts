@@ -45,7 +45,8 @@ export function construirConsulta(p: PerfilBusqueda, hoy = hoyISO()): string {
 
 type Crudo = Record<string, unknown>;
 export function normalizarRegistro(r: Crudo): Oportunidad {
-  const url = (r.urlproceso as { url?: string } | undefined)?.url || '';
+  const bruta = (r.urlproceso as { url?: unknown } | undefined)?.url;
+  const url = typeof bruta === 'string' && /^https?:\/\//i.test(bruta) ? bruta : '';
   const s = (k: string) => (typeof r[k] === 'string' ? (r[k] as string) : '');
   return {
     id: s('id_del_proceso') || s('referencia_del_proceso') || url,

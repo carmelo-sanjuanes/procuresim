@@ -5,8 +5,7 @@ import { DEPARTAMENTOS, MODALIDADES_BUSQUEDA, OTRAS_PLATAFORMAS, PERFIL_NUEVO } 
 import type { PerfilBusqueda, Oportunidad, Puntuada, OportunidadGuardada, EstadoSeguimiento } from '../../core/domain/oportunidades';
 import { construirConsulta, normalizarRegistro, puntuar, etiquetaPuntaje, codigosDe, hoyISO } from '../../core/engines/OportunidadesEngine';
 import { capacidadResidual, codigosExigidos, num } from '../../core/engines/VendoEngine';
-import { CASOS_SIMULADOS_MAESTROS, casoAOportunidad } from '../../mock-data/casosSimuladosMaestros';
-import { diasHabilesEntre } from '../../core/engines/TerminosProcesalesEngine';
+import { diasHabilesEntre, esFechaValida } from '../../core/engines/TerminosProcesalesEngine';
 
 const CLAVE = 'procuresim-oportunidades-v1';
 interface Guardado { perfiles: PerfilBusqueda[]; activoId: string; guardadas: OportunidadGuardada[] }
@@ -14,7 +13,11 @@ const nuevoId = () => Math.random().toString(36).slice(2, 10);
 const cargar = (): Guardado => {
   try {
     const t = JSON.parse(localStorage.getItem(CLAVE) || 'null') as Guardado | null;
-    if (t && Array.isArray(t.perfiles) && t.perfiles.length) return { perfiles: t.perfiles, activoId: t.activoId || t.perfiles[0].id, guardadas: Array.isArray(t.guardadas) ? t.guardadas : [] };
+    if (t && Array.isArray(t.perfiles) && t.perfiles.length) {
+      const perfiles = t.perfiles.filter((x) => x && typeof x === 'object').map((x) => ({ ...PERFIL_NUEVO(typeof x.id === 'string' && x.id ? x.id : nuevoId()), ...x, departamentos: Array.isArray(x.departamentos) ? x.departamentos : [], modalidades: Array.isArray(x.modalidades) ? x.modalidades : [], vistas: Array.isArray(x.vistas) ? x.vistas : [], dias: Number(x.dias) > 0 ? Number(x.dias) : 30 }));
+      const guardadas = (Array.isArray(t.guardadas) ? t.guardadas : []).filter((x) => x && x.op && typeof x.op === 'object' && typeof x.op.id === 'string');
+      if (perfiles.length) return { perfiles, activoId: perfiles.some((x) => x.id === t.activoId) ? t.activoId : perfiles[0].id, guardadas };
+    }
   } catch { /* sin almacenamiento */ }
   const p = PERFIL_NUEVO(nuevoId());
   return { perfiles: [p], activoId: p.id, guardadas: [] };
@@ -25,7 +28,7 @@ const entrada = 'w-full px-3 py-2 rounded-xl border border-slate-300 text-sm bg-
 
 export const BuscadorOportunidades: React.FC<{ datos: DatosVendo; hayDatosProceso: boolean; onUsar: (o: Oportunidad) => void; onCerrar: () => void }> = ({ datos, hayDatosProceso, onUsar, onCerrar }) => {
   const [g, setG] = useState<Guardado>(cargar);
-  const [tab, setTab] = useState<'BUSCAR' | 'CASOS' | 'MIS'>('BUSCAR');
+  const [tab, setTab] = useState<'BUSCAR' | 'MIS'>('BUSCAR');
   const [estado, setEstado] = useState<'IDLE' | 'CARGANDO' | 'ERROR'>('IDLE');
   const [resultados, setResultados] = useState<Puntuada[] | null>(null);
   const [confirmar, setConfirmar] = useState<string>('');
@@ -60,7 +63,9 @@ export const BuscadorOportunidades: React.FC<{ datos: DatosVendo; hayDatosProces
     try {
       const r = await fetch(construirConsulta(perfil), { signal: ac.signal });
       if (!r.ok) throw new Error(String(r.status));
-      const crudo = (await r.json()) as Record<string, unknown>[];
+      const json: unknown = await r.json();
+      if (!Array.isArray(json)) throw new Error('respuesta inesperada');
+      const crudo = json.filter((x): x is Record<string, unknown> => !!x && typeof x === 'object' && !Array.isArray(x) && typeof (x as Record<string, unknown>).id_del_proceso === 'string');
       const lista = crudo.map((x) => ({ op: normalizarRegistro(x), extra: typeof x.descripci_n_del_procedimiento === 'string' ? (x.descripci_n_del_procedimiento as string) : '' }));
       const puntuadas = lista.map(({ op, extra }) => puntuar(op, perfil, { ...ctx, textoExtra: extra })).sort((a, b) => b.puntaje - a.puntaje);
       setResultados(puntuadas); setEstado('IDLE');
@@ -99,7 +104,7 @@ export const BuscadorOportunidades: React.FC<{ datos: DatosVendo; hayDatosProces
           {o.nueva && <span className="block text-[10px] font-bold text-slate-900">Nueva</span>}
         </div>
       </div>
-      {o.cierre && <p data-cierre className={`text-[11px] font-bold ${o.cierre < hoyISO() ? 'text-rose-800' : 'text-slate-900'}`}>{o.cierre < hoyISO() ? `Cerró el ${o.cierre}` : `Cierra el ${o.cierre} · faltan ${diasHabilesEntre(hoyISO(), o.cierre)} día(s) hábil(es)`}</p>}
+      {esFechaValida(o.cierre) && <p data-cierre className={`text-[11px] font-bold ${o.cierre < hoyISO() ? 'text-rose-800' : 'text-slate-900'}`}>{o.cierre < hoyISO() ? `Cerró el ${o.cierre}` : `Cierra el ${o.cierre} · faltan ${diasHabilesEntre(hoyISO(), o.cierre)} día(s) hábil(es)`}</p>}
       {o.razones.length > 0 && <p className="text-[11px] text-slate-700">{o.razones.join(' · ')}</p>}
       {o.alertas.map((a) => <p key={a} className="text-[11px] text-amber-800">{a}</p>)}
       <div className="flex flex-wrap items-center gap-3 pt-1">
@@ -122,7 +127,7 @@ export const BuscadorOportunidades: React.FC<{ datos: DatosVendo; hayDatosProces
         </div>
 
         <div className="flex gap-2 border-b border-slate-200">
-          {([['BUSCAR', 'Buscar en SECOP II'], ['CASOS', '📚 12 Casos Simulados (FNCER, APP, etc.)'], ['MIS', `Mis oportunidades (${g.guardadas.length})`]] as const).map(([k, t]) => (
+          {([['BUSCAR', 'Buscar'], ['MIS', `Mis oportunidades (${g.guardadas.length})`]] as const).map(([k, t]) => (
             <button key={k} data-tab={k} onClick={() => setTab(k)} className={`px-3 py-2 text-xs font-bold cursor-pointer border-b-2 ${tab === k ? 'border-slate-900 text-slate-900' : 'border-transparent text-slate-500'}`}>{t}</button>
           ))}
         </div>
@@ -209,79 +214,6 @@ export const BuscadorOportunidades: React.FC<{ datos: DatosVendo; hayDatosProces
                 </div>
                 <button data-manual-agregar onClick={agregarManual} className="px-4 py-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-800 cursor-pointer">Agregar a mis oportunidades</button>
               </div>
-            </div>
-          </div>
-        )}
-
-        {tab === 'CASOS' && (
-          <div data-casos className="space-y-4">
-            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
-              <h3 className="text-xs font-bold text-slate-900">12 Casos de Simulación y Auditoría Adversarial</h3>
-              <p className="text-[11px] text-slate-600">
-                Desde la mínima cuantía elemental hasta megaproyectos APP de $1,85 billones, parques solares FNCER (Ley 1715/2099), triangulación de convenios (Ley 2195) y urgencias manifiestas. Pulsa <strong>«Usar en mi propuesta»</strong> para cargarlo directamente en tu flujo.
-              </p>
-            </div>
-
-            <div className="space-y-4">
-              {CASOS_SIMULADOS_MAESTROS.map((caso) => {
-                const op = casoAOportunidad(caso);
-                return (
-                  <div key={caso.id} data-caso-id={caso.id} className="p-4 rounded-2xl border border-slate-200 hover:border-slate-400 transition-colors space-y-3 bg-white">
-                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
-                      <div className="space-y-1">
-                        <div className="flex flex-wrap items-center gap-1.5">
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-900 text-white">
-                            {caso.numeroProceso}
-                          </span>
-                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
-                            {caso.plataformaTexto}
-                          </span>
-                          <span className="text-[10px] px-2 py-0.5 rounded-full border border-slate-200 text-slate-600">
-                            {caso.modalidadTexto}
-                          </span>
-                        </div>
-                        <h4 className="text-xs font-bold text-slate-900">{caso.titulo}</h4>
-                        <p className="text-[11px] text-slate-600 leading-relaxed">{caso.objeto}</p>
-                      </div>
-                      <div className="sm:text-right shrink-0">
-                        <span className="block text-sm font-black text-slate-900">{cop(caso.presupuestoCOP)}</span>
-                        <span className="block text-[10px] text-slate-500">Plazo: {caso.plazoMeses} meses</span>
-                      </div>
-                    </div>
-
-                    <div className="p-2.5 rounded-xl bg-amber-50/60 border border-amber-200/70 text-[11px] space-y-1">
-                      <p className="font-bold text-amber-900">⚠️ Punto Crítico / Riesgo Auditado:</p>
-                      <p className="text-amber-800">{caso.trampaOPeligroAuditado}</p>
-                      <p className="text-emerald-800 font-semibold pt-1">🛡️ Blindaje Legal: {caso.solucionBlindaje}</p>
-                    </div>
-
-                    <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-slate-100">
-                      <div className="flex flex-wrap gap-1">
-                        {caso.tags.map((t) => (
-                          <span key={t} className="text-[10px] px-2 py-0.5 rounded-md bg-slate-50 text-slate-500 border border-slate-200">
-                            #{t}
-                          </span>
-                        ))}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => guardar(op)}
-                          disabled={yaGuardada(op.id)}
-                          className="px-3 py-1.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-50 cursor-pointer disabled:opacity-40"
-                        >
-                          {yaGuardada(op.id) ? 'Guardada' : '+ Guardar'}
-                        </button>
-                        <button
-                          onClick={() => usar(op)}
-                          className="px-4 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold cursor-pointer"
-                        >
-                          {hayDatosProceso && confirmar === op.id ? 'Confirmar reemplazo' : 'Usar en mi propuesta →'}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
             </div>
           </div>
         )}

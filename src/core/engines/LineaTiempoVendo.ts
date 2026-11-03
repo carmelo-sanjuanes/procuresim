@@ -1,5 +1,5 @@
 // Línea de tiempo de la venta: se construye sola a partir de las fechas que el usuario ya digitó en la ruta «Vendo».
-import { TerminosProcesalesEngine, sumarDiasHabiles, restarDiasHabiles, diasHabilesEntre } from './TerminosProcesalesEngine';
+import { TerminosProcesalesEngine, sumarDiasHabiles, restarDiasHabiles, diasHabilesEntre, esFechaValida } from './TerminosProcesalesEngine';
 import { plazosLiquidacion, sumarMeses, num } from './VendoEngine';
 import type { ActaPago } from '../domain/vendo';
 
@@ -26,7 +26,10 @@ export function quintoHabilDeAbril(terminacion: string): string {
   return sumarDiasHabiles(`${anio}-03-31`, 5);
 }
 
-export function construirLineaTiempo(c: Record<string, string>, actas: ActaPago[], ahora: Date = new Date()): { hitos: Hito[]; avisos: string[] } {
+export function construirLineaTiempo(cEntrada: Record<string, string>, actasEntrada: ActaPago[], ahora: Date = new Date()): { hitos: Hito[]; avisos: string[] } {
+  const ok = (x?: string) => (esFechaValida(x) ? x : '');
+  const c: Record<string, string> = { ...cEntrada, t_publicacion: ok(cEntrada?.t_publicacion), t_prepliego: ok(cEntrada?.t_prepliego), t_cierre: ok(cEntrada?.t_cierre), t_informe: ok(cEntrada?.t_informe), t_adjud: ok(cEntrada?.t_adjud), k_inicio: ok(cEntrada?.k_inicio), l_term: ok(cEntrada?.l_term) };
+  const actas = (Array.isArray(actasEntrada) ? actasEntrada : []).filter((a) => a && esFechaValida(a.fecha));
   const P = TerminosProcesalesEngine.PLAZOS;
   const hoy = hoyISO(ahora);
   const crudos: Omit<Hito, 'estado' | 'diasHabiles' | 'proximo'>[] = [];
@@ -46,7 +49,7 @@ export function construirLineaTiempo(c: Record<string, string>, actas: ActaPago[
   actas.filter((a) => a.fecha).forEach((a, i) => add({ id: `acta_${a.id}`, titulo: `Acta de pago ${i + 1}`, fecha: a.fecha, tipo: 'ENTRADA', paso: 26 }));
 
   const plazo = num(c.fc_plazo);
-  const terminacionCalc = c.k_inicio && Number.isFinite(plazo) && plazo > 0 ? sumarMeses(c.k_inicio, Math.round(plazo)) : '';
+  const terminacionCalc = c.k_inicio && Number.isFinite(plazo) && plazo > 0 && plazo <= 600 ? sumarMeses(c.k_inicio, Math.round(plazo)) : '';
   const terminacion = c.l_term || terminacionCalc;
   if (terminacion) {
     add({ id: 'term', titulo: 'Terminación del contrato', fecha: terminacion, tipo: c.l_term ? 'ENTRADA' : 'CALCULADO', paso: 28, campo: c.l_term ? 'l_term' : undefined, nota: c.l_term ? undefined : `Estimada: inicio + ${plazo} mes(es)` });

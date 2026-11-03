@@ -22,7 +22,7 @@ import {
 } from '../../core/engines/VendoEngine';
 import { descargarPropuesta } from '../../core/engines/PropuestaVendoDocx';
 import type { MetodoCalificacionEconomica } from '../../core/engines/ScoringFormulasEngine';
-import { TerminosProcesalesEngine, sumarDiasHabiles } from '../../core/engines/TerminosProcesalesEngine';
+import { TerminosProcesalesEngine, esFechaValida } from '../../core/engines/TerminosProcesalesEngine';
 import { sugerirPlataforma } from '../../core/engines/PlatformRouterEngine';
 import { PLATAFORMAS } from '../../core/domain/plataformas';
 import { abrirHerramienta, abrirPlataforma } from '../../core/domain/herramientas';
@@ -190,28 +190,7 @@ export const VendoFlowView: React.FC<{ expedienteInicial: Expediente | null; onC
   const [verBuscador, setVerBuscador] = useState(false);
   const usarOportunidad = (o: Oportunidad) => {
     const modalidad = /licitaci/i.test(o.modalidad) ? 'Licitación pública' : /subasta/i.test(o.modalidad) ? 'Selección abreviada por subasta inversa' : /abreviada/i.test(o.modalidad) ? 'Selección abreviada de menor cuantía' : /concurso/i.test(o.modalidad) ? 'Concurso de méritos' : /m[ií]nima/i.test(o.modalidad) ? 'Mínima cuantía' : '';
-    let cierreEstimado = o.cierre || '';
-    if (!cierreEstimado && o.publicada) {
-      const dias = /licitaci/i.test(o.modalidad) ? 20 : /concurso/i.test(o.modalidad) ? 15 : /abreviada/i.test(o.modalidad) ? 10 : /m[ií]nima/i.test(o.modalidad) ? 5 : 15;
-      try {
-        cierreEstimado = sumarDiasHabiles(o.publicada, dias);
-      } catch { /* ignorar */ }
-    }
-    setD((p) => ({
-      ...p,
-      campos: {
-        ...p.campos,
-        p_numero: o.referencia || o.id,
-        p_entidad: o.entidad,
-        p_objeto: o.objeto,
-        ...(o.valor > 0 ? { p_presupuesto: String(Math.round(o.valor)) } : {}),
-        ...(modalidad ? { p_modalidad: modalidad } : {}),
-        ...(o.codigo && !p.campos.r_unspsc ? { r_unspsc: o.codigo.replace(/\D/g, '') } : {}),
-        p_enlace: o.enlace,
-        t_prepliego: o.publicada || p.campos.t_prepliego || '',
-        t_cierre: cierreEstimado || p.campos.t_cierre || ''
-      }
-    }));
+    setD((p) => ({ ...p, campos: { ...p.campos, p_numero: o.referencia || o.id, p_entidad: o.entidad, p_objeto: o.objeto, ...(o.valor > 0 ? { p_presupuesto: String(Math.round(o.valor)) } : {}), ...(modalidad ? { p_modalidad: modalidad } : {}), ...(o.codigo && !p.campos.r_unspsc ? { r_unspsc: o.codigo.replace(/\D/g, '') } : {}), p_enlace: o.enlace, t_publicacion: o.publicada || '', t_cierre: o.cierre || '' } }));
     setVerBuscador(false); ir(8);
   };
   const perfil = perfilAliado(d);
@@ -266,7 +245,7 @@ export const VendoFlowView: React.FC<{ expedienteInicial: Expediente | null; onC
   const adicion = evaluarAdicion(num(c.x_valor) > 0 ? num(c.x_valor) : valorContrato, num(c.x_anio), num(c.x_adicion) || 0);
   const multa = calcularMulta(valorContrato, num(c.x_mpct), num(c.x_dias), num(c.x_tope));
   const descargosTxt = redactarDescargos(d);
-  const liq = c.l_term ? plazosLiquidacion(c.l_term) : null;
+  const liq = esFechaValida(c.l_term) ? plazosLiquidacion(c.l_term) : null;
   const copia = (t: string) => (
     <div className="space-y-2">
       <pre data-borrador className="whitespace-pre-wrap text-xs text-slate-800 font-sans leading-relaxed p-4 rounded-2xl border border-slate-200 bg-slate-50">{t}</pre>

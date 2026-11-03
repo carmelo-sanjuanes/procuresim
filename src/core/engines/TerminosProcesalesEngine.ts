@@ -40,6 +40,15 @@ export function festivosColombia(anio: number): Set<string> {
   return set;
 }
 
+/** Fecha real (calendario) en formato AAAA-MM-DD, entre 1990 y 2100: lo demás se ignora para no romper los cálculos. */
+export function esFechaValida(iso: string | undefined | null): iso is string {
+  if (typeof iso !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return false;
+  const [y, m, d] = iso.split('-').map(Number);
+  if (y < 1990 || y > 2100) return false;
+  const f = new Date(Date.UTC(y, m - 1, d));
+  return f.getUTCFullYear() === y && f.getUTCMonth() === m - 1 && f.getUTCDate() === d;
+}
+
 export function esDiaHabil(iso: string): boolean {
   const d = aFechaUTC(iso);
   const dow = d.getUTCDay();
@@ -129,8 +138,10 @@ export const TerminosProcesalesEngine = {
   /** Plazos adoptados por el simulador: modificables por el pliego aplicable; el usuario siempre debe verificarlos. */
   PLAZOS: { OBSERVACIONES_PREPLIEGO: 10, ADENDAS_ANTES_CIERRE: 3, TRASLADO_EVALUACION: 5, SUSCRIPCION_CONTRATO: 5 },
 
-  calcularAlarmas(f: FechasBase, ahora: Date = new Date()): AlarmaTermino[] {
+  calcularAlarmas(fEntrada: FechasBase, ahora: Date = new Date()): AlarmaTermino[] {
     const P = TerminosProcesalesEngine.PLAZOS;
+    const ok = (x?: string) => (esFechaValida(x) ? x : undefined);
+    const f: FechasBase = { publicacionPrepliego: ok(fEntrada.publicacionPrepliego), cierre: ok(fEntrada.cierre), publicacionInforme: ok(fEntrada.publicacionInforme), adjudicacion: ok(fEntrada.adjudicacion) };
     return [
       armar(
         {

@@ -8,11 +8,13 @@ import {
 } from './VendoEngine';
 
 const PEND = '[PENDIENTE]';
-const v = (t?: string) => (t && t.trim() ? t.trim() : PEND);
+/** Quita caracteres de control que vuelven inválido el XML de Word (el archivo no abriría). */
+const limpio = (t: string) => t.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\uFFFE\uFFFF]/g, '');
+const v = (t?: string) => (t && limpio(t).trim() ? limpio(t).trim() : PEND);
 const cop = (n: number) => `$ ${Math.round(n).toLocaleString('es-CO')}`;
-const p = (t: string, bold = false) => new Paragraph({ spacing: { after: 140 }, children: [new TextRun({ text: t, bold })] });
-const h = (t: string) => new Paragraph({ heading: HeadingLevel.HEADING_2, spacing: { before: 240, after: 120 }, children: [new TextRun(t)] });
-const celda = (t: string, bold = false) => new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: t, bold, size: 20 })] })] });
+const p = (t: string, bold = false) => new Paragraph({ spacing: { after: 140 }, children: [new TextRun({ text: limpio(t), bold })] });
+const h = (t: string) => new Paragraph({ heading: HeadingLevel.HEADING_2, spacing: { before: 240, after: 120 }, children: [new TextRun(limpio(t))] });
+const celda = (t: string, bold = false) => new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: limpio(t), bold, size: 20 })] })] });
 const tabla = (filas: string[][], cab = true) =>
   new Table({
     width: { size: 100, type: WidthType.PERCENTAGE },
