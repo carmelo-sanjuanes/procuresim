@@ -169,7 +169,7 @@ export const RegulatoryWatchdogModal: React.FC<RegulatoryWatchdogModalProps> = (
               title="Registro trazable de observaciones de veeduría, Contraloría y decisiones del simulador"
             >
               <ClipboardList className="w-3.5 h-3.5" />
-              <span>Bitácora de observaciones ({bitacoraObservaciones.length})</span>
+              <span>Bitácora de Observaciones y Vigilancia ({bitacoraObservaciones.length})</span>
             </button>
           </div>
         </div>

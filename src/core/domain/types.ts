@@ -405,6 +405,12 @@ export interface MiembroAsociacion {
   activoTotal: number;
   pasivoTotal: number;
   patrimonio: number;
+  /** Capacidad residual (obra pública): datos que aporta el usuario, opcionales. */
+  ingresosOperacionalesMaxCOP?: number; // CO
+  puntosExperiencia?: number; // E (máx. 120)
+  puntosCapTecnica?: number; // CT (máx. 40)
+  puntosCapFinanciera?: number; // CF (máx. 40)
+  saldoContratosEjecucionCOP?: number; // SCE
 }
 
 export interface AsociacionPlural {

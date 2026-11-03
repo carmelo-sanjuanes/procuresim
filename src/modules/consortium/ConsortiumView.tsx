@@ -769,26 +769,49 @@ export const ConsortiumView: React.FC = () => {
                 </span>
               </div>
 
-              {/* Capacidad Residual Consolidada (K-Residual) */}
-              <div className="bg-indigo-50/70 p-3 rounded-lg border border-indigo-200 flex items-center justify-between">
-                <div>
-                  <span className="font-bold text-indigo-900 block flex items-center gap-1">
-                    <ShieldCheck className="w-3.5 h-3.5 text-indigo-600" />
-                    K-Residual Consolidado
-                  </span>
-                  <span className="text-[11px] text-indigo-700">
-                    Estimación didáctica — no reemplaza la fórmula oficial de capacidad residual (Dec. 1082/2015)
-                  </span>
-                </div>
-                <div className="text-right">
-                  <span className="text-sm font-extrabold text-indigo-900">
-                    {(consolidacion.indicadoresPonderados.capacidadResidualTotalSMMLV || 0).toLocaleString('es-CO')} SMMLV
-                  </span>
-                  <span className="block text-[10px] text-indigo-600 font-semibold">
-                    Σ K-Residual Integrantes
-                  </span>
-                </div>
-              </div>
+              {/* Capacidad residual oficial (obra pública) */}
+              {(() => {
+                const cr = ConsortiumEngine.calcularCapacidadResidual(miembros);
+                const num = (v: string) => Number(v.replace(/\D/g, '')) || 0;
+                const setCampo = (id: string, campo: keyof MiembroAsociacion, valor: number) =>
+                  setMiembros(miembros.map((m) => (m.id === id ? { ...m, [campo]: valor } : m)));
+                return (
+                  <div className="bg-indigo-50/70 p-3 rounded-lg border border-indigo-200 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="font-bold text-indigo-900 block flex items-center gap-1">
+                          <ShieldCheck className="w-3.5 h-3.5 text-indigo-600" />
+                          Capacidad residual (obra pública)
+                        </span>
+                        <span className="text-[11px] text-indigo-700">CR = CO × (E + CT + CF) / 100 − SCE — guía de Colombia Compra Eficiente</span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-sm font-extrabold text-indigo-900">
+                          {cr.integrantesCalculados ? `$${cr.totalCOP.toLocaleString('es-CO')} COP` : 'Sin datos'}
+                        </span>
+                        {cr.integrantesCalculados > 0 && (
+                          <span className="block text-[10px] text-indigo-600 font-semibold">
+                            {cr.totalSMMLV.toLocaleString('es-CO')} SMMLV • {cr.integrantesCalculados} de {miembros.length} integrantes
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-indigo-800">
+                      Digita por integrante: CO (mayor ingreso operacional de los últimos 5 años, COP), E (máx. {ConsortiumEngine.CR_MAX_E}), CT (máx. {ConsortiumEngine.CR_MAX_CT}), CF (máx. {ConsortiumEngine.CR_MAX_CF}) y SCE (saldo de contratos en ejecución, COP). El simulador no inventa estos datos.
+                    </p>
+                    {miembros.map((m) => (
+                      <div key={m.id} className="grid grid-cols-2 sm:grid-cols-6 gap-1.5 items-end text-[10px]">
+                        <span className="col-span-2 sm:col-span-1 font-bold text-indigo-900 truncate" title={m.razonSocial}>{m.razonSocial || m.id}</span>
+                        <label>CO<input aria-label={`CO ${m.razonSocial}`} value={m.ingresosOperacionalesMaxCOP || ''} onChange={(e) => setCampo(m.id, 'ingresosOperacionalesMaxCOP', num(e.target.value))} className="w-full px-1.5 py-1 rounded border border-indigo-200 font-mono" /></label>
+                        <label>E<input aria-label={`E ${m.razonSocial}`} value={m.puntosExperiencia ?? ''} onChange={(e) => setCampo(m.id, 'puntosExperiencia', num(e.target.value))} className="w-full px-1.5 py-1 rounded border border-indigo-200 font-mono" /></label>
+                        <label>CT<input aria-label={`CT ${m.razonSocial}`} value={m.puntosCapTecnica ?? ''} onChange={(e) => setCampo(m.id, 'puntosCapTecnica', num(e.target.value))} className="w-full px-1.5 py-1 rounded border border-indigo-200 font-mono" /></label>
+                        <label>CF<input aria-label={`CF ${m.razonSocial}`} value={m.puntosCapFinanciera ?? ''} onChange={(e) => setCampo(m.id, 'puntosCapFinanciera', num(e.target.value))} className="w-full px-1.5 py-1 rounded border border-indigo-200 font-mono" /></label>
+                        <label>SCE<input aria-label={`SCE ${m.razonSocial}`} value={m.saldoContratosEjecucionCOP || ''} onChange={(e) => setCampo(m.id, 'saldoContratosEjecucionCOP', num(e.target.value))} className="w-full px-1.5 py-1 rounded border border-indigo-200 font-mono" /></label>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
             </div>
           </div>
 

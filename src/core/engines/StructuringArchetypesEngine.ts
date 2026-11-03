@@ -353,7 +353,7 @@ export const ARQUETIPOS_ESTRUCTURACION: Record<TipoSituacionInicial, ArquetipoEs
     icono: 'AlertCircle',
     controlesEmergentes: {
       mostrarAlertaCalamidad: true,
-      recordatorioEsquina: '⚠️ Obligatorio: Enviar expediente a la CGR dentro de los 2 meses siguientes'
+      recordatorioEsquina: '⚠️ Obligatorio: enviar de inmediato el expediente al órgano de control fiscal competente (Art. 43 Ley 80); este se pronuncia en 2 meses'
     },
     rutasJuridicas: [
       {

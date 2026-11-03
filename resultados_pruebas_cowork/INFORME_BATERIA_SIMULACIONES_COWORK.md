@@ -95,3 +95,67 @@ Leyenda: ✅ comportamiento correcto · 🔧 estaba mal y lo corregí en esta ro
 ---
 
 *Elaborado por Claude. Los textos jurídicos del simulador son material de entrenamiento: verifica cada norma citada contra su fuente oficial antes de usarla en un proceso real.*
+
+
+---
+
+# RONDA 2 — Orden de continuidad (3 tareas)
+**Fecha:** 3 de noviembre de 2026 · **Compilación:** `tsc -b` y `npm run build` sin errores de TypeScript.
+
+## A. Verificación previa: lo que afirmaba el texto de la otra IA frente a lo que hace la aplicación
+
+| Afirmación | Resultado de la prueba |
+|---|---|
+| La app abre limpia (modo enfocado, sin barras laterales) | **Cierto.** La pantalla inicial solo tiene "Volver", "Vista Experta", "Cambiar a Producir" y la pregunta "¿Hoy vienes a comprar o a vender?". |
+| La complejidad (cuantías, topes, alertas) opera de fondo | **Cierto.** Se comprobó en los casos 01–10: el usuario ve una pregunta por pantalla y el cálculo en SMMLV aparece como resultado, no como formulario. |
+| Cada proceso que se crea queda guardado en `procuresim-storage-v3` | **Falso.** Probé 7 pasos de "Compro" y el almacén seguía con los 5 procesos de demostración (LP-001-2025, MC-012-2024, SUPL-EVT-2025-045, ARIBA-RFQ-9902…). Al recargar la página el flujo vuelve al inicio y se pierde lo avanzado. Solo el módulo de tendencias (datos.gov.co) crea procesos en el almacén (`crearProceso`). |
+| El selector de proceso de la cabecera lista los procesos acumulados | **Solo en parte.** Aparece únicamente en Vista Experta y lista los 5 procesos de demostración, no los que estructuras en el flujo paso a paso. |
+| Hay botones "Exportar / Importar Escenario" | **No están visibles.** El componente `Navbar.tsx` existe, pero `App.tsx` no lo monta. |
+| Al terminar, "Estructurar un proceso nuevo desde cero" limpia el formulario | **Cierto**, pero lo que no se descargó se pierde: la única salida es el expediente .docx y, ahora, el acta de liquidación. |
+
+**Conclusión:** hoy la aplicación **no administra la acumulación de procesos**. Es una gran herramienta de ejercicio de un proceso por vez. Recomendación: guardar cada expediente del flujo en el almacén (con "Mis procesos": reanudar, duplicar, exportar/importar). No lo hice porque no estaba en la orden y toca ~50 variables de estado del flujo; dime si lo quieres.
+
+### Herramientas de asistencia: nombres reales en pantalla (Vista Experta)
+| En la cabecera | Qué abre |
+|---|---|
+| **Buscar (Ctrl+K)** — funciona también en la vista limpia | Paleta de comandos: saltar a módulos y proveedores |
+| **Radar** (con contador) | Radar Regulatorio: hitos normativos, calibrador de variables, sandbox de reformas y **"Bitácora de Observaciones y Vigilancia"** |
+| **Mentor CCE** | Mentor pedagógico y auditor de Colombia Compra Eficiente |
+| **Auditoría (26)** | Auditoría multirol con 26 actores |
+| **Bitácora OCDS** (con contador) | Registro de trazabilidad de acciones (antes se llamaba solo "Bitácora") |
+| **Tutor Didáctico** y **Glosario** (barra guiada) | Explicaciones y términos |
+
+## B. Tarea 1 — Resoluciones de diseño y limpieza normativa
+1. **Capacidad residual (K) — implementada con la fórmula de la guía oficial de Colombia Compra Eficiente, NO con la de la orden.**
+   - La orden decía `KR = (CO×0,20 + CE×0,40 + CF×0,20) − SCE`. Esa expresión suma pesos y puntos en unidades distintas y no coincide con la guía.
+   - La guía de CCE (consultada en esta ronda) establece **`CR = CO × (E + CT + CF) / 100 − SCE`**, con CO = mayor ingreso operacional de los últimos 5 años (COP), E = experiencia (máx. 120 puntos), CT = capacidad técnica (máx. 40), CF = capacidad financiera (máx. 40) y SCE = saldo de contratos en ejecución en los 12 meses siguientes.
+   - Implementado en `ConsortiumEngine.calcularCapacidadResidual` y en un panel de `ConsortiumView.tsx` donde el usuario digita CO, E, CT, CF y SCE por integrante (el simulador no inventa esos datos; los puntajes se limitan a sus máximos). Prueba: CO $1.000 M, E 100, CT 30, CF 30, SCE $200 M → **CR = $1.400 M**; con E = 500 se recorta a 120 y da $1.600 M.
+   - **Verificar:** el texto de la guía muestra el divisor 100 en sus ejemplos aunque los máximos suman 200; confírmalo con la imagen de la fórmula del PDF. En proponentes plurales sumo la CR de los integrantes; confirma la regla en el pliego aplicable. Si prefieres la fórmula de tu orden, cambia las constantes `CR_*` y la línea de cálculo en el motor.
+2. **Cita de Juntas de Acción Comunal:** quedó **Ley 2166 de 2021 (Art. 95) y Decreto 142 de 2023**. La orden dice "Ley 2166 de 2022"; la ley es del 18 de diciembre de **2021**, así que mantuve 2021 (corrígelo si tu fuente dice otra cosa).
+3. **Bitácoras:** la de la barra superior se llama ahora **"Bitácora OCDS"** y la pestaña del Radar **"Bitácora de Observaciones y Vigilancia"**.
+
+## C. Tarea 2 — Anticipo y fiducia (Art. 91 Ley 1474 de 2011)
+Nuevo `AnticipoFiduciaEngine` y tarjeta en el Paso 12, más un recordatorio en el Paso 11 para obras de mayor cuantía.
+- **Tope legal: 50 %** del valor del contrato (Concepto C-814 de 2025 de CCE). El **20 %** de la orden figura como **referencia sugerida**, no como límite legal; el simulador avisa si lo superas y marca en rojo si superas el 50 %.
+- **Fiducia o patrimonio autónomo irrevocable obligatorio** si se pacta anticipo en obra, concesión o salud que no sean de menor o mínima cuantía, y en toda licitación pública. Con la vía de $9.200 M (caso 08) la tarjeta dice que es obligatoria; con un suministro de $80 M dice que no lo es.
+- **Desembolsos sujetos a la aprobación de la interventoría:** lo incluí como práctica que el pliego y el contrato deben fijar. El concepto de CCE que revisé **no** dice quién aprueba los desembolsos, por lo que no lo presento como texto de la ley.
+- Prueba (caso 08): anticipo 20 % = $1.817 M sobre $9.085 M adjudicados; con 60 % el mensaje dice que supera el tope legal del 50 %.
+
+## D. Tarea 3 — Las 4 modalidades especiales
+Los controles ya existían como banderas en los arquetipos (`mostrarVerificacionLey2195`, `mostrarBalanceAporteEsal`…) pero **la interfaz nunca los mostraba**. Ahora:
+
+| Modalidad | Qué hace el simulador | Estado |
+|---|---|---|
+| **Contrato interadministrativo / triangulación** | Pide valor del contrato y la parte subcontratada con privados; alerta si pasa del 50 %. Prueba: 60 % → "Posible triangulación", 40 % → dentro del límite. | ✅ funciona · ⚠️ **No pude confirmar el texto de la Ley 2195 de 2022 que fija ese 50 %.** Lo dejé como regla adoptada por tu orden, con esa advertencia en pantalla. |
+| **Convenio con ESAL (Decreto 092 de 2017)** | Verifica el aporte: ≥ 30 % del valor total **en dinero** (Art. 5). Prueba: 20 % en dinero + 15 % en especie → "Aporte insuficiente", debe haber proceso competitivo (Art. 4); 30 % → cumple. | ✅ · La orden dice "real y cuantificable"; el decreto, según lo consultado, exige aporte **en dinero**: el aporte en especie no completa el mínimo. Verifícalo con el concepto de CCE sobre el cálculo del 30 %. |
+| **Urgencia manifiesta (Arts. 42 y 43 Ley 80)** | Se muestra al detectar emergencia en la necesidad ("derrumbe", "calamidad"…): contratación inmediata, objeto limitado y remisión del expediente al control fiscal. | ✅ · ⚠️ **No pude confirmar el plazo de "3 días hábiles".** El Art. 43 dice que el expediente se remite "inmediatamente" y que el órgano de control se pronuncia en 2 meses. Lo escribí así (y corregí el recordatorio anterior del arquetipo que decía "dentro de los 2 meses", que confundía los dos plazos). Si tienes la norma del plazo de 3 días, dime y lo agrego. |
+| **Sancionatorio con aseguradora y caducidad** | En el laboratorio del Paso 12, selector "Multa (Art. 86 Ley 1474) / Caducidad (Art. 18 Ley 80)". Caducidad: informe del supervisor, citación a contratista **y aseguradora**, audiencia, acto motivado, declaratoria del siniestro, **inhabilidad de 5 años** desde la ejecutoria (Art. 8 Ley 80) y registro en RUP/SECOP. | ✅ |
+
+## E. Archivos de esta ronda
+Nuevos: `SpecialModalitiesEngine.ts`, `AnticipoFiduciaEngine.ts`. Modificados: `ConsortiumEngine.ts`, `ConsortiumView.tsx`, `types.ts` (campos opcionales de capacidad residual), `ContractFlowchartView.tsx` (paneles de modalidades, tarjeta de anticipo, selector multa/caducidad), `StructuringArchetypesEngine.ts` (recordatorio de urgencia), `TopHeader.tsx` y `RegulatoryWatchdogModal.tsx` (nombres de bitácoras).
+
+## F. Pendientes que necesitan tu decisión
+1. ¿Mantengo la fórmula de CCE para la capacidad residual o prefieres la de tu orden? (recomiendo la de CCE).
+2. Fuente del límite del 50 % de subcontratación (Ley 2195) y del plazo de 3 días hábiles de la urgencia manifiesta.
+3. ¿Implemento "Mis procesos" para que el flujo guarde, reanude y exporte expedientes?
+4. El Art. 35 Ley 2069 (desempate) y el radicado 65.412 siguen sin verificar (ronda 1).

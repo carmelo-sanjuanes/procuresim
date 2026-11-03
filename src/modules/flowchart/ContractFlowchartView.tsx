@@ -42,6 +42,8 @@ import { soundEffects } from '../../utils/soundEffects';
 import { launchConfetti } from '../../utils/confetti';
 import { DocumentEngine } from '../../core/engines/DocumentEngine';
 import { ObjectTypologyEngine, ETIQUETAS_TIPOLOGIA, type TipologiaObjeto } from '../../core/engines/ObjectTypologyEngine';
+import { AnticipoFiduciaEngine } from '../../core/engines/AnticipoFiduciaEngine';
+import { SpecialModalitiesEngine, type DictamenEspecial } from '../../core/engines/SpecialModalitiesEngine';
 import { descargarActaLiquidacionWord } from '../../core/engines/ActaLiquidacionEngine';
 import {
   ARQUETIPOS_ESTRUCTURACION,
@@ -512,6 +514,23 @@ export const ALTERNATIVAS_MULTILATERAL: AlternativaAuditoria[] = [
 
 export const ALTERNATIVAS_AUDITORIA = ALTERNATIVAS_LEY_80;
 
+const TarjetaDictamen: React.FC<{ d: DictamenEspecial }> = ({ d }) => (
+  <div
+    className={`p-3 rounded-2xl border text-xs space-y-1.5 ${
+      d.nivel === 'OK' ? 'bg-emerald-50 border-emerald-200 text-emerald-950' : d.nivel === 'ALERTA' ? 'bg-amber-50 border-amber-200 text-amber-950' : 'bg-rose-50 border-rose-200 text-rose-950'
+    }`}
+  >
+    <strong className="block">{d.titulo}</strong>
+    <p className="leading-snug">{d.detalle}</p>
+    {d.pasos.length > 0 && (
+      <ol className="list-decimal pl-4 space-y-0.5">
+        {d.pasos.map((x, i) => (<li key={i}>{x}</li>))}
+      </ol>
+    )}
+    <p className="text-[10px] opacity-80">Fundamento: {d.fundamento}</p>
+  </div>
+);
+
 export const ContractFlowchartView: React.FC = () => {
   const { procesoSeleccionadoId, procesos, registrarObservacionBitacora } = useProcurementStore();
   const procesoActivo = procesos.find((p) => p.id === procesoSeleccionadoId) || procesos[0];
@@ -586,6 +605,12 @@ export const ContractFlowchartView: React.FC = () => {
   const [mostrarSimuladorAdicion, setMostrarSimuladorAdicion] = useState<boolean>(false);
   const [valorAdicionInput, setValorAdicionInput] = useState<string>('');
   const [anioSuscripcion, setAnioSuscripcion] = useState<number>(2026);
+  const [anticipoPct, setAnticipoPct] = useState<string>('20');
+  const [tipoSancion, setTipoSancion] = useState<'MULTA' | 'CADUCIDAD'>('MULTA');
+  const [espValorContrato, setEspValorContrato] = useState<string>('');
+  const [espSubcontratado, setEspSubcontratado] = useState<string>('');
+  const [espAporteDinero, setEspAporteDinero] = useState<string>('');
+  const [espAporteEspecie, setEspAporteEspecie] = useState<string>('');
   const [multaRetrasoPct, setMultaRetrasoPct] = useState<string>('30');
   const [multaPlazoDias, setMultaPlazoDias] = useState<string>('90');
   const [multaTasaDiaria, setMultaTasaDiaria] = useState<string>('0.1');
@@ -2110,6 +2135,43 @@ export const ContractFlowchartView: React.FC = () => {
                     Adaptado
                   </span>
                 </div>
+              )}
+
+              {arquetipoActivo && arquetipoActivo.id === 'CONTRATO_INTERADMINISTRATIVO_SERVICIO' && (
+                <div className="p-3 rounded-2xl bg-white border border-slate-200 space-y-2 text-xs animate-fadeIn">
+                  <strong className="block text-slate-900">Control de triangulación (contrato interadministrativo)</strong>
+                  <div className="grid grid-cols-2 gap-2">
+                    <label className="space-y-0.5">Valor del contrato (COP)
+                      <input value={espValorContrato} onChange={(e) => setEspValorContrato(e.target.value.replace(/\D/g, ''))} className="w-full px-2 py-1.5 rounded-lg border border-slate-300 font-mono" />
+                    </label>
+                    <label className="space-y-0.5">Parte que se subcontrataría con privados (COP)
+                      <input value={espSubcontratado} onChange={(e) => setEspSubcontratado(e.target.value.replace(/\D/g, ''))} className="w-full px-2 py-1.5 rounded-lg border border-slate-300 font-mono" />
+                    </label>
+                  </div>
+                  {espValorContrato && <TarjetaDictamen d={SpecialModalitiesEngine.evaluarTriangulacion(Number(espValorContrato), Number(espSubcontratado || 0))} />}
+                </div>
+              )}
+
+              {arquetipoActivo && arquetipoActivo.id.includes('ESAL') && (
+                <div className="p-3 rounded-2xl bg-white border border-slate-200 space-y-2 text-xs animate-fadeIn">
+                  <strong className="block text-slate-900">Verificación del aporte de la ESAL (Decreto 092 de 2017)</strong>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <label className="space-y-0.5">Valor total del convenio (COP)
+                      <input value={espValorContrato} onChange={(e) => setEspValorContrato(e.target.value.replace(/\D/g, ''))} className="w-full px-2 py-1.5 rounded-lg border border-slate-300 font-mono" />
+                    </label>
+                    <label className="space-y-0.5">Aporte de la ESAL en dinero (COP)
+                      <input value={espAporteDinero} onChange={(e) => setEspAporteDinero(e.target.value.replace(/\D/g, ''))} className="w-full px-2 py-1.5 rounded-lg border border-slate-300 font-mono" />
+                    </label>
+                    <label className="space-y-0.5">Aporte en especie (COP)
+                      <input value={espAporteEspecie} onChange={(e) => setEspAporteEspecie(e.target.value.replace(/\D/g, ''))} className="w-full px-2 py-1.5 rounded-lg border border-slate-300 font-mono" />
+                    </label>
+                  </div>
+                  {espValorContrato && <TarjetaDictamen d={SpecialModalitiesEngine.evaluarAporteEsal(Number(espValorContrato), Number(espAporteDinero || 0), Number(espAporteEspecie || 0))} />}
+                </div>
+              )}
+
+              {arquetipoActivo && arquetipoActivo.id === 'URGENCIA_MANIFIESTA' && (
+                <TarjetaDictamen d={SpecialModalitiesEngine.recordatoriosUrgenciaManifiesta()} />
               )}
             </div>
 
@@ -3941,6 +4003,12 @@ export const ContractFlowchartView: React.FC = () => {
                 </div>
               </div>
 
+              {tipologiaObjeto === 'OBRA' && nivelCuantia === 'MAYOR' && (
+                <div className="p-3 rounded-2xl border border-sky-200 bg-sky-50/40 text-[11px] text-slate-700 md:col-span-2">
+                  <strong>Si pactas anticipo:</strong> antes de entregarlo debe estar constituida la fiducia o patrimonio autónomo irrevocable (Art. 91 Ley 1474 de 2011). Los desembolsos se subordinan a la aprobación de la interventoría. Detalle en el Paso 12.
+                </div>
+              )}
+
               {/* 3. Garantía Única de Cumplimiento */}
               <div className="p-4 rounded-3xl border border-indigo-200 bg-indigo-50/30 space-y-2 md:col-span-2">
                 <div className="flex items-center justify-between">
@@ -4205,6 +4273,37 @@ export const ContractFlowchartView: React.FC = () => {
               </div>
             </div>
 
+            {/* Anticipo y fiducia (Art. 91 Ley 1474) */}
+            {(() => {
+              const esObra = tipologiaObjeto === 'OBRA';
+              const a = AnticipoFiduciaEngine.evaluar({
+                esObra,
+                nivelCuantia: nivelCuantia,
+                valorContratoCOP: valorAdjudicado,
+                anticipoPct: parseFloat(anticipoPct || '0')
+              });
+              return (
+                <div className="p-5 rounded-3xl border border-sky-200 bg-sky-50/30 space-y-3 text-xs">
+                  <div>
+                    <h4 className="text-xs font-black text-slate-900">Anticipo y fiducia mercantil (Art. 91 Ley 1474 de 2011)</h4>
+                    <span className="text-[10px] text-slate-500">
+                      {a.aplicaFiduciaObligatoria
+                        ? 'En este contrato la fiducia o patrimonio autónomo irrevocable es obligatoria si pactas anticipo.'
+                        : 'En este contrato (no es obra de mayor cuantía ni licitación) la fiducia del Art. 91 no es obligatoria.'}
+                    </span>
+                  </div>
+                  <label className="flex items-center gap-2">Anticipo propuesto (% del valor del contrato)
+                    <input aria-label="Anticipo porcentaje" value={anticipoPct} onChange={(e) => setAnticipoPct(e.target.value.replace(/[^\d.]/g, ''))} className="w-20 px-2 py-1 rounded-lg border border-slate-300 font-mono" />
+                  </label>
+                  <div className={`p-2 rounded-xl border ${a.superaTopeLegal ? 'bg-rose-50 border-rose-200 text-rose-900' : 'bg-white border-sky-200 text-slate-800'}`}>
+                    Anticipo: <strong>{fmtCOP(a.anticipoCOP)}</strong> • tope legal {AnticipoFiduciaEngine.TOPE_LEGAL_PCT}% = {fmtCOP(a.topeLegalCOP)} • referencia sugerida {AnticipoFiduciaEngine.REFERENCIA_SUGERIDA_PCT}% = {fmtCOP(a.referenciaSugeridaCOP)}
+                    <ul className="list-disc pl-4 mt-1">{a.mensajes.map((m, i) => (<li key={i}>{m}</li>))}</ul>
+                  </div>
+                  <ul className="list-disc pl-4 space-y-0.5 text-slate-700">{a.requisitos.map((r, i) => (<li key={i}>{r}</li>))}</ul>
+                </div>
+              );
+            })()}
+
             {/* Simulador 1: Modificaciones Contractuales (Tope del 50% Art. 40 Ley 80) */}
             <div className="p-5 rounded-3xl border border-indigo-100 bg-linear-to-br from-indigo-50/70 via-purple-50/40 to-slate-50 space-y-4">
               <div className="flex items-center justify-between border-b border-indigo-100 pb-2">
@@ -4379,6 +4478,14 @@ export const ContractFlowchartView: React.FC = () => {
                         </div>
                       );
                     })()}
+                    <div className="flex items-center gap-2 text-[11px]">
+                      <label htmlFor="tipo-sancion" className="font-bold">Decisión a evaluar:</label>
+                      <select id="tipo-sancion" value={tipoSancion} onChange={(e) => setTipoSancion(e.target.value as 'MULTA' | 'CADUCIDAD')} className="px-2 py-1 rounded-lg border border-slate-300 bg-white">
+                        <option value="MULTA">Multa por retraso (Art. 86 Ley 1474)</option>
+                        <option value="CADUCIDAD">Caducidad (Art. 18 Ley 80)</option>
+                      </select>
+                    </div>
+                    <TarjetaDictamen d={SpecialModalitiesEngine.procedimientoSancionatorio(tipoSancion, valorAdjudicado)} />
                     <div className="grid grid-cols-1 sm:grid-cols-5 gap-2 text-[10px] font-mono pt-1">
                       <div className="p-2 bg-emerald-50 rounded-xl border border-emerald-200 text-emerald-900">
                         1. Informe Supervisor con tasación de daños

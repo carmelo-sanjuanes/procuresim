@@ -35,15 +35,8 @@ export class ConsortiumEngine {
 
     const capitalTrabajoTotalCOP = activoCteTotal - pasivoCteTotal;
 
-    // Capacidad Residual de Contratación consolidada (K-Residual) - Art. 72 Ley 1682/2013 y Dcto 1082/2015
-    // En proponentes plurales de obra pública, la capacidad residual es la sumatoria de las capacidades de los integrantes
-    const capacidadResidualTotalSMMLV = Number(
-      miembros.reduce((acc, m) => {
-        const smmlvPatrimonio = (m.patrimonio || 0) / SMMLV_2026;
-        const krIndividual = ((m.experienciaAportadaSMMLV || 0) * 0.40) + (smmlvPatrimonio * 0.25) + ((m.porcentajeParticipacion || 0) * 4);
-        return acc + krIndividual;
-      }, 0).toFixed(1)
-    );
+    // Capacidad residual de obra pública: fórmula de la guía de Colombia Compra Eficiente.
+    const capacidadResidualTotalSMMLV = ConsortiumEngine.calcularCapacidadResidual(miembros).totalSMMLV;
 
     return {
       porcentajeTotal,
@@ -56,6 +49,47 @@ export class ConsortiumEngine {
         experienciaTotalSMMLV: experienciaTotal,
         capacidadResidualTotalSMMLV
       }
+    };
+  }
+
+  /**
+   * Capacidad residual de contratación para obra pública (guía de Colombia Compra Eficiente):
+   *   CR = CO × (E + CT + CF) / 100 − SCE
+   * CO: mayor ingreso operacional de los últimos 5 años (COP) · E: experiencia (máx. 120 puntos)
+   * CT: capacidad técnica (máx. 40) · CF: capacidad financiera (máx. 40)
+   * SCE: saldo por ejecutar de los contratos en ejecución en los 12 meses siguientes (COP).
+   * Los datos los aporta el usuario; si faltan, el integrante no se calcula. En proponentes plurales
+   * el simulador suma la CR de los integrantes (verifica la regla del pliego aplicable).
+   */
+  public static readonly CR_MAX_E = 120;
+  public static readonly CR_MAX_CT = 40;
+  public static readonly CR_MAX_CF = 40;
+  public static readonly CR_DIVISOR = 100;
+
+  public static calcularCapacidadResidual(miembros: MiembroAsociacion[]): {
+    porMiembro: { id: string; razonSocial: string; crCOP: number | null }[];
+    totalCOP: number;
+    totalSMMLV: number;
+    integrantesCalculados: number;
+  } {
+    const clamp = (v: number | undefined, max: number) => Math.min(Math.max(v || 0, 0), max);
+    const porMiembro = miembros.map((m) => {
+      const completo = (m.ingresosOperacionalesMaxCOP || 0) > 0;
+      if (!completo) return { id: m.id, razonSocial: m.razonSocial, crCOP: null };
+      const puntos =
+        clamp(m.puntosExperiencia, ConsortiumEngine.CR_MAX_E) +
+        clamp(m.puntosCapTecnica, ConsortiumEngine.CR_MAX_CT) +
+        clamp(m.puntosCapFinanciera, ConsortiumEngine.CR_MAX_CF);
+      const cr = Math.round((m.ingresosOperacionalesMaxCOP as number) * (puntos / ConsortiumEngine.CR_DIVISOR) - (m.saldoContratosEjecucionCOP || 0));
+      return { id: m.id, razonSocial: m.razonSocial, crCOP: cr };
+    });
+    const calculados = porMiembro.filter((x) => x.crCOP !== null);
+    const totalCOP = calculados.reduce((acc, x) => acc + (x.crCOP as number), 0);
+    return {
+      porMiembro,
+      totalCOP,
+      totalSMMLV: Number((totalCOP / SMMLV_2026).toFixed(1)),
+      integrantesCalculados: calculados.length
     };
   }
 

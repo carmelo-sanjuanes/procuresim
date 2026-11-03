@@ -343,7 +343,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
               title="Bitácora de Trazabilidad OCDS"
             >
               <History className="w-3.5 h-3.5 text-slate-500" />
-              <span className="hidden lg:inline">Bitácora</span>
+              <span className="hidden lg:inline">Bitácora OCDS</span>
               <span className="bg-slate-200 text-slate-700 font-mono text-[10px] px-1 rounded">
                 {eventosAuditoria.length}
               </span>
