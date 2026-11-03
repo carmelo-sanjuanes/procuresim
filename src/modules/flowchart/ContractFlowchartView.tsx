@@ -39,8 +39,10 @@ import {
 } from 'lucide-react';
 import { useProcurementStore } from '../../store/useProcurementStore';
 import { etiquetaPaso, type Expediente } from '../../core/domain/expedientes';
+import { PLATAFORMAS, type IdPlataforma } from '../../core/domain/plataformas';
+import { sugerirPlataforma } from '../../core/engines/PlatformRouterEngine';
 import { AyudaContextual } from '../../components/AyudaContextual';
-import { abrirHerramienta, type IdHerramienta, type ContextoHerramienta } from '../../core/domain/herramientas';
+import { abrirHerramienta, abrirPlataforma, type IdHerramienta, type ContextoHerramienta } from '../../core/domain/herramientas';
 import { soundEffects } from '../../utils/soundEffects';
 import { launchConfetti } from '../../utils/confetti';
 import { DocumentEngine } from '../../core/engines/DocumentEngine';
@@ -608,6 +610,7 @@ export const ContractFlowchartView: React.FC = () => {
   const [mostrarSimuladorAdicion, setMostrarSimuladorAdicion] = useState<boolean>(false);
   const [valorAdicionInput, setValorAdicionInput] = useState<string>('');
   const [anioSuscripcion, setAnioSuscripcion] = useState<number>(2026);
+  const [plataformaManual, setPlataformaManual] = useState<IdPlataforma | null>(null);
   const [ayudas, setAyudas] = useState<Partial<Record<IdHerramienta, 'SI' | 'NO'>>>({});
   const [anticipoPct, setAnticipoPct] = useState<string>('20');
   const [tipoSancion, setTipoSancion] = useState<'MULTA' | 'CADUCIDAD'>('MULTA');
@@ -725,11 +728,11 @@ export const ContractFlowchartView: React.FC = () => {
   const [hidratado, setHidratado] = useState<boolean>(!expedienteInicial);
   const camposPersistidos: Record<string, unknown> = {
     paso,
-    ayudas, mostrarFlujogramaVisual, modoChecklist, tipoOperacion, nombre, cargo, busquedaLugar, entidadesCoincidentes, entidadSeleccionada, busquedaSinResultados, areaResponsable, codigoCentroCostos, regimenSeleccionado, necesidad, numeroCdp, valorCdp, cdpPendiente, metodoMercado, proveedorSeleccionado, procesoHistoricoRef, precioHistoricoRef, nitManual, mercadoSoportado, fleteEstimado, porcentajeEstampillas, mostrarValidacionesSoberanas, proveedoresDinamicos, estampillasInfo, faseSecop, adendaPublicada, sobresAbiertos, evaluacionPublicada, adjudicacionFinalizada, incidenteActivo, mostrarSelectorIncidentes, accionIncidenteTomada, dilemaEleccion, rpExpedido, numeroRP, polizaAprobada, supervisorNombre, actaInicioSuscrita, avanceEjecucionPct, mostrarSimuladorAdicion, valorAdicionInput, anioSuscripcion, anticipoPct, tipoSancion, espValorContrato, espSubcontratado, espAporteDinero, espAporteEspecie, multaRetrasoPct, multaPlazoDias, multaTasaDiaria, multaTope, resultadoAdicion, mostrarSimuladorSancionatorio, sancionSimulada, tipoLiquidacion, incluyeSalvedades, textoSalvedades, presupuestoAnualEntidad, liquidacionCompletada, tipologiaManual, antiAlucinacionChecks, situacionInicial, mostrarCasosEspeciales,
+    ayudas, mostrarFlujogramaVisual, modoChecklist, tipoOperacion, nombre, cargo, busquedaLugar, entidadesCoincidentes, entidadSeleccionada, busquedaSinResultados, areaResponsable, codigoCentroCostos, regimenSeleccionado, plataformaManual, necesidad, numeroCdp, valorCdp, cdpPendiente, metodoMercado, proveedorSeleccionado, procesoHistoricoRef, precioHistoricoRef, nitManual, mercadoSoportado, fleteEstimado, porcentajeEstampillas, mostrarValidacionesSoberanas, proveedoresDinamicos, estampillasInfo, faseSecop, adendaPublicada, sobresAbiertos, evaluacionPublicada, adjudicacionFinalizada, incidenteActivo, mostrarSelectorIncidentes, accionIncidenteTomada, dilemaEleccion, rpExpedido, numeroRP, polizaAprobada, supervisorNombre, actaInicioSuscrita, avanceEjecucionPct, mostrarSimuladorAdicion, valorAdicionInput, anioSuscripcion, anticipoPct, tipoSancion, espValorContrato, espSubcontratado, espAporteDinero, espAporteEspecie, multaRetrasoPct, multaPlazoDias, multaTasaDiaria, multaTope, resultadoAdicion, mostrarSimuladorSancionatorio, sancionSimulada, tipoLiquidacion, incluyeSalvedades, textoSalvedades, presupuestoAnualEntidad, liquidacionCompletada, tipologiaManual, antiAlucinacionChecks, situacionInicial, mostrarCasosEspeciales,
     arquetipoId: arquetipoActivo.id,
     alternativaId: alternativaSeleccionada?.id ?? null
   };
-  const settersPersistidos: Record<string, (v: any) => void> = { paso: setPaso, ayudas: setAyudas, mostrarFlujogramaVisual: setMostrarFlujogramaVisual, modoChecklist: setModoChecklist, tipoOperacion: setTipoOperacion, nombre: setNombre, cargo: setCargo, busquedaLugar: setBusquedaLugar, entidadesCoincidentes: setEntidadesCoincidentes, entidadSeleccionada: setEntidadSeleccionada, busquedaSinResultados: setBusquedaSinResultados, areaResponsable: setAreaResponsable, codigoCentroCostos: setCodigoCentroCostos, regimenSeleccionado: setRegimenSeleccionado, necesidad: setNecesidad, numeroCdp: setNumeroCdp, valorCdp: setValorCdp, cdpPendiente: setCdpPendiente, metodoMercado: setMetodoMercado, proveedorSeleccionado: setProveedorSeleccionado, procesoHistoricoRef: setProcesoHistoricoRef, precioHistoricoRef: setPrecioHistoricoRef, nitManual: setNitManual, mercadoSoportado: setMercadoSoportado, fleteEstimado: setFleteEstimado, porcentajeEstampillas: setPorcentajeEstampillas, mostrarValidacionesSoberanas: setMostrarValidacionesSoberanas, proveedoresDinamicos: setProveedoresDinamicos, estampillasInfo: setEstampillasInfo, faseSecop: setFaseSecop, adendaPublicada: setAdendaPublicada, sobresAbiertos: setSobresAbiertos, evaluacionPublicada: setEvaluacionPublicada, adjudicacionFinalizada: setAdjudicacionFinalizada, incidenteActivo: setIncidenteActivo, mostrarSelectorIncidentes: setMostrarSelectorIncidentes, accionIncidenteTomada: setAccionIncidenteTomada, dilemaEleccion: setDilemaEleccion, rpExpedido: setRpExpedido, numeroRP: setNumeroRP, polizaAprobada: setPolizaAprobada, supervisorNombre: setSupervisorNombre, actaInicioSuscrita: setActaInicioSuscrita, avanceEjecucionPct: setAvanceEjecucionPct, mostrarSimuladorAdicion: setMostrarSimuladorAdicion, valorAdicionInput: setValorAdicionInput, anioSuscripcion: setAnioSuscripcion, anticipoPct: setAnticipoPct, tipoSancion: setTipoSancion, espValorContrato: setEspValorContrato, espSubcontratado: setEspSubcontratado, espAporteDinero: setEspAporteDinero, espAporteEspecie: setEspAporteEspecie, multaRetrasoPct: setMultaRetrasoPct, multaPlazoDias: setMultaPlazoDias, multaTasaDiaria: setMultaTasaDiaria, multaTope: setMultaTope, resultadoAdicion: setResultadoAdicion, mostrarSimuladorSancionatorio: setMostrarSimuladorSancionatorio, sancionSimulada: setSancionSimulada, tipoLiquidacion: setTipoLiquidacion, incluyeSalvedades: setIncluyeSalvedades, textoSalvedades: setTextoSalvedades, presupuestoAnualEntidad: setPresupuestoAnualEntidad, liquidacionCompletada: setLiquidacionCompletada, tipologiaManual: setTipologiaManual, antiAlucinacionChecks: setAntiAlucinacionChecks, situacionInicial: setSituacionInicial, mostrarCasosEspeciales: setMostrarCasosEspeciales };
+  const settersPersistidos: Record<string, (v: any) => void> = { paso: setPaso, ayudas: setAyudas, mostrarFlujogramaVisual: setMostrarFlujogramaVisual, modoChecklist: setModoChecklist, tipoOperacion: setTipoOperacion, nombre: setNombre, cargo: setCargo, busquedaLugar: setBusquedaLugar, entidadesCoincidentes: setEntidadesCoincidentes, entidadSeleccionada: setEntidadSeleccionada, busquedaSinResultados: setBusquedaSinResultados, areaResponsable: setAreaResponsable, codigoCentroCostos: setCodigoCentroCostos, regimenSeleccionado: setRegimenSeleccionado, plataformaManual: setPlataformaManual, necesidad: setNecesidad, numeroCdp: setNumeroCdp, valorCdp: setValorCdp, cdpPendiente: setCdpPendiente, metodoMercado: setMetodoMercado, proveedorSeleccionado: setProveedorSeleccionado, procesoHistoricoRef: setProcesoHistoricoRef, precioHistoricoRef: setPrecioHistoricoRef, nitManual: setNitManual, mercadoSoportado: setMercadoSoportado, fleteEstimado: setFleteEstimado, porcentajeEstampillas: setPorcentajeEstampillas, mostrarValidacionesSoberanas: setMostrarValidacionesSoberanas, proveedoresDinamicos: setProveedoresDinamicos, estampillasInfo: setEstampillasInfo, faseSecop: setFaseSecop, adendaPublicada: setAdendaPublicada, sobresAbiertos: setSobresAbiertos, evaluacionPublicada: setEvaluacionPublicada, adjudicacionFinalizada: setAdjudicacionFinalizada, incidenteActivo: setIncidenteActivo, mostrarSelectorIncidentes: setMostrarSelectorIncidentes, accionIncidenteTomada: setAccionIncidenteTomada, dilemaEleccion: setDilemaEleccion, rpExpedido: setRpExpedido, numeroRP: setNumeroRP, polizaAprobada: setPolizaAprobada, supervisorNombre: setSupervisorNombre, actaInicioSuscrita: setActaInicioSuscrita, avanceEjecucionPct: setAvanceEjecucionPct, mostrarSimuladorAdicion: setMostrarSimuladorAdicion, valorAdicionInput: setValorAdicionInput, anioSuscripcion: setAnioSuscripcion, anticipoPct: setAnticipoPct, tipoSancion: setTipoSancion, espValorContrato: setEspValorContrato, espSubcontratado: setEspSubcontratado, espAporteDinero: setEspAporteDinero, espAporteEspecie: setEspAporteEspecie, multaRetrasoPct: setMultaRetrasoPct, multaPlazoDias: setMultaPlazoDias, multaTasaDiaria: setMultaTasaDiaria, multaTope: setMultaTope, resultadoAdicion: setResultadoAdicion, mostrarSimuladorSancionatorio: setMostrarSimuladorSancionatorio, sancionSimulada: setSancionSimulada, tipoLiquidacion: setTipoLiquidacion, incluyeSalvedades: setIncluyeSalvedades, textoSalvedades: setTextoSalvedades, presupuestoAnualEntidad: setPresupuestoAnualEntidad, liquidacionCompletada: setLiquidacionCompletada, tipologiaManual: setTipologiaManual, antiAlucinacionChecks: setAntiAlucinacionChecks, situacionInicial: setSituacionInicial, mostrarCasosEspeciales: setMostrarCasosEspeciales };
   const instantanea = JSON.stringify(camposPersistidos);
   const valoresInicialesRef = useRef<Record<string, unknown>>(camposPersistidos);
   const instRef = useRef<string>(instantanea);
@@ -829,6 +832,15 @@ export const ContractFlowchartView: React.FC = () => {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const sugerenciaPlat = sugerirPlataforma({
+    nombreEntidad: entidadSeleccionada?.nombreCompleto,
+    tipoEntidad: entidadSeleccionada?.tipoEntidad,
+    regimen: regimenSeleccionado,
+    modalidad: alternativaSeleccionada?.modalidad
+  });
+  const idPlat: IdPlataforma = plataformaManual ?? sugerenciaPlat.id;
+  const plat = PLATAFORMAS[idPlat];
 
   // Ayudas contextuales: «¿Lo vas a necesitar?» (Sí deja el botón visible; No indica cómo llamarla después)
   const modalidadLegal = (): ContextoHerramienta['modalidad'] => {
@@ -1012,10 +1024,10 @@ export const ContractFlowchartView: React.FC = () => {
                   { n: 7, titulo: '7. La Mirada Preventiva (Ruta Jurídica y Blindaje)', desc: 'Los 3 Cuidados Preventivos (Fiscal, Proponentes y Territorio) blindan el proceso.', esClave: true },
                   { n: 8, titulo: '8. Estudio de Mercado Empático', desc: 'Proveedores calificados BIC, histórico SECOP o NIT específico.' },
                   { n: 9, titulo: '9. Consolidación y Descarga de Documento', desc: 'Generación de Estudios Previos blindados en formato Word (.docx).' },
-                  { n: 10, titulo: '10. SECOP II Transaccional y Adjudicación', desc: 'Pliego, observaciones, apertura de sobres, evaluación e Inyector de Contingencias.', esClave: true },
-                  { n: 11, titulo: '11. Perfeccionamiento y Legalización', desc: 'Firma en SECOP II, Registro Presupuestal (RP), Garantía Única y Supervisión.' },
+                  { n: 10, titulo: `10. ${plat.etiqueta === 'SECOP II' ? 'SECOP II' : 'Plataforma'} Transaccional y Adjudicación`, desc: 'Pliego, observaciones, apertura de sobres, evaluación e Inyector de Contingencias.', esClave: true },
+                  { n: 11, titulo: '11. Perfeccionamiento y Legalización', desc: `Firma en ${plat.en}, Registro Presupuestal (RP), Garantía Única y Supervisión.` },
                   { n: 12, titulo: '12. Ejecución, Modificaciones y Sancionatorio', desc: 'Seguimiento de bitácora, adiciones (tope del 50% Art. 40 Ley 80) y audiencia Art. 86.', esClave: true },
-                  { n: 13, titulo: '13. Recibo a Satisfacción, Liquidación y Cierre', desc: 'Liquidación Bilateral vs Unilateral, balance financiero y archivo en SECOP II.' },
+                  { n: 13, titulo: '13. Recibo a Satisfacción, Liquidación y Cierre', desc: `Liquidación Bilateral vs Unilateral, balance financiero y archivo en ${plat.en}.` },
                 ].map((nodo) => {
                   const esActual = paso === nodo.n;
                   const esPasado = paso > nodo.n;
@@ -3193,6 +3205,30 @@ export const ContractFlowchartView: React.FC = () => {
                 <span>Descargar Estudios Previos Blindados (.docx)</span>
               </button>
 
+              <div className="p-3 rounded-2xl border border-slate-200 bg-slate-50 space-y-1.5">
+                <label className="flex flex-wrap items-center gap-2 text-[11px] font-bold text-slate-700">
+                  Plataforma de publicación
+                  <select
+                    value={plataformaManual ?? sugerenciaPlat.id}
+                    onChange={(e) => setPlataformaManual(e.target.value as IdPlataforma)}
+                    className="px-2 py-1 rounded-lg border border-slate-300 bg-white text-[11px] font-semibold"
+                    aria-label="Plataforma de publicación"
+                  >
+                    {Object.values(PLATAFORMAS).map((x) => (
+                      <option key={x.id} value={x.id}>{x.etiqueta}</option>
+                    ))}
+                  </select>
+                </label>
+                <p className="text-[11px] text-slate-500 leading-snug">
+                  {plataformaManual && plataformaManual !== sugerenciaPlat.id ? `Sugerida para esta entidad: ${PLATAFORMAS[sugerenciaPlat.id].etiqueta}. ` : `${sugerenciaPlat.motivo} `}{plat.nota}
+                </p>
+                {plat.vista && (
+                  <button onClick={() => abrirPlataforma(plat.vista!)} className="text-[11px] font-bold text-slate-700 underline underline-offset-2 cursor-pointer">
+                    Ver el simulador de {plat.etiqueta.replace(/ \(.*\)/, '')}
+                  </button>
+                )}
+              </div>
+
               <button
                 onClick={() => {
                   soundEffects.playClick();
@@ -3202,7 +3238,7 @@ export const ContractFlowchartView: React.FC = () => {
                 className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-xs transition-all cursor-pointer flex items-center justify-center gap-2 shadow-md hover:scale-[1.01]"
               >
                 <Send className="w-4 h-4 text-white" />
-                <span>Publicar Proceso en SECOP II y Simular hasta la Adjudicación →</span>
+                <span>{plat.accionPublicar} y Simular hasta la Adjudicación →</span>
               </button>
             </div>
 
@@ -3250,7 +3286,7 @@ export const ContractFlowchartView: React.FC = () => {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
                 <div className="flex items-center gap-2">
                   <span className="text-[10px] font-mono px-2 py-0.5 rounded font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                    SECOP II • Sistema Electrónico de Contratación Pública
+                    {plat.subtitulo}
                   </span>
                   <span className="text-[10px] font-mono text-slate-400">
                     ID: {(entidadSeleccionada?.nit || '').replace(/\D/g, '').slice(0, 4) ? `CO1.BDOS.${(entidadSeleccionada?.nit || '').replace(/\D/g, '').slice(0, 4)}` : 'CO1.BDOS.2026'}.{numeroCdp || '2026'}
@@ -3317,7 +3353,7 @@ export const ContractFlowchartView: React.FC = () => {
                   </div>
                   <div>
                     <h4 className="text-sm font-black text-slate-900 font-display flex items-center gap-2">
-                      Inyector de Contingencias y Rarezas de SECOP II
+                      Inyector de Contingencias y Rarezas {plat.de}
                       <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 font-bold">
                         9 Escenarios Reales
                       </span>
@@ -3413,7 +3449,7 @@ export const ContractFlowchartView: React.FC = () => {
                       <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-700 space-y-1">
                         <div className="flex items-center gap-1.5 font-bold text-slate-900">
                           <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
-                          <span>El Hecho Procesal en SECOP II:</span>
+                          <span>El Hecho Procesal en {plat.en}:</span>
                         </div>
                         <p className="leading-relaxed text-slate-600">
                           {inc.resumenHecho}
@@ -3546,7 +3582,7 @@ export const ContractFlowchartView: React.FC = () => {
                   <div className="flex items-center gap-2">
                     <MessageSquare className="w-4 h-4 text-sky-600" />
                     <strong className="text-sm font-black text-slate-900">
-                      Observaciones Radicadas en SECOP II (2)
+                      Observaciones Radicadas en {plat.en} (2)
                     </strong>
                   </div>
                   <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-sky-50 text-sky-800 border border-sky-200">
@@ -3599,7 +3635,7 @@ export const ContractFlowchartView: React.FC = () => {
                   className="w-full py-3.5 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl font-black text-xs transition-all cursor-pointer flex items-center justify-center gap-2 shadow-sm"
                 >
                   <Send className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Publicar Respuestas y Expedir Adenda N° 1 de Pliegos en SECOP II →</span>
+                  <span>Publicar Respuestas y Expedir Adenda N° 1 de Pliegos en {plat.en} →</span>
                 </button>
               </div>
             )}
@@ -3611,7 +3647,7 @@ export const ContractFlowchartView: React.FC = () => {
                   <div className="flex items-center gap-2">
                     <Clock className="w-4 h-4 text-amber-600" />
                     <strong className="text-sm font-black text-slate-900">
-                      Cierre de Presentación de Ofertas en SECOP II
+                      Cierre de Presentación de Ofertas en {plat.en}
                     </strong>
                   </div>
                   <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">
@@ -3620,7 +3656,7 @@ export const ContractFlowchartView: React.FC = () => {
                 </div>
 
                 <p className="text-xs text-slate-600">
-                  Se cumplió la hora de cierre oficial en SECOP II. Tres proponentes presentaron oferta con sobres digitales encriptados:
+                  Se cumplió la hora de cierre oficial en {plat.en}. Tres proponentes presentaron oferta con sobres digitales encriptados:
                 </p>
 
                 <div className="space-y-2">
@@ -3658,7 +3694,7 @@ export const ContractFlowchartView: React.FC = () => {
                   className="w-full py-3.5 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl font-black text-xs transition-all cursor-pointer flex items-center justify-center gap-2 shadow-sm"
                 >
                   <Scale className="w-4 h-4 text-emerald-400" />
-                  <span>Desencriptar Sobres y Efectuar Apertura en SECOP II →</span>
+                  <span>Desencriptar Sobres y Efectuar Apertura en {plat.en} →</span>
                 </button>
               </div>
             )}
@@ -3959,7 +3995,7 @@ export const ContractFlowchartView: React.FC = () => {
                   className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-xs transition-all cursor-pointer flex items-center justify-center gap-2 shadow-md hover:scale-[1.01]"
                 >
                   <Award className="w-4 h-4 text-white" />
-                  <span>Celebrar Audiencia y Expedir Resolución de Adjudicación en SECOP II →</span>
+                  <span>Celebrar Audiencia y Expedir Resolución de Adjudicación en {plat.en} →</span>
                 </button>
               </div>
             )}
@@ -4018,7 +4054,7 @@ export const ContractFlowchartView: React.FC = () => {
                   </div>
 
                   <div className="pt-2 border-t border-slate-100 text-[11px] text-emerald-900 font-medium">
-                    ✓ Publicado y notificado en estrado digital de SECOP II. Listo para expedición del Registro Presupuestal (RP) y firma electrónica del contrato.
+                    ✓ Publicado y notificado en estrado digital de {plat.en}. Listo para expedición del Registro Presupuestal (RP) y firma electrónica del contrato.
                   </div>
                 </div>
 
@@ -4106,7 +4142,7 @@ export const ContractFlowchartView: React.FC = () => {
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                     <strong className="text-xs font-black text-slate-900">
-                      1. Firma Electrónica en SECOP II
+                      1. Firma Electrónica en {plat.en}
                     </strong>
                   </div>
                   <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">
@@ -4271,7 +4307,7 @@ export const ContractFlowchartView: React.FC = () => {
                 </button>
               ) : (
                 <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs text-emerald-900 space-y-1">
-                  <strong>✓ Acta de Inicio suscrita a satisfacción en SECOP II.</strong>
+                  <strong>✓ Acta de Inicio suscrita a satisfacción en {plat.en}.</strong>
                   <p className="text-[11px] text-slate-600">
                     Se verificó la disponibilidad de sitio, licencias requeridas y afiliaciones a la ARL. El contrato se encuentra en formal ejecución.
                   </p>
@@ -4705,7 +4741,7 @@ export const ContractFlowchartView: React.FC = () => {
 
               <div className="space-y-1">
                 <h3 className="text-lg font-black text-white font-display">
-                  Recibo Final a Satisfacción, Liquidación y Cierre en SECOP II
+                  Recibo Final a Satisfacción, Liquidación y Cierre en {plat.en}
                 </h3>
                 <p className="text-xs text-slate-300 leading-snug">
                   Cruce definitivo de cuentas, amortización de anticipos, liberación presupuestal y garantías poscontractuales (Art. 11 Ley 1150 de 2007).
@@ -4865,17 +4901,17 @@ export const ContractFlowchartView: React.FC = () => {
                 >
                   <Award className="w-4 h-4 text-white" />
                   <span>
-                    Suscribir y Publicar {tipoLiquidacion === 'BILATERAL_MUTUO_ACUERDO' ? 'Acta Bilateral de Liquidación' : 'Resolución de Liquidación Unilateral'} en SECOP II →
+                    Suscribir y Publicar {tipoLiquidacion === 'BILATERAL_MUTUO_ACUERDO' ? 'Acta Bilateral de Liquidación' : 'Resolución de Liquidación Unilateral'} en {plat.en} →
                   </span>
                 </button>
               ) : (
                 <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-300 space-y-2 text-xs animate-fadeIn">
                   <div className="flex items-center gap-2 font-black text-emerald-900">
                     <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-                    <span>¡PROCESO CONTRACTUAL 100% FINALIZADO Y CERRADO EN SECOP II!</span>
+                    <span>¡PROCESO CONTRACTUAL 100% FINALIZADO Y CERRADO EN {plat.en.toUpperCase()}!</span>
                   </div>
                   <p className="text-emerald-950/90 leading-snug">
-                    Se publicó el documento de liquidación en SECOP II, se remitieron copias a Contabilidad y Tesorería, se activaron los amparos de estabilidad y calidad poscontractuales, y el expediente electrónico quedó formalmente archivado sin hallazgos preventivos.
+                    Se publicó el documento de liquidación en {plat.en}, se remitieron copias a Contabilidad y Tesorería, se activaron los amparos de estabilidad y calidad poscontractuales, y el expediente electrónico quedó formalmente archivado sin hallazgos preventivos.
                   </p>
                   <button
                     type="button"

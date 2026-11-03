@@ -42,3 +42,39 @@ Cada herramienta abre a pantalla completa («Volver al flujo» o Esc) **sin perd
 
 ## 6. Regresión
 `t4` (modalidades), `t5` (capacidad residual), `t6` (nota Paso 11), `mp2` (Mis Procesos: crear, reanudar, duplicar, recargar) pasan. `mp.cjs` y `mp3.cjs` (Ronda 3) quedaron desactualizados frente a la regla «Mis expedientes solo con varios» y al rótulo `2xl` del encabezado experto; su comportamiento actual (oculto con 0–1 expedientes en vista limpia, visible en Vista Experta) es el esperado.
+
+## RONDA 4 — Adenda: plataforma de publicación según la entidad
+- Nuevo `src/core/domain/plataformas.ts`: SECOP II (Ley 80 / 1150), portal propio de la entidad (manual propio, derecho privado) y plataforma del organismo multilateral. Se elige automáticamente por el régimen de la entidad y se puede cambiar a mano en el Paso 9 («Plataforma de publicación»); la elección se guarda en el expediente.
+- Se reemplazaron los textos fijos «SECOP II» de los Pasos 9–13 (botones, cabecera, cierre, adendas, firma, acta de inicio, liquidación) por la plataforma elegida. Con el régimen por defecto el texto no cambia.
+- **Verificado:** por defecto SECOP II; al elegir portal propio cambia el botón y la cabecera del Paso 10; persiste tras recargar; regresión t4, t6 y r4 sin errores.
+- **Por validar:** si una entidad de régimen especial debe además registrar el contrato en SECOP (Ley 1712 de 2014 y su régimen); la interfaz lo dice como «verifica». Pendiente: TVEC como plataforma propia de flujo (órdenes de compra sin pliego) y los portales concretos de cada entidad (p. ej. los de grandes empresas de servicios públicos).
+
+---
+
+# RONDA 5 — Ecosistema multiplataforma según la entidad
+
+**Compilación:** `tsc -b` y `npm run build` sin errores · **Playwright:** 0 errores de página.
+
+## Qué se hizo
+- `PlatformRouterEngine.ts`: sugiere la plataforma según entidad, régimen y modalidad. `plataformas.ts` define 7 canales: SECOP II, Tienda Virtual (TVEC), Suplos, SAP Ariba, SECOP I, portal propio y plataforma multilateral.
+- Paso 9: selector «Plataforma de publicación» con la sugerida y su motivo; el usuario puede cambiarla. El botón de publicar y los textos de los Pasos 9–13 (cabecera, adenda, apertura, adjudicación, firma, acta de inicio, liquidación y cierre) se adaptan al canal. Se guarda en el expediente.
+- «Ver el simulador de …» abre SECOP II, SECOP I, Suplos, SAP Ariba o TVEC en pantalla completa; «Volver al flujo» (o Esc) regresa sin perder datos.
+
+## Pruebas (navegador)
+| Caso | Sugiere | Abre vista | Vuelve con estado |
+|---|---|---|---|
+| Alcaldía de Neiva, obra | SECOP II | — | sí |
+| Empresas Públicas de Medellín (EPM) | Suplos | Suplos | sí |
+| Ecopetrol | SAP Ariba | SAP Ariba | sí |
+| Alcaldía, suministro (Acuerdo Marco) | TVEC | Tienda Virtual | sí |
+
+## Desviaciones de la orden
+- **Ecopetrol → SAP Ariba, no Suplos:** el portal de proveedores de Ecopetrol indica que usa SAP Ariba (proveedores.ecopetrol.com.co). Cenit se asignó igual por ser filial (inferido).
+- **Selector en el Paso 9**, donde la decisión tiene efecto, no en los Pasos 3/4.
+- **SECOP I no se sugiere automáticamente:** no hay dato confiable de categoría municipal en transición. Queda seleccionable a mano.
+- Coupa tiene vista en el proyecto pero no se incluyó como canal (la orden no lo lista).
+
+## Por validar
+- ISA, EPM, GEB y demás ESP → Suplos es una **heurística sin confirmar**; la pantalla lo avisa. Confirmar la plataforma real de cada entidad.
+- Si una entidad de régimen especial debe además registrar contratos en SECOP (Ley 1712 de 2014).
+- El simulador de cada plataforma se abre como pantalla de consulta; no está enlazado a los datos del expediente.

@@ -75,3 +75,8 @@ export const EVENTO_ABRIR_HERRAMIENTA = 'procuresim:abrir-herramienta';
 export function abrirHerramienta(id: IdHerramienta, contexto?: ContextoHerramienta): void {
   window.dispatchEvent(new CustomEvent(EVENTO_ABRIR_HERRAMIENTA, { detail: { id, contexto } }));
 }
+
+export const EVENTO_ABRIR_PLATAFORMA = 'procuresim:abrir-plataforma';
+export function abrirPlataforma(vista: import('./plataformas').VistaPlataforma): void {
+  window.dispatchEvent(new CustomEvent(EVENTO_ABRIR_PLATAFORMA, { detail: { vista } }));
+}
