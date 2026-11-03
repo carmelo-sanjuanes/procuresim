@@ -1,0 +1,3070 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ProcureSim v2.0 - La Mirada Preventiva y Elección Soberana</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    .fade-in {
+      animation: fadeIn 0.25s ease-out forwards;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body class="bg-white text-slate-900 min-h-screen p-4 sm:p-8 flex flex-col justify-between selection:bg-slate-900 selection:text-white">
+
+  <!-- Cabecera Superior: Limpia, sin fontanería ni contadores prematuros -->
+  <header class="w-full max-w-2xl mx-auto flex items-center justify-between pb-6 border-b border-slate-100 shrink-0">
+    <div class="flex items-center gap-2">
+      <div class="w-7 h-7 rounded-xl bg-slate-900 text-white flex items-center justify-center font-black text-xs shadow-xs">P</div>
+      <span class="font-black text-sm tracking-tight text-slate-900">PROCURE<span class="text-emerald-600">SIM</span></span>
+    </div>
+
+    <!-- Controles que emergen SOLO a medida que se crea contexto en el expediente (ocultos al inicio) -->
+    <div id="top-controles-contextuales" class="flex items-center gap-2 hidden animate-fadeIn">
+      <span id="badge-regimen-top" class="hidden text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-slate-900 text-white"></span>
+      <button onclick="toggleChecklistView()" id="btn-top-checklist" class="text-[11px] font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1 cursor-pointer">
+        📋 Lista de Chequeo
+      </button>
+      <button onclick="toggleModalFlujograma(true)" class="text-[11px] font-bold text-slate-700 hover:text-slate-950 bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1 cursor-pointer">
+        🗺️ Mapa
+      </button>
+    </div>
+  </header>
+
+  <!-- Área Central de la Conversación Progresiva -->
+  <main class="w-full max-w-2xl mx-auto my-auto py-8">
+
+    <!-- ===================================================================== -->
+    <!-- HISTORIA VIVA DEL EXPEDIENTE (Lo que ya se ha definido, NUNCA se oculta) -->
+    <!-- ===================================================================== -->
+    <div id="historia-expediente" class="mb-6 space-y-2 pb-4 border-b border-slate-200/80 hidden">
+      <div class="flex items-center justify-between pb-1">
+        <span class="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
+          Historia del Expediente en Construcción:
+        </span>
+        <button onclick="toggleChecklistView()" class="text-[11px] font-bold text-emerald-800 hover:text-emerald-950 flex items-center gap-1 cursor-pointer bg-emerald-50 px-2.5 py-0.5 rounded-lg border border-emerald-200">
+          <span>📋 Ver Lista Completa</span>
+        </button>
+      </div>
+      <div id="historia-cards" class="space-y-1.5">
+        <!-- Tarjetas dinámicas agregadas conforme se avanza en los pasos -->
+      </div>
+    </div>
+
+    <!-- ================= PASO 1: ¿Compras o vendes? + Brújula de Entrada ================= -->
+    <div id="view-paso-1" class="space-y-6 fade-in">
+      <div class="space-y-2 text-center sm:text-left">
+        <h1 class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight font-display">
+          Hola.
+        </h1>
+        <p class="text-base sm:text-lg text-slate-600 font-medium">
+          ¿Hoy vienes a comprar o a vender?
+        </p>
+      </div>
+
+      <!-- Los dos botones principales -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+        <button onclick="seleccionarRolCompro()" class="p-6 rounded-3xl border-2 border-slate-200 hover:border-slate-900 hover:shadow-xl transition-all text-left bg-slate-50/70 hover:bg-white cursor-pointer group active:scale-[0.98]">
+          <div class="w-12 h-12 rounded-2xl bg-white border border-slate-200 flex items-center justify-center text-slate-900 mb-4 group-hover:scale-105 transition-transform shadow-xs">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+          </div>
+          <h2 class="font-black text-slate-900 text-xl">Compro</h2>
+          <p class="text-xs text-slate-500 mt-1 leading-snug">Represento a una entidad pública, corporación autónoma o empresa estatal.</p>
+        </button>
+
+        <button onclick="elegirRol('VENDO')" class="p-6 rounded-3xl border-2 border-slate-200 hover:border-slate-900 hover:shadow-xl transition-all text-left bg-slate-50/70 hover:bg-white cursor-pointer group active:scale-[0.98]">
+          <div class="w-12 h-12 rounded-2xl bg-white border border-slate-200 flex items-center justify-center text-slate-900 mb-4 group-hover:scale-105 transition-transform shadow-xs">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+          </div>
+          <h2 class="font-black text-slate-900 text-xl">Vendo</h2>
+          <p class="text-xs text-slate-500 mt-1 leading-snug">Soy empresa proveedora, contratista, Mipyme o proponente en licitaciones.</p>
+        </button>
+      </div>
+
+      <!-- Brújula de Entrada: Puntos de Partida Reales (Emerge al elegir Compro) -->
+      <div id="box-brujula-entrada" class="p-5 rounded-3xl bg-slate-50 border border-slate-200 space-y-3 hidden animate-fadeIn">
+        <span class="text-xs font-bold text-slate-800 block">
+          ¿Cuál es el punto de partida de tu proceso hoy?
+        </span>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+          <button onclick="iniciarSituacion('NUEVO_ORDINARIO')" class="p-3.5 rounded-2xl border border-slate-200 bg-white hover:border-slate-900 text-left cursor-pointer transition-all">
+            <strong class="block text-slate-900">✨ Proceso nuevo ordinario</strong>
+            <span class="text-[11px] text-slate-500">Tengo una necesidad desde cero y cuento con rubro</span>
+          </button>
+          <button onclick="iniciarSituacion('NUEVO_SIN_CDP')" class="p-3.5 rounded-2xl border border-slate-200 bg-white hover:border-slate-900 text-left cursor-pointer transition-all">
+            <strong class="block text-slate-900">⏳ Formulación técnica (Sin CDP)</strong>
+            <span class="text-[11px] text-slate-500">Apenas estamos costeando para pedir el presupuesto a Hacienda</span>
+          </button>
+          <button onclick="iniciarSituacion('RESCATE_DESIERTO')" class="p-3.5 rounded-2xl border border-slate-200 bg-white hover:border-slate-900 text-left cursor-pointer transition-all">
+            <strong class="block text-slate-900">🔄 Rescatar proceso desierto</strong>
+            <span class="text-[11px] text-slate-500">La licitación se cayó o quedó sin proponentes y debo ajustarla</span>
+          </button>
+          <button onclick="iniciarSituacion('RESCATE_HUERFANO')" class="p-3.5 rounded-2xl border border-slate-200 bg-white hover:border-slate-900 text-left cursor-pointer transition-all">
+            <strong class="block text-slate-900">📂 Adoptar borrador huérfano</strong>
+            <span class="text-[11px] text-slate-500">Heredé un archivo a medias de otro compañero y debo terminarlo</span>
+          </button>
+        </div>
+
+        <!-- Acceso a Modalidades Especiales y Convenios -->
+        <div class="pt-2 text-center">
+          <button type="button" onclick="toggleCasosEspeciales()" class="text-xs text-slate-500 hover:text-slate-900 font-bold underline cursor-pointer inline-flex items-center gap-1.5">
+            <span id="txt-toggle-especiales">▼ ¿Es un convenio, donación, arriendo o caso especial?</span>
+          </button>
+        </div>
+
+        <div id="drawer-casos-especiales" class="space-y-3 pt-2 border-t border-slate-200 hidden animate-fadeIn">
+          <span class="text-[11px] font-mono font-bold uppercase text-slate-400 block">
+            Familias Especiales de Contratación:
+          </span>
+
+          <!-- Familia I: Interadministrativos -->
+          <div class="space-y-1.5">
+            <span class="text-[11px] font-bold text-slate-700 block">🏛️ Relaciones Interadministrativas</span>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+              <button onclick="iniciarSituacion('CONVENIO_INTERADMINISTRATIVO', 'Convenio interadministrativo de cooperación para aunar esfuerzos institucionales')" class="p-3 rounded-2xl border border-slate-200 bg-white hover:border-slate-900 text-left cursor-pointer transition-all hover:shadow-xs group">
+                <strong class="block text-slate-900 group-hover:text-emerald-700">Convenio Interadministrativo</strong>
+                <span class="text-[10px] text-slate-500">Aunar esfuerzos bilaterales sin utilidad comercial</span>
+              </button>
+              <button onclick="iniciarSituacion('CONTRATO_INTERADMINISTRATIVO_SERVICIO', 'Contrato interadministrativo de prestación de servicios con entidad pública especializada')" class="p-3 rounded-2xl border border-slate-200 bg-white hover:border-slate-900 text-left cursor-pointer transition-all hover:shadow-xs group">
+                <strong class="block text-slate-900 group-hover:text-emerald-700">Contrato con Universidad / EICE</strong>
+                <span class="text-[10px] text-slate-500">Servicios remunerados blindados bajo la Ley 2195</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Familia II: Base Social y JAC -->
+          <div class="space-y-1.5 pt-1">
+            <span class="text-[11px] font-bold text-slate-700 block">🤝 Base Social y Economía Popular</span>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+              <button onclick="iniciarSituacion('CONVENIO_SOLIDARIO_COMUNAL_JAC', 'Convenio solidario comunal para mantenimiento de vía terciaria con Junta de Acción Comunal')" class="p-3 rounded-2xl border border-slate-200 bg-white hover:border-slate-900 text-left cursor-pointer transition-all hover:shadow-xs group">
+                <strong class="block text-slate-900 group-hover:text-emerald-700">Convenio Comunal (JAC)</strong>
+                <span class="text-[10px] text-slate-500">Ley 2166 / Vías terciarias y caminos comunitarios</span>
+              </button>
+              <button onclick="iniciarSituacion('CONVENIO_ASOCIACION_ESAL_30', 'Convenio de asociación con fundación sin ánimo de lucro para programa social')" class="p-3 rounded-2xl border border-slate-200 bg-white hover:border-slate-900 text-left cursor-pointer transition-all hover:shadow-xs group">
+                <strong class="block text-slate-900 group-hover:text-emerald-700">Asociación con ESAL (≥ 30%)</strong>
+                <span class="text-[10px] text-slate-500">Decreto 092 con aporte de contrapartida real</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Familia III: Gestión Patrimonial e Inmuebles -->
+          <div class="space-y-1.5 pt-1">
+            <span class="text-[11px] font-bold text-slate-700 block">📦 Gestión Patrimonial e Inmuebles</span>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+              <button onclick="iniciarSituacion('DONACION_ACEPTACION_BIENES', 'Aceptación de donación a título gratuito de bienes con destino al municipio')" class="p-3 rounded-2xl border border-slate-200 bg-white hover:border-slate-900 text-left cursor-pointer transition-all hover:shadow-xs group">
+                <strong class="block text-slate-900 group-hover:text-emerald-700">Aceptación de Donación</strong>
+                <span class="text-[10px] text-slate-500">Recepción de bienes con blindaje SARLAFT y de títulos</span>
+              </button>
+              <button onclick="iniciarSituacion('ARRENDAMIENTO_INMUEBLE_ENTIDAD', 'Arrendamiento de inmueble para funcionamiento de sede institucional')" class="p-3 rounded-2xl border border-slate-200 bg-white hover:border-slate-900 text-left cursor-pointer transition-all hover:shadow-xs group">
+                <strong class="block text-slate-900 group-hover:text-emerald-700">Arrendamiento de Sede</strong>
+                <span class="text-[10px] text-slate-500">Alquiler directo reglado con avalúo IGAC/RAA</span>
+              </button>
+              <button onclick="iniciarSituacion('COMODATO_PRESTAMO_USO', 'Contrato de comodato de bien público a título gratuito para fin comunitario')" class="p-3 rounded-2xl border border-slate-200 bg-white hover:border-slate-900 text-left cursor-pointer transition-all hover:shadow-xs group">
+                <strong class="block text-slate-900 group-hover:text-emerald-700">Comodato de Bien Público</strong>
+                <span class="text-[10px] text-slate-500">Préstamo de uso gratuito sin explotación privada</span>
+              </button>
+              <button onclick="iniciarSituacion('ENAJENACION_SUBASTA_BIENES_FISCALES', 'Enajenación y venta de bienes muebles dados de baja mediante subasta pública')" class="p-3 rounded-2xl border border-slate-200 bg-white hover:border-slate-900 text-left cursor-pointer transition-all hover:shadow-xs group">
+                <strong class="block text-slate-900 group-hover:text-emerald-700">Subasta de Chatarra / Bienes</strong>
+                <span class="text-[10px] text-slate-500">Remate público al alza sobre avalúo pericial</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= PASO 2: Nombre y Cargo ================= -->
+    <div id="view-paso-2" class="space-y-6 fade-in hidden">
+      <div class="space-y-2">
+        <h2 class="text-2xl font-black text-slate-900">¿Cómo te llamas y qué cargo o función tienes?</h2>
+        <p class="text-xs text-slate-500">Para el cuadro oficial de firmas de los documentos que vas a generar.</p>
+      </div>
+      <div class="space-y-3">
+        <input id="input-nombre" type="text" placeholder="Tu nombre completo" class="w-full text-sm font-bold text-slate-900 bg-slate-50 border border-slate-200 rounded-2xl p-4 focus:outline-none focus:border-slate-900 focus:bg-white" />
+        <input id="input-cargo" type="text" placeholder="Tu cargo institucional o función delegada" class="w-full text-sm font-bold text-slate-900 bg-slate-50 border border-slate-200 rounded-2xl p-4 focus:outline-none focus:border-slate-900 focus:bg-white" />
+      </div>
+      <div class="flex items-center justify-between pt-4">
+        <button onclick="irPaso(1)" class="text-xs text-slate-400 hover:text-slate-900 font-bold cursor-pointer">← Volver</button>
+        <button onclick="guardarPaso2()" class="px-6 py-3 rounded-2xl bg-slate-900 text-white font-black text-xs hover:bg-slate-800 cursor-pointer shadow-sm">Continuar →</button>
+      </div>
+    </div>
+
+    <!-- ================= PASO 3: Entidad y Área ================= -->
+    <div id="view-paso-3" class="space-y-6 fade-in hidden">
+      <div class="space-y-2">
+        <h2 class="text-2xl font-black text-slate-900">Identificación de tu entidad o corporación</h2>
+        <p class="text-xs text-slate-500">Escribe el nombre o municipio. Detectaremos el NIT inequívoco y su naturaleza legal.</p>
+      </div>
+      <div class="space-y-3">
+        <div class="flex gap-2">
+          <input id="input-busqueda-entidad" type="text" oninput="buscarEntidad()" onkeydown="if(event.key==='Enter') buscarEntidad()" placeholder="Ej: Electrificadora del Huila, Neiva, CAM, USCO, San Pedro..." class="flex-1 text-sm font-bold text-slate-900 bg-slate-50 border border-slate-200 rounded-2xl p-4 focus:outline-none focus:border-slate-900 focus:bg-white" />
+          <button onclick="buscarEntidad()" class="px-6 py-4 bg-slate-900 text-white font-black text-xs rounded-2xl cursor-pointer hover:bg-slate-800">Buscar</button>
+        </div>
+        <div id="contenedor-resultados-entidad" class="space-y-2 pt-1 hidden"></div>
+        <div id="contenedor-entidad-seleccionada" class="p-5 rounded-3xl border border-slate-200 bg-slate-50/70 space-y-4 hidden">
+          <div>
+            <span id="ent-nit" class="text-[10px] font-mono font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200"></span>
+            <h3 id="ent-nombre" class="text-base font-black text-slate-900 mt-1"></h3>
+            <span id="ent-detalle" class="text-xs text-slate-500"></span>
+          </div>
+          <div class="space-y-2 pt-2 border-t border-slate-200">
+            <label class="text-xs font-bold text-slate-700 block">Área o dependencia que lidera la contratación:</label>
+            <input id="input-area" type="text" placeholder="Ej: Subdirección de Gestión Ambiental / Gerencia Técnica..." class="w-full text-xs font-bold text-slate-900 bg-white border border-slate-200 rounded-xl p-3 focus:outline-none focus:border-slate-900" />
+          </div>
+          <button onclick="guardarPaso3()" class="w-full py-3.5 bg-slate-900 text-white font-black text-xs rounded-xl cursor-pointer hover:bg-slate-800 shadow-sm">Confirmar entidad y área →</button>
+        </div>
+      </div>
+      <div class="pt-2">
+        <button onclick="irPaso(2)" class="text-xs text-slate-400 hover:text-slate-900 font-bold cursor-pointer">← Volver</button>
+      </div>
+    </div>
+
+    <!-- ================= PASO 4: HITO DEDICADO - Verificación del Régimen Legal ================= -->
+    <div id="view-paso-4" class="space-y-6 fade-in hidden">
+      <div class="space-y-2">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 text-white text-[11px] font-bold">
+          <span>⚖️ Paso 4: Verificación del Marco Normativo</span>
+        </div>
+        <h2 class="text-2xl sm:text-3xl font-black text-slate-900">¿Bajo qué régimen jurídico contrata tu entidad?</h2>
+        <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
+          Para evitar sesgos y actuar con serenidad, validamos las reglas de juego antes de definir el objeto o blindar el expediente.
+        </p>
+      </div>
+
+      <!-- Ficha de la Entidad y Análisis Predictivo -->
+      <div id="box-analisis-entidad" class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1.5 text-xs text-slate-700">
+        <div class="flex items-center justify-between font-bold">
+          <span id="p4-ent-nombre">Corporación Autónoma Regional del Alto Magdalena (CAM)</span>
+          <span id="p4-ent-nit" class="font-mono text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">NIT 800.223.111-2</span>
+        </div>
+        <p id="p4-ent-analisis" class="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-600">
+          💡 <strong>Análisis Institucional:</strong> Al ser una Corporación Autónoma Regional (Ley 99/93), sus compras ordinarias se rigen por el <strong>Estatuto General de Contratación (Ley 80 / 1150)</strong>.
+        </p>
+      </div>
+
+      <!-- Las 3 Opciones de Régimen Legal -->
+      <div class="space-y-3">
+        <!-- Régimen 1: Ley 80 -->
+        <button onclick="seleccionarRegimenPaso4('LEY_80')" id="card-regimen-ley80" class="w-full p-4 rounded-2xl border-2 border-slate-900 bg-white ring-2 ring-slate-900/10 text-left cursor-pointer transition-all">
+          <div class="flex items-start justify-between">
+            <div>
+              <strong class="text-sm font-black text-slate-900 block">Estatuto General de Contratación Pública (Ley 80 / 1150)</strong>
+              <p class="text-xs text-slate-600 mt-0.5">Alcaldías, Gobernaciones, Ministerios, Corporaciones Autónomas (CAR) y entidades públicas estándar.</p>
+              <div class="text-[10px] text-slate-500 font-mono mt-1.5 flex gap-2">
+                <span class="bg-slate-100 px-2 py-0.5 rounded">SECOP II</span>
+                <span class="bg-slate-100 px-2 py-0.5 rounded">Pliegos Tipo CCE</span>
+                <span class="bg-slate-100 px-2 py-0.5 rounded">Menor Cuantía Mipymes / Subasta</span>
+              </div>
+            </div>
+            <span id="check-ley80" class="w-5 h-5 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs">✓</span>
+          </div>
+        </button>
+
+        <!-- Régimen 2: Manual Propio -->
+        <button onclick="seleccionarRegimenPaso4('MANUAL_PROPIO')" id="card-regimen-manual" class="w-full p-4 rounded-2xl border border-slate-200 bg-slate-50/60 hover:bg-white text-left cursor-pointer transition-all">
+          <div class="flex items-start justify-between">
+            <div>
+              <strong class="text-sm font-black text-slate-900 block">Manual de Contratación Propio (Régimen Especial - Derecho Privado)</strong>
+              <p class="text-xs text-slate-600 mt-0.5">Empresas de Servicios Públicos (E.S.P. - Ley 142), Hospitales (E.S.E. - Ley 100), E.I.C.E. y Universidades Estatales.</p>
+              <div class="text-[10px] text-slate-500 font-mono mt-1.5 flex gap-2">
+                <span class="bg-slate-100 px-2 py-0.5 rounded">Art. 13 Ley 1150</span>
+                <span class="bg-slate-100 px-2 py-0.5 rounded">Convocatoria Institucional</span>
+                <span class="bg-slate-100 px-2 py-0.5 rounded">Solicitud 3 Cotizaciones</span>
+              </div>
+            </div>
+            <span id="check-manual" class="w-5 h-5 rounded-full bg-slate-200 text-slate-400 flex items-center justify-center text-xs hidden">✓</span>
+          </div>
+        </button>
+
+        <!-- Régimen 3: Multilateral -->
+        <button onclick="seleccionarRegimenPaso4('MULTILATERAL')" id="card-regimen-multilateral" class="w-full p-4 rounded-2xl border border-slate-200 bg-slate-50/60 hover:bg-white text-left cursor-pointer transition-all">
+          <div class="flex items-start justify-between">
+            <div>
+              <strong class="text-sm font-black text-slate-900 block">Banca Multilateral / Convenios Internacionales (BID, Banco Mundial, CAF)</strong>
+              <p class="text-xs text-slate-600 mt-0.5">Proyectos cofinanciados con crédito externo sujetos al Art. 20 de la Ley 80 y manuales fiduciarios.</p>
+              <div class="text-[10px] text-slate-500 font-mono mt-1.5 flex gap-2">
+                <span class="bg-slate-100 px-2 py-0.5 rounded">Art. 20 Ley 80</span>
+                <span class="bg-slate-100 px-2 py-0.5 rounded">Shopping / Comparación</span>
+                <span class="bg-slate-100 px-2 py-0.5 rounded">No-Objeción Previa</span>
+              </div>
+            </div>
+            <span id="check-multilateral" class="w-5 h-5 rounded-full bg-slate-200 text-slate-400 flex items-center justify-center text-xs hidden">✓</span>
+          </div>
+        </button>
+      </div>
+
+      <div class="flex items-center justify-between pt-4">
+        <button onclick="irPaso(3)" class="text-xs text-slate-400 hover:text-slate-900 font-bold cursor-pointer">← Volver a Entidad</button>
+        <button onclick="irPaso(5)" class="px-6 py-3 rounded-2xl bg-slate-900 text-white font-black text-xs hover:bg-slate-800 cursor-pointer shadow-sm">Confirmar Régimen y Definir Necesidad →</button>
+      </div>
+    </div>
+
+    <!-- ================= PASO 5: Necesidad / Objeto ================= -->
+    <div id="view-paso-5" class="space-y-6 fade-in hidden">
+      <div class="space-y-2">
+        <h2 class="text-2xl font-black text-slate-900">¿Qué necesitas contratar hoy?</h2>
+        <p class="text-xs text-slate-500">Describe con tus palabras el requerimiento y a quiénes beneficia.</p>
+      </div>
+      <textarea id="input-necesidad" rows="3" placeholder="Describe qué se requiere contratar, a quiénes beneficia y el resultado esperado..." class="w-full text-sm text-slate-900 bg-slate-50 border border-slate-200 rounded-2xl p-4 focus:outline-none focus:border-slate-900 focus:bg-white leading-relaxed"></textarea>
+      <div class="flex items-center justify-between pt-4">
+        <button onclick="irPaso(4)" class="text-xs text-slate-400 hover:text-slate-900 font-bold cursor-pointer">← Volver al Régimen</button>
+        <button onclick="guardarPaso5()" class="px-6 py-3 rounded-2xl bg-slate-900 text-white font-black text-xs hover:bg-slate-800 cursor-pointer shadow-sm">Continuar al Presupuesto →</button>
+      </div>
+    </div>
+
+    <!-- ================= PASO 6: Presupuesto y CDP ================= -->
+    <div id="view-paso-6" class="space-y-6 fade-in hidden">
+      <div class="space-y-2">
+        <h2 class="text-2xl font-black text-slate-900">¿Tienes ya el número y valor del CDP?</h2>
+        <p class="text-xs text-slate-500">Si aún no tienes disponibilidad presupuestal expedida, no hay problema: estructuramos el proceso desde cero.</p>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <input id="input-cdp" type="text" placeholder="Número de CDP (opcional, ej: CDP-2026-048)" class="w-full text-sm font-mono font-bold text-slate-900 bg-slate-50 border border-slate-200 rounded-2xl p-4 focus:outline-none focus:border-slate-900 focus:bg-white" />
+        <input id="input-valor" type="text" oninput="actualizarCalculoCuantiaHTML()" placeholder="Valor estimado en COP (opcional)" class="w-full text-sm font-mono font-bold text-slate-900 bg-slate-50 border border-slate-200 rounded-2xl p-4 focus:outline-none focus:border-slate-900 focus:bg-white" />
+      </div>
+
+      <!-- Tarjeta Dinámica de Análisis Matemático de Cuantía (SMMLV 2026) -->
+      <div id="card-analisis-cuantia" class="hidden p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="font-bold text-slate-700">Análisis Matemático de Cuantía (SMMLV 2026: $1.423.500):</span>
+          <span id="txt-smmlv-calculado" class="font-mono text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded font-black border border-emerald-200">0 SMMLV</span>
+        </div>
+        <div class="text-slate-600 space-y-1">
+          <div><strong>Modalidad Legal Determinada:</strong> <span id="txt-modalidad-cuantia" class="text-slate-900 font-bold">Selección Abreviada de Menor Cuantía</span></div>
+          <p id="txt-explicacion-cuantia" class="text-[11px] text-slate-500 leading-snug"></p>
+        </div>
+      </div>
+
+      <div class="pt-2 space-y-3">
+        <button onclick="continuarSinCdp()" class="w-full p-4 rounded-2xl border-2 border-slate-900 bg-slate-900 text-white hover:bg-slate-800 transition-all font-black text-xs cursor-pointer shadow-md flex items-center justify-between group">
+          <div class="text-left">
+            <span class="block text-sm font-bold">Continuar sin CDP</span>
+            <span class="text-[11px] text-slate-300 font-normal">Entonces vamos a costear y estructurar desde cero</span>
+          </div>
+          <span class="text-emerald-400 font-bold text-base">→</span>
+        </button>
+
+        <button onclick="guardarConCdp()" class="w-full p-3.5 rounded-2xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-900 transition-all font-bold text-xs cursor-pointer flex items-center justify-center gap-2">
+          <span>Guardar CDP e ir a la estructuración →</span>
+        </button>
+      </div>
+
+      <div class="flex items-center justify-between pt-2">
+        <button onclick="irPaso(5)" class="text-xs text-slate-400 hover:text-slate-900 font-bold cursor-pointer">← Volver a Necesidad</button>
+        <button onclick="toggleChecklistView()" class="text-xs text-slate-500 hover:text-slate-900 font-bold cursor-pointer">📋 Ver Lista de Chequeo</button>
+      </div>
+    </div>
+
+    <!-- ================= VISTA DE LISTA DE CHEQUEO DE ESTRUCTURACIÓN ================= -->
+    <div id="view-checklist" class="space-y-6 fade-in hidden">
+      <div class="space-y-2">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-[11px] font-bold">
+          <span>✨ Estructuración Activa de Nuevo Proceso</span>
+        </div>
+        <h2 class="text-2xl sm:text-3xl font-black text-slate-900">Componentes de tu Estructuración.</h2>
+        <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
+          Aquí tienes la lista de chequeo viva. Puedes saltar a cualquiera de los componentes, construirlos a tu propio ritmo y ver cómo se va blindando tu expediente.
+        </p>
+      </div>
+
+      <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs">
+        <div>
+          <span class="text-slate-400 font-mono text-[10px] block">Expediente Oficial</span>
+          <strong id="chk-entidad-resumen" class="text-slate-900 block">Entidad Oficial</strong>
+        </div>
+        <span id="chk-badge-cdp" class="px-2.5 py-1 rounded-xl font-mono text-[11px] font-bold bg-amber-100 text-amber-900 border border-amber-200">
+          📌 Estructurando sin CDP
+        </span>
+      </div>
+
+      <div class="space-y-2.5">
+        <button onclick="irPaso(3)" class="w-full p-4 rounded-2xl border border-slate-200 bg-white hover:border-slate-900 text-left cursor-pointer transition-all flex items-center justify-between">
+          <div>
+            <div class="flex items-center gap-2 font-bold text-xs text-slate-900"><span class="w-4 h-4 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-[10px]">✓</span> 1. Identificación de la Entidad y Área Responsable</div>
+            <p id="chk-desc-entidad" class="text-[11px] text-slate-500 pl-6 mt-0.5">Entidad y área responsable definida</p>
+          </div>
+          <span class="text-xs font-bold text-slate-400">Editar →</span>
+        </button>
+
+        <button onclick="irPaso(4)" class="w-full p-4 rounded-2xl border border-slate-200 bg-white hover:border-slate-900 text-left cursor-pointer transition-all flex items-center justify-between">
+          <div>
+            <div class="flex items-center gap-2 font-bold text-xs text-slate-900"><span class="w-4 h-4 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-[10px]">✓</span> 2. Régimen Jurídico y Modalidad (24 Arquetipos)</div>
+            <p id="chk-desc-regimen" class="text-[11px] text-slate-500 pl-6 mt-0.5">Estatuto General (Ley 80 / 1150) • Estructuración Ordinaria</p>
+          </div>
+          <span class="text-xs font-bold text-slate-400">Cambiar →</span>
+        </button>
+
+        <button onclick="irPaso(5)" class="w-full p-4 rounded-2xl border border-slate-200 bg-white hover:border-slate-900 text-left cursor-pointer transition-all flex items-center justify-between">
+          <div>
+            <div class="flex items-center gap-2 font-bold text-xs text-slate-900"><span id="chk-ico-necesidad" class="w-4 h-4 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center text-[10px]">3</span> 3. Descripción de la Necesidad y Objeto</div>
+            <p id="chk-desc-necesidad" class="text-[11px] text-slate-500 pl-6 mt-0.5">Pendiente redactar el alcance técnico</p>
+          </div>
+          <span class="text-xs font-bold text-slate-400">Diligenciar →</span>
+        </button>
+
+        <button onclick="irPaso(6)" class="w-full p-4 rounded-2xl border border-amber-200 bg-amber-50/40 hover:bg-white text-left cursor-pointer transition-all flex items-center justify-between">
+          <div>
+            <div class="flex items-center gap-2 font-bold text-xs text-slate-900"><span id="chk-ico-cdp" class="w-4 h-4 rounded-full bg-amber-100 text-amber-800 flex items-center justify-center text-[10px]">⏳</span> 4. Presupuesto Estimado y CDP</div>
+            <p id="chk-desc-cdp" class="text-[11px] text-amber-800 pl-6 mt-0.5">Avanzando en estructuración sin CDP previo</p>
+          </div>
+          <span class="text-xs font-bold text-slate-600">Ingresar valor/CDP →</span>
+        </button>
+
+        <button onclick="irPaso(7)" class="w-full p-4 rounded-2xl border border-slate-900 bg-slate-900 text-white text-left cursor-pointer transition-all flex items-center justify-between shadow-xs">
+          <div>
+            <div class="flex items-center gap-2 font-bold text-xs"><span>🛡️</span> 5. La Mirada Preventiva (3 Cuidados y Blindaje)</div>
+            <p id="chk-desc-preventivo" class="text-[11px] text-slate-300 pl-6 mt-0.5">Cuidados fiscal, proponente y operativo activos ante entes de control</p>
+          </div>
+          <span class="text-xs font-bold text-emerald-400">Ver blindaje →</span>
+        </button>
+
+        <button onclick="irPaso(8)" class="w-full p-4 rounded-2xl border border-slate-200 bg-white hover:border-slate-900 text-left cursor-pointer transition-all flex items-center justify-between">
+          <div>
+            <div class="flex items-center gap-2 font-bold text-xs text-slate-900"><span id="chk-ico-mercado" class="w-4 h-4 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center text-[10px]">6</span> 6. Estudio de Mercado y Análisis del Sector (Anti-Alucinación)</div>
+            <p id="chk-desc-mercado" class="text-[11px] text-slate-500 pl-6 mt-0.5">Precios consultados en SECOP II o cotizaciones formales, estampillas (3.5%) y fletes</p>
+          </div>
+          <span class="text-xs font-bold text-slate-400">Definir →</span>
+        </button>
+
+        <button onclick="irPaso(8)" class="w-full p-4 rounded-2xl border border-slate-200 bg-white hover:border-slate-900 text-left cursor-pointer transition-all flex items-center justify-between">
+          <div>
+            <div class="flex items-center gap-2 font-bold text-xs text-slate-900"><span class="w-4 h-4 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-[10px]">✓</span> 7. Requisitos Habilitantes Proporcionados RUP (Art. 5 Ley 1150)</div>
+            <p class="text-[11px] text-slate-500 pl-6 mt-0.5">Experiencia exclusiva como habilitante Pasa/No Pasa (sin calificar con puntaje)</p>
+          </div>
+          <span class="text-xs font-bold text-slate-400">Revisar →</span>
+        </button>
+
+        <button onclick="irPaso(8)" class="w-full p-4 rounded-2xl border border-slate-200 bg-white hover:border-slate-900 text-left cursor-pointer transition-all flex items-center justify-between">
+          <div>
+            <div class="flex items-center gap-2 font-bold text-xs text-slate-900"><span class="w-4 h-4 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-[10px]">✓</span> 8. Matriz de Riesgos Tipificados CONPES 3714 (Clima y Vías)</div>
+            <p class="text-[11px] text-slate-500 pl-6 mt-0.5">Riesgos climáticos, transporte y geografía territorial local tipificados</p>
+          </div>
+          <span class="text-xs font-bold text-slate-400">Verificar →</span>
+        </button>
+
+        <button onclick="irPaso(7)" class="w-full p-4 rounded-2xl border border-slate-200 bg-white hover:border-slate-900 text-left cursor-pointer transition-all flex items-center justify-between">
+          <div>
+            <div class="flex items-center gap-2 font-bold text-xs text-slate-900"><span class="w-4 h-4 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-[10px]">✓</span> 9. Garantías y Amparos de Póliza de Cumplimiento</div>
+            <p class="text-[11px] text-slate-500 pl-6 mt-0.5">Seriedad (10%), Cumplimiento (10-20%), Salarios (5-10%), Calidad y RCE</p>
+          </div>
+          <span class="text-xs font-bold text-slate-400">Consultar →</span>
+        </button>
+
+        <button onclick="irPaso(9)" class="w-full p-4 rounded-2xl border border-slate-200 bg-white hover:border-slate-900 text-left cursor-pointer transition-all flex items-center justify-between">
+          <div>
+            <div class="flex items-center gap-2 font-bold text-xs text-slate-900"><span class="w-4 h-4 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center text-[10px]">10</span> 10. Supervisión/Interventoría y Expediente Oficial (.docx)</div>
+            <p class="text-[11px] text-slate-500 pl-6 mt-0.5">Descarga de Estudios Previos con autoría y cláusulas de blindaje preventivo</p>
+          </div>
+          <span class="text-xs font-bold text-slate-400">Ver →</span>
+        </button>
+      </div>
+
+      <div class="pt-2 flex justify-between">
+        <button onclick="irPaso(6)" class="text-xs text-slate-400 hover:text-slate-900 font-bold cursor-pointer">← Volver al Presupuesto</button>
+        <button onclick="irPaso(7)" class="px-6 py-3 rounded-2xl bg-slate-900 text-white font-black text-xs hover:bg-slate-800 cursor-pointer shadow-md">Ver Mirada Preventiva y Blindaje →</button>
+      </div>
+    </div>
+
+    <!-- ================= PASO 7: La Mirada Preventiva (Sin Tribunales ni Scores) ================= -->
+    <div id="view-paso-7" class="space-y-6 fade-in hidden">
+      <div class="space-y-2">
+        <span id="badge-preventivo-regimen" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900 text-white text-[11px] font-bold">
+          🛡️ La Mirada Preventiva • Estatuto General (Ley 80 / 1150)
+        </span>
+        <h2 class="text-2xl font-black text-slate-900">¿Qué ruta jurídica te da mayor tranquilidad?</h2>
+        <p id="subtitulo-preventivo" class="text-xs text-slate-500">Analizamos las opciones legales para que tu proceso avance con serenidad y blindaje:</p>
+      </div>
+
+      <!-- Contenedor Dinámico de la Mirada Preventiva -->
+      <div id="contenedor-alternativas-preventivas" class="space-y-3"></div>
+
+      <div class="flex items-center justify-between pt-4">
+        <button onclick="irPaso(6)" class="text-xs text-slate-400 hover:text-slate-900 font-bold cursor-pointer">← Volver al Presupuesto</button>
+        <button onclick="irPaso(8)" class="px-6 py-3 rounded-2xl bg-slate-900 text-white font-black text-xs hover:bg-slate-800 cursor-pointer shadow-md">Adoptar esta ruta y continuar →</button>
+      </div>
+    </div>
+
+    <!-- ================= PASO 8: Estudio de Mercado ================= -->
+    <div id="view-paso-8" class="space-y-6 fade-in hidden">
+      <div class="space-y-2">
+        <h2 class="text-2xl font-black text-slate-900">¿Cómo prefieres sustentar tu estudio de mercado?</h2>
+        <p class="text-xs text-slate-500">Selecciona el camino más cómodo permitido por la normativa:</p>
+      </div>
+      <div class="space-y-3">
+        <!-- Camino 1: Proveedores sugeridos dinámicos -->
+        <div class="space-y-2">
+          <div class="flex items-center justify-between">
+            <strong class="text-xs font-bold text-slate-800">Proveedores calificados con RUP vigente para tu objeto:</strong>
+            <button onclick="consultarProveedoresSecopEnVivoHTML()" class="text-[10px] font-mono text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2.5 py-1 rounded-lg cursor-pointer font-bold flex items-center gap-1">
+              <span>🌐 Consultar SECOP II en vivo</span>
+            </button>
+          </div>
+          <div id="contenedor-proveedores-dinamicos" class="space-y-2.5">
+            <!-- Renderizado dinámicamente por departamento y objeto -->
+          </div>
+        </div>
+
+        <!-- Camino 2: Proceso similar SECOP -->
+        <div class="p-4 rounded-2xl border border-slate-200 bg-slate-50/60 space-y-2">
+          <strong class="text-xs font-black text-slate-900 block">Referencia histórica de SECOP / Contrato anterior</strong>
+          <input id="input-ref-historica" type="text" placeholder="Ej: Contrato 214-2024 / SECOP II LP-003-2024" class="w-full text-xs font-mono font-bold text-slate-900 bg-white border border-slate-200 rounded-xl p-2.5" />
+          <button onclick="finalizarRefHistorica()" class="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-900 rounded-xl text-xs font-bold cursor-pointer">Guardar referencia histórica y continuar →</button>
+        </div>
+
+        <!-- Camino 3: Proveedor por NIT en RUES -->
+        <div class="p-4 rounded-2xl border border-slate-200 bg-slate-50/60 space-y-2">
+          <strong class="text-xs font-black text-slate-900 block">Consultar NIT de proveedor específico (RUES)</strong>
+          <div class="flex gap-2">
+            <input id="input-nit-manual" type="text" placeholder="Digita el NIT del proveedor..." class="flex-1 text-xs font-mono font-bold text-slate-900 bg-white border border-slate-200 rounded-xl p-2.5" />
+            <button onclick="consultarNitManual()" class="px-4 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-black cursor-pointer hover:bg-slate-800">Consultar</button>
+          </div>
+        </div>
+
+        <!-- Camino 4: Costeo Integral, Estampillas Territoriales y Fletes Veredales -->
+        <div class="p-4.5 rounded-2xl border border-amber-200 bg-amber-50/40 space-y-3">
+          <div class="space-y-0.5">
+            <strong class="text-xs font-black text-slate-900 block">Costeo Integral: Estampillas Territoriales y Fletes Veredales</strong>
+            <p class="text-[11px] text-slate-600">Calcula deducciones locales (Pro-Cultura, Adulto Mayor) y transporte para evitar procesos desiertos:</p>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+            <div>
+              <label id="label-pct-estampillas" class="text-[10px] font-bold text-slate-700 block mb-1">% Estampillas Territoriales:</label>
+              <input id="input-pct-estampillas" type="text" value="3.5" oninput="actualizarCalculoEstampillasHTML()" class="w-full text-xs font-mono font-bold bg-white border border-slate-200 rounded-xl p-2" />
+              <span id="txt-base-legal-estampillas" class="text-[10px] text-slate-500 block mt-1"></span>
+            </div>
+            <div>
+              <label class="text-[10px] font-bold text-slate-700 block mb-1">Flete Veredal estimado (COP):</label>
+              <input id="input-flete-veredal" type="text" value="5000000" oninput="actualizarCalculoEstampillasHTML()" class="w-full text-xs font-mono font-bold bg-white border border-slate-200 rounded-xl p-2" />
+            </div>
+          </div>
+          <div class="p-2.5 rounded-xl bg-white border border-amber-200 text-xs space-y-1">
+            <div class="flex justify-between text-slate-600"><span>Deducción por Estampillas:</span><span id="txt-calc-estampillas" class="font-mono font-bold text-amber-800">- $14.700.000 COP</span></div>
+            <div class="flex justify-between text-slate-600"><span>Flete Rural / Logística:</span><span id="txt-calc-flete" class="font-mono font-bold text-slate-900">+ $5.000.000 COP</span></div>
+          </div>
+          <button onclick="finalizarConEstampillas()" class="w-full py-2.5 bg-slate-900 text-white rounded-xl text-xs font-black cursor-pointer hover:bg-slate-800">Incorporar deducciones y fletes al estudio →</button>
+        </div>
+
+        <!-- Módulo de Blindaje Anti-Alucinación de IA -->
+        <div class="p-4.5 rounded-2xl border border-slate-200 bg-slate-50/80 space-y-3">
+          <div class="flex items-center justify-between">
+            <strong class="text-xs font-black text-slate-900 uppercase">🛡️ Blindaje Soberano Anti-Alucinación de IA</strong>
+            <span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">Decreto 1082 / Ley 1150</span>
+          </div>
+          <p class="text-[11px] text-slate-600">Verifica que tu estructuración no incurra en los tres errores comunes de las IAs comerciales:</p>
+          <div class="space-y-2 text-xs">
+            <label class="flex items-start gap-2.5 p-2.5 rounded-xl bg-white border border-slate-200 cursor-pointer">
+              <input type="checkbox" checked class="mt-0.5 text-emerald-600 rounded" />
+              <div>
+                <strong class="text-[11px] text-slate-900 block">1. Cotizaciones y precios reales (Cero alucinación de retail)</strong>
+                <p class="text-[10px] text-slate-500">Precios basados en SECOP II o cotizaciones formales con RUT, no en plataformas de venta al por menor sin impuestos.</p>
+              </div>
+            </label>
+            <label class="flex items-start gap-2.5 p-2.5 rounded-xl bg-white border border-slate-200 cursor-pointer">
+              <input type="checkbox" checked class="mt-0.5 text-emerald-600 rounded" />
+              <div>
+                <strong class="text-[11px] text-slate-900 block">2. Prohibido calificar experiencia (Art. 5 Ley 1150)</strong>
+                <p class="text-[10px] text-slate-500">La experiencia solo habilita (Pasa/No Pasa). Requisitos RUP proporcionales para garantizar pluralidad de oferentes.</p>
+              </div>
+            </label>
+            <div class="p-2.5 rounded-xl bg-white border border-slate-200 space-y-1.5">
+              <label class="flex items-start gap-2.5 cursor-pointer">
+                <input type="checkbox" checked class="mt-0.5 text-emerald-600 rounded" />
+                <div>
+                  <strong class="text-[11px] text-slate-900 block">3. Matriz CONPES 3714 con contingencias territoriales</strong>
+                  <p class="text-[10px] text-slate-500">Riesgos climáticos (lluvias, crecientes de ríos) y de transporte local tipificados según el departamento:</p>
+                </div>
+              </label>
+              <div id="contenedor-riesgos-conpes-dinamicos" class="space-y-1 pt-1 pl-6">
+                <!-- Riesgos territoriales inyectados dinámicamente -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="pt-2 flex justify-between">
+        <button onclick="irPaso(7)" class="text-xs text-slate-400 hover:text-slate-900 font-bold cursor-pointer">← Volver a la Ruta Legal</button>
+        <button onclick="finalizar('Estudio de mercado sustentado por cotizaciones')" class="text-xs text-slate-500 hover:text-slate-900 font-bold cursor-pointer">Omitir por ahora y ver expediente →</button>
+      </div>
+    </div>
+
+    <!-- ================= PASO 9: Expediente Consolidado y Descarga ================= -->
+    <div id="view-paso-9" class="space-y-6 fade-in hidden">
+      <div class="space-y-2">
+        <h2 class="text-3xl font-black text-slate-900">Todo listo y blindado.</h2>
+        <p class="text-sm text-slate-600">
+          Construiste la base de tu proceso con rigor legal, autoría inequívoca y blindaje preventivo.
+        </p>
+      </div>
+
+      <div class="p-6 rounded-3xl border border-slate-200 bg-slate-50/40 space-y-4">
+        <div class="text-xs text-slate-700 space-y-2.5">
+          <div><span class="text-slate-400">Autor:</span> <strong id="res-autor">Carmelo (Director)</strong></div>
+          <div><span class="text-slate-400">Entidad Oficial:</span> <strong id="res-entidad">Corporación Autónoma Regional del Alto Magdalena (CAM)</strong></div>
+          <div><span class="text-slate-400">Área Responsable:</span> <span id="res-area">Subdirección de Gestión Ambiental</span></div>
+          <div><span class="text-slate-400">Régimen Contractual Verificado:</span> <strong id="res-regimen" class="text-slate-900 font-mono">Estatuto General (Ley 80 / 1150)</strong></div>
+          
+          <div class="p-3.5 rounded-2xl bg-white border border-slate-200 space-y-1.5">
+            <div class="flex items-center justify-between">
+              <span class="text-slate-400 font-bold text-[11px]">Ruta Jurídica Adoptada:</span>
+              <span id="res-score" class="font-mono text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded font-black text-[11px] border border-emerald-200">Ruta Óptima y Blindada</span>
+            </div>
+            <strong id="res-ruta" class="text-slate-900 block text-xs">Menor Cuantía con Convocatoria Limitada a Mipymes</strong>
+            <p id="res-clausulas" class="text-[11px] text-slate-500">Cláusulas de protección: unidad de objeto, verificación RUP, cronograma reglado de 35 días hábiles.</p>
+          </div>
+
+          <div><span class="text-slate-400">Objeto:</span> <span id="res-objeto">Suministro e instalación de sensores de monitoreo</span></div>
+          <div><span class="text-slate-400">Presupuesto / CDP:</span> <strong id="res-valor">$ 420.000.000 COP</strong></div>
+          <div><span class="text-slate-400">Referencia de Mercado:</span> <span id="res-mercado">SANJUANÉS SOLUCIONES S.A.S. (BIC)</span></div>
+        </div>
+
+        <button onclick="simularDescarga()" class="w-full py-4 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl font-black text-xs transition-all cursor-pointer flex items-center justify-center gap-2 shadow-md hover:scale-[1.01]">
+          <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+          <span id="btn-descarga-texto">Descargar Estudios Previos Blindados (.docx)</span>
+        </button>
+
+        <button onclick="irPaso(10)" class="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-xs transition-all cursor-pointer flex items-center justify-center gap-2 shadow-md hover:scale-[1.01]">
+          <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+          <span>Publicar Proceso en SECOP II y Simular hasta la Adjudicación →</span>
+        </button>
+      </div>
+
+      <div class="pt-2 flex items-center justify-between">
+        <button onclick="empezarDeNuevo()" class="text-xs text-slate-400 hover:text-slate-900 font-bold cursor-pointer">
+          Empezar otro proceso
+        </button>
+        <button onclick="toggleChecklistView()" class="text-xs text-slate-500 hover:text-slate-900 font-bold cursor-pointer">
+          📋 Ver Lista de Chequeo
+        </button>
+      </div>
+    </div>
+
+    <!-- ================= PASO 10: Simulación Transaccional en SECOP II ================= -->
+    <div id="view-paso-10" class="space-y-6 fade-in hidden">
+      <!-- Cabecera SECOP II -->
+      <div class="p-5 rounded-3xl bg-slate-900 text-white space-y-3 shadow-xl border border-slate-800">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+              SECOP II • Sistema Electrónico de Contratación Pública
+            </span>
+            <span id="secop-id-proceso" class="text-[10px] font-mono text-slate-400">
+              ID: CO1.BDOS.2026.048
+            </span>
+          </div>
+          <span id="secop-presupuesto-badge" class="text-xs font-mono font-bold text-slate-300">
+            Presupuesto: $420.000.000 COP
+          </span>
+        </div>
+
+        <div class="space-y-1">
+          <h3 id="secop-entidad-nombre" class="text-lg font-black text-white">
+            Corporación Autónoma Regional del Alto Magdalena (CAM)
+          </h3>
+          <p id="secop-objeto-txt" class="text-xs text-slate-300 leading-snug line-clamp-2">
+            Objeto: Suministro e instalación de equipos y sensores de monitoreo hidrometeorológico.
+          </p>
+          <span id="secop-subtitulo-meta" class="text-[11px] text-slate-400 font-mono block">
+            Modalidad: Menor Cuantía con Convocatoria Limitada a Mipymes
+          </span>
+        </div>
+
+        <!-- Fases del Proceso -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5 pt-2 text-[10px] font-mono">
+          <div id="fase-step-1" class="p-2 rounded-xl text-center border bg-emerald-500/20 text-emerald-300 border-emerald-500/40 font-bold">
+            1. Publicación y Pliegos
+          </div>
+          <div id="fase-step-2" class="p-2 rounded-xl text-center border bg-slate-800/60 text-slate-400 border-slate-700">
+            2. Observaciones y Adendas
+          </div>
+          <div id="fase-step-3" class="p-2 rounded-xl text-center border bg-slate-800/60 text-slate-400 border-slate-700">
+            3. Presentación de Ofertas
+          </div>
+          <div id="fase-step-4" class="p-2 rounded-xl text-center border bg-slate-800/60 text-slate-400 border-slate-700">
+            4. Adjudicación Oficial
+          </div>
+        </div>
+      </div>
+
+      <!-- Inyector y Laboratorio de Contingencias y Rarezas en SECOP II -->
+      <div class="p-5 rounded-3xl border border-indigo-100 bg-gradient-to-br from-indigo-50/70 via-purple-50/40 to-slate-50 space-y-4 shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-indigo-100/80 pb-3">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-sm">
+              ⚡
+            </div>
+            <div>
+              <h4 class="text-sm font-black text-slate-900 flex items-center gap-2">
+                Inyector de Contingencias y Rarezas de SECOP II
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 font-bold">
+                  9 Escenarios Reales
+                </span>
+              </h4>
+              <p class="text-[11px] text-slate-500">
+                Simula eventos críticos y dilemas jurídicos reales entre la publicación de pliegos y la audiencia de adjudicación.
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onclick="toggleCatalogoIncidentesHTML()"
+            class="px-3 py-1.5 rounded-xl bg-white border border-indigo-200 text-indigo-800 text-xs font-bold hover:bg-indigo-50 cursor-pointer flex items-center gap-1.5 transition-all self-start sm:self-auto"
+          >
+            <span id="btn-catalogo-incidentes-lbl">Cambiar Escenario</span>
+            <span id="btn-catalogo-incidentes-icon">▼</span>
+          </button>
+        </div>
+
+        <!-- Grid de Selección de Incidentes -->
+        <div id="grid-selector-incidentes" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 pt-1 hidden">
+          <!-- Generado dinámicamente por JS -->
+        </div>
+
+        <!-- Tarjeta de Trabajo del Incidente Seleccionado -->
+        <div id="tarjeta-incidente-activo" class="space-y-3 pt-1">
+          <!-- Inyectado por JS -->
+        </div>
+      </div>
+
+      <!-- Subfase 1: Observaciones y Adenda -->
+      <div id="secop-seccion-observaciones" class="p-5 rounded-3xl border border-slate-200 bg-white space-y-4">
+        <div class="flex items-center justify-between">
+          <strong class="text-sm font-black text-slate-900">Observaciones Radicadas por Oferentes en SECOP II (2)</strong>
+          <span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-sky-50 text-sky-800 border border-sky-200">Plazo Abierto</span>
+        </div>
+
+        <div class="space-y-3 text-xs">
+          <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-1.5">
+            <strong class="text-slate-900 block font-bold">1. CONTRATISTAS DEL VALLE & ASOCIADOS</strong>
+            <p class="text-slate-600 leading-snug">«Solicitamos aclarar si la experiencia en RUP puede acreditarse con contratos privados o únicamente públicos.»</p>
+            <div class="text-[11px] text-emerald-800 bg-emerald-50 p-2 rounded-xl border border-emerald-200">
+              <strong>Respuesta de la Entidad:</strong> Se acoge la solicitud. Conforme al Dcto 1082, se aceptan contratos públicos y privados inscritos en el RUP.
+            </div>
+          </div>
+
+          <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-1.5">
+            <strong class="text-slate-900 block font-bold">2. Veeduría Ciudadana Territorial</strong>
+            <p class="text-slate-600 leading-snug">«Consultamos si se previó en el presupuesto el costo de las estampillas territoriales y flete veredal.»</p>
+            <div class="text-[11px] text-emerald-800 bg-emerald-50 p-2 rounded-xl border border-emerald-200">
+              <strong>Respuesta de la Entidad:</strong> Se ratifica que en el costeo (Paso 8) se incorporaron deducciones territoriales y logística veredal.
+            </div>
+          </div>
+        </div>
+
+        <button onclick="publicarAdendaSecopHTML()" class="w-full py-3.5 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl font-black text-xs transition-all cursor-pointer">
+          Publicar Respuestas y Expedir Adenda N° 1 de Pliegos en SECOP II →
+        </button>
+      </div>
+
+      <!-- Subfase 2: Cierre y Apertura de Sobres -->
+      <div id="secop-seccion-sobres" class="p-5 rounded-3xl border border-slate-200 bg-white space-y-4 hidden">
+        <div class="flex items-center justify-between">
+          <strong class="text-sm font-black text-slate-900">Cierre de Presentación de Ofertas en SECOP II</strong>
+          <span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">3 Ofertas Recibidas</span>
+        </div>
+
+        <p class="text-xs text-slate-600">Se cumplió la hora de cierre oficial en SECOP II. Tres proponentes presentaron oferta con sobres digitales encriptados:</p>
+
+        <div class="space-y-2 text-xs">
+          <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+            <div><strong class="text-slate-900">1. SOLUCIONES TERRITORIALES S.A.S. (BIC)</strong><span class="text-[10px] text-slate-500 block">NIT 901.458.712 • Mipyme Regional • RUP Vigente</span></div>
+            <span class="font-mono text-[10px] bg-slate-200 px-2 py-0.5 rounded font-bold">🔒 Sobre Encriptado</span>
+          </div>
+          <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+            <div><strong class="text-slate-900">2. INGENIERÍA NACIONAL INTEGRADA S.A.</strong><span class="text-[10px] text-slate-500 block">NIT 800.231.902 • Gran Empresa (Bogotá)</span></div>
+            <span class="font-mono text-[10px] bg-slate-200 px-2 py-0.5 rounded font-bold">🔒 Sobre Encriptado</span>
+          </div>
+          <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+            <div><strong class="text-slate-900">3. CONSORCIO ANDINO 2026</strong><span class="text-[10px] text-slate-500 block">NIT 901.883.121 • Unión Temporal Regional</span></div>
+            <span class="font-mono text-[10px] bg-slate-200 px-2 py-0.5 rounded font-bold">🔒 Sobre Encriptado</span>
+          </div>
+        </div>
+
+        <button onclick="desencriptarSobresSecopHTML()" class="w-full py-3.5 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl font-black text-xs transition-all cursor-pointer">
+          Desencriptar Sobres y Efectuar Apertura en SECOP II →
+        </button>
+      </div>
+
+      <!-- Subfase 3: Evaluación y Calificación -->
+      <div id="secop-seccion-evaluacion" class="p-5 rounded-3xl border border-slate-200 bg-white space-y-4 hidden">
+        <div class="flex items-center justify-between">
+          <strong class="text-sm font-black text-slate-900">Informe de Evaluación y Calificación de Ofertas</strong>
+          <span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200">Fórmula CCE: Media Aritmética</span>
+        </div>
+
+        <div class="overflow-x-auto text-xs">
+          <table class="w-full text-left">
+            <thead>
+              <tr class="border-b border-slate-200 text-slate-400 font-mono text-[10px]">
+                <th class="py-2">Proponente</th>
+                <th class="py-2">Valor Ofertado</th>
+                <th class="py-2">Habilitación</th>
+                <th class="py-2">Económico (60)</th>
+                <th class="py-2">Técnico / Mipyme (40)</th>
+                <th class="py-2 font-bold text-slate-900">Puntaje</th>
+              </tr>
+            </thead>
+            <tbody id="secop-tabla-evaluacion-body" class="divide-y divide-slate-100">
+              <tr class="bg-emerald-50/60 font-medium">
+                <td class="py-3 font-bold text-slate-900">1. SOLUCIONES TERRITORIALES S.A.S. (BIC)<span class="text-[10px] text-emerald-700 block font-normal">Prioridad Mipyme Ley 2069/2020</span></td>
+                <td class="py-3 font-mono text-slate-700">$395.000.000</td>
+                <td class="py-3"><span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">CUMPLE</span></td>
+                <td class="py-3 font-mono">58.50 pts</td>
+                <td class="py-3 font-mono">40.00 pts</td>
+                <td class="py-3 font-mono font-black text-emerald-800 text-sm">98.50 pts (1°)</td>
+              </tr>
+              <tr>
+                <td class="py-3 font-bold text-slate-900">2. INGENIERÍA NACIONAL INTEGRADA S.A.<span class="text-[10px] text-slate-500 block font-normal">Gran Empresa Bogotá</span></td>
+                <td class="py-3 font-mono text-slate-700">$370.000.000</td>
+                <td class="py-3"><span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">CUMPLE</span></td>
+                <td class="py-3 font-mono">60.00 pts</td>
+                <td class="py-3 font-mono">25.00 pts</td>
+                <td class="py-3 font-mono font-bold text-slate-700">85.00 pts (2°)</td>
+              </tr>
+              <tr>
+                <td class="py-3 font-bold text-slate-900">3. CONSORCIO ANDINO 2026<span class="text-[10px] text-slate-500 block font-normal">Unión Temporal</span></td>
+                <td class="py-3 font-mono text-slate-700">$405.000.000</td>
+                <td class="py-3"><span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">CUMPLE</span></td>
+                <td class="py-3 font-mono">54.20 pts</td>
+                <td class="py-3 font-mono">30.00 pts</td>
+                <td class="py-3 font-mono font-bold text-slate-700">84.20 pts (3°)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <button onclick="adjudicarProcesoSecopHTML()" class="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-xs transition-all cursor-pointer">
+          Celebrar Audiencia y Expedir Resolución de Adjudicación en SECOP II →
+        </button>
+      </div>
+
+      <!-- Subfase 4: Resolución Oficial de Adjudicación -->
+      <div id="secop-seccion-adjudicacion" class="p-6 rounded-3xl border-2 border-emerald-500/40 bg-emerald-50/20 space-y-4 hidden">
+        <div class="flex items-center justify-between">
+          <strong class="text-base font-black text-slate-900">Acto Administrativo Oficial de Adjudicación</strong>
+          <span class="text-[10px] font-mono font-black px-2.5 py-1 rounded bg-emerald-600 text-white">PROCESO ADJUDICADO</span>
+        </div>
+
+        <div class="p-4 rounded-2xl bg-white border border-emerald-200 space-y-2 text-xs">
+          <div class="border-b border-slate-100 pb-2">
+            <strong class="text-slate-900 block text-sm">RESOLUCIÓN N° 048-2026</strong>
+            <span class="text-slate-500 text-[11px]">«Por medio de la cual se adjudica el proceso de contratación oficial»</span>
+          </div>
+          <div class="space-y-1.5 text-slate-700 text-[11px]">
+            <div><strong>Entidad Adjudicadora:</strong> <span id="secop-res-entidad">Corporación Autónoma Regional del Alto Magdalena (CAM)</span></div>
+            <div><strong>Ordenador del Gasto:</strong> <span id="secop-res-ordenador">Carmelo (Director de Contratación)</span></div>
+            <div><strong>Adjudicatario Ganador:</strong> <span id="secop-res-ganador">SOLUCIONES TERRITORIALES S.A.S. (BIC) • NIT 901.458.712-4</span></div>
+            <div><strong>Valor Adjudicado:</strong> <span id="secop-res-valor">$395.000.000 COP</span> • <strong>Puntaje Final:</strong> <span id="secop-res-puntaje">98.50 puntos</span></div>
+          </div>
+          <div class="pt-2 border-t border-slate-100 text-[11px] text-emerald-900 font-medium">
+            ✓ Publicado y notificado en estrado digital de SECOP II. Listo para expedición de Registro Presupuestal (RP) y firma electrónica.
+          </div>
+        </div>
+
+        <div class="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <button onclick="empezarDeNuevo()" class="text-xs text-slate-400 hover:text-slate-900 font-bold cursor-pointer">← Estructurar un proceso nuevo</button>
+          <div class="flex items-center gap-2">
+            <button onclick="simularDescarga()" class="px-4 py-3 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-2xl text-xs font-bold cursor-pointer">Descargar Resolución (.docx)</button>
+            <button onclick="irPaso(11)" class="px-5 py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl text-xs font-black cursor-pointer">Continuar a Etapa Contractual (Paso 11) →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= PASO 11: Perfeccionamiento y Legalización ================= -->
+    <div id="view-paso-11" class="space-y-6 fade-in hidden">
+      <div class="p-5 rounded-3xl bg-slate-900 text-white space-y-3 shadow-xl border border-slate-800">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+              ETAPA CONTRACTUAL • PASO 11
+            </span>
+            <span class="text-[10px] font-mono text-slate-400">
+              Contrato N° 048-2026
+            </span>
+          </div>
+          <span class="text-xs font-mono font-bold text-slate-300">
+            Valor: $395.000.000 COP
+          </span>
+        </div>
+        <div class="space-y-1">
+          <h3 class="text-lg font-black text-white">Perfeccionamiento, Legalización y Condiciones Previas</h3>
+          <p class="text-xs text-slate-300 leading-snug">
+            Contratista: SOLUCIONES TERRITORIALES S.A.S. (BIC) • Objeto: Suministro e instalación de equipos y sensores de monitoreo hidrometeorológico.
+          </p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+        <div class="p-4 rounded-3xl border border-emerald-200 bg-emerald-50/30 space-y-2">
+          <div class="flex items-center justify-between">
+            <strong class="font-black text-slate-900">1. Firma Electrónica en SECOP II</strong>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">Perfeccionado</span>
+          </div>
+          <p class="text-slate-600">Suscrito digitalmente por el Ordenador y el Contratista con estampillado cronológico digital (Art. 41 Ley 80/93).</p>
+        </div>
+
+        <div class="p-4 rounded-3xl border border-sky-200 bg-sky-50/30 space-y-2">
+          <div class="flex items-center justify-between">
+            <strong class="font-black text-slate-900">2. Registro Presupuestal (RP)</strong>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-sky-100 text-sky-800 font-bold">RP-2026-0892</span>
+          </div>
+          <p class="text-slate-600">Afectación presupuestal definitiva contra el CDP original. Recursos formalmente comprometidos (Dcto 111/96).</p>
+        </div>
+
+        <div class="p-4 rounded-3xl border border-indigo-200 bg-indigo-50/30 space-y-2 md:col-span-2">
+          <div class="flex items-center justify-between">
+            <strong class="font-black text-slate-900">3. Garantía Única de Cumplimiento (Póliza de Seguros)</strong>
+            <span id="badge-poliza-html" class="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-100 text-amber-800 font-bold">Pendiente Aprobación</span>
+          </div>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-[11px]">
+            <div class="p-2.5 bg-white rounded-xl border border-slate-200">
+              <span class="text-slate-400 font-mono text-[10px] block">Cumplimiento (10%)</span>
+              <strong>$39.500.000 COP</strong>
+            </div>
+            <div class="p-2.5 bg-white rounded-xl border border-slate-200">
+              <span class="text-slate-400 font-mono text-[10px] block">Salarios (5%)</span>
+              <strong>$19.750.000 COP</strong>
+            </div>
+            <div class="p-2.5 bg-white rounded-xl border border-slate-200">
+              <span class="text-slate-400 font-mono text-[10px] block">Calidad (20%)</span>
+              <strong>$79.000.000 COP</strong>
+            </div>
+            <div class="p-2.5 bg-white rounded-xl border border-slate-200">
+              <span class="text-slate-400 font-mono text-[10px] block">RCE (200 SMMLV)</span>
+              <strong>$284.700.000 COP</strong>
+            </div>
+          </div>
+          <button id="btn-aprobar-poliza-html" onclick="aprobarPolizaHTML()" class="w-full mt-2 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs cursor-pointer">
+            Examinar Amparos y Aprobar Garantía Única mediante Acto Administrativo
+          </button>
+        </div>
+
+        <div class="p-4 rounded-3xl border border-amber-200 bg-amber-50/30 space-y-2 md:col-span-2">
+          <div class="flex items-center justify-between">
+            <strong class="font-black text-slate-900">4. Designación Oficial de Supervisión (Ley 1474/2011)</strong>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-100 text-amber-800 font-bold">Supervisión Interna</span>
+          </div>
+          <p class="text-slate-600">Se designa al funcionario de planta <strong>Ing. Juan Camilo Roa</strong> con funciones de control técnico, administrativo y jurídico.</p>
+        </div>
+      </div>
+
+      <div class="p-5 rounded-3xl border-2 border-slate-900 bg-white space-y-3">
+        <div class="flex items-center justify-between">
+          <div>
+            <h4 class="text-sm font-black text-slate-900">Suscripción del Acta de Inicio Oficial</h4>
+            <p class="text-xs text-slate-500">El plazo contractual comienza a computarse formalmente desde la suscripción del acta.</p>
+          </div>
+          <span id="badge-acta-inicio-html" class="text-[10px] font-mono px-2 py-1 rounded font-black bg-slate-200 text-slate-700">PENDIENTE DE FIRMA</span>
+        </div>
+        <button id="btn-suscribir-inicio-html" onclick="suscribirActaInicioHTML()" class="w-full py-3.5 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl font-black text-xs cursor-pointer">
+          Suscribir Acta de Inicio (Comenzar Cómputo del Plazo Contractual) →
+        </button>
+      </div>
+
+      <div class="pt-2 flex justify-between">
+        <button onclick="irPaso(10)" class="text-xs text-slate-400 hover:text-slate-900 font-bold cursor-pointer">← Volver a Adjudicación (Paso 10)</button>
+        <button id="btn-ir-paso-12" onclick="irPaso(12)" class="px-5 py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl text-xs font-black cursor-pointer hidden">Continuar a Ejecución (Paso 12) →</button>
+      </div>
+    </div>
+
+    <!-- ================= PASO 12: Ejecución, Modificaciones y Sancionatorio ================= -->
+    <div id="view-paso-12" class="space-y-6 fade-in hidden">
+      <div class="p-5 rounded-3xl bg-slate-900 text-white space-y-3 shadow-xl border border-slate-800">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+              ETAPA CONTRACTUAL • PASO 12
+            </span>
+            <span class="text-[10px] font-mono text-slate-400">Contrato N° 048-2026 • En Ejecución</span>
+          </div>
+          <span class="text-xs font-mono font-bold text-slate-300">Supervisor: Ing. Juan Camilo Roa</span>
+        </div>
+        <div class="space-y-1">
+          <h3 class="text-lg font-black text-white">Gestión de la Ejecución, Modificaciones y Régimen Sancionatorio</h3>
+          <p class="text-xs text-slate-300 leading-snug">Seguimiento de bitácora, control de adiciones presupuestales (tope del 50%) y procedimiento sancionatorio del Art. 86 Ley 1474 de 2011.</p>
+        </div>
+      </div>
+
+      <div class="p-5 rounded-3xl border border-slate-200 bg-white space-y-4 text-xs">
+        <div class="flex items-center justify-between">
+          <strong>Progreso de Ejecución Física y Financiera</strong>
+          <div class="flex gap-1.5">
+            <button onclick="cambiarAvanceEjecucionHTML(25)" class="px-2.5 py-1 rounded-xl bg-slate-100 font-bold font-mono cursor-pointer">25%</button>
+            <button onclick="cambiarAvanceEjecucionHTML(50)" class="px-2.5 py-1 rounded-xl bg-slate-100 font-bold font-mono cursor-pointer">50%</button>
+            <button onclick="cambiarAvanceEjecucionHTML(75)" class="px-2.5 py-1 rounded-xl bg-slate-100 font-bold font-mono cursor-pointer">75%</button>
+            <button onclick="cambiarAvanceEjecucionHTML(100)" class="px-2.5 py-1 rounded-xl bg-emerald-600 text-white font-bold font-mono cursor-pointer">100%</button>
+          </div>
+        </div>
+        <div class="w-full h-3 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
+          <div id="barra-progreso-html" class="h-full bg-emerald-500" style="width: 100%;"></div>
+        </div>
+      </div>
+
+      <!-- Simulador de Modificaciones y Adiciones -->
+      <div class="p-5 rounded-3xl border border-indigo-100 bg-gradient-to-br from-indigo-50/70 to-slate-50 space-y-3 text-xs">
+        <div class="flex items-center justify-between border-b border-indigo-100 pb-2">
+          <div>
+            <strong class="font-black text-slate-900 block">📐 Simulador de Modificaciones y Adiciones (Tope del 50% Art. 40 Ley 80)</strong>
+            <span class="text-[10px] text-slate-500">Prueba valores de adición para verificar el cumplimiento legal</span>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <input id="input-adicion-html" type="text" value="120000000" class="flex-1 px-3 py-2 rounded-xl border border-slate-300 font-mono text-xs">
+          <button onclick="validarAdicionHTML()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold cursor-pointer">Validar</button>
+        </div>
+        <div id="resultado-adicion-html" class="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-950">
+          ✓ Adición procedente (30.4%). Respeta el límite perentorio del 50% del Artículo 40 de la Ley 80 de 1993.
+        </div>
+      </div>
+
+      <!-- Simulador de Sancionatorio Art. 86 -->
+      <div class="p-5 rounded-3xl border border-amber-200 bg-amber-50/30 space-y-3 text-xs">
+        <strong class="font-black text-slate-900 block">⚖️ Procedimiento Sancionatorio por Retraso (Art. 86 Ley 1474 de 2011)</strong>
+        <p class="text-slate-600">Simulación del debido proceso: 1. Informe de Supervisión → 2. Citación formal y vinculación de la Aseguradora → 3. Descargos orales → 4. Imposición de Multa conminatoria (2% = $7.900.000 COP) → 5. Recurso de Reposición resuelto en estrados.</p>
+      </div>
+
+      <div class="pt-2 flex justify-between">
+        <button onclick="irPaso(11)" class="text-xs text-slate-400 hover:text-slate-900 font-bold cursor-pointer">← Volver a Legalización (Paso 11)</button>
+        <button onclick="irPaso(13)" class="px-5 py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl text-xs font-black cursor-pointer">Culminar Ejecución y Pasar a Liquidación (Paso 13) →</button>
+      </div>
+    </div>
+
+    <!-- ================= PASO 13: Recibo Final, Liquidación y Cierre en SECOP II ================= -->
+    <div id="view-paso-13" class="space-y-6 fade-in hidden">
+      <div class="p-5 rounded-3xl bg-slate-900 text-white space-y-3 shadow-xl border border-slate-800">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+              ETAPA POSTCONTRACTUAL • PASO 13
+            </span>
+            <span class="text-[10px] font-mono text-slate-400">Contrato N° 048-2026 • Cierre Oficial</span>
+          </div>
+          <span id="badge-estado-proceso-13" class="text-xs font-mono font-bold text-emerald-400">EN TRÁMITE DE LIQUIDACIÓN</span>
+        </div>
+        <div class="space-y-1">
+          <h3 class="text-lg font-black text-white">Recibo Final a Satisfacción, Liquidación y Cierre en SECOP II</h3>
+          <p class="text-xs text-slate-300 leading-snug">Cruce definitivo de cuentas, amortización de anticipos, liberación presupuestal y garantías poscontractuales (Art. 11 Ley 1150 de 2007).</p>
+        </div>
+      </div>
+
+      <div class="p-4 rounded-3xl border border-emerald-200 bg-emerald-50/30 space-y-2 text-xs">
+        <div class="flex items-center justify-between">
+          <strong class="font-black text-slate-900">1. Acta de Recibo Final a Satisfacción</strong>
+          <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">100% Recibido</span>
+        </div>
+        <p class="text-slate-600">Certificación de entrega física y técnica expedida por la supervisión.</p>
+      </div>
+
+      <div class="p-5 rounded-3xl border border-slate-200 bg-white space-y-4 text-xs">
+        <strong class="text-sm font-black text-slate-900 block">2. Modalidad de Liquidación del Contrato</strong>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <button id="btn-liq-bilateral" onclick="seleccionarTipoLiquidacionHTML('BILATERAL')" class="p-3 rounded-2xl border-2 border-emerald-500 bg-emerald-50/30 text-left cursor-pointer">
+            <strong class="text-emerald-950 block">🤝 Liquidación Bilateral (Mutuo Acuerdo)</strong>
+            <span class="text-slate-600 text-[11px]">Suscrita conjuntamente dentro de los cuatro (4) meses legales.</span>
+          </button>
+          <button id="btn-liq-unilateral" onclick="seleccionarTipoLiquidacionHTML('UNILATERAL')" class="p-3 rounded-2xl border border-slate-200 bg-white text-left cursor-pointer">
+            <strong class="text-slate-900 block">⚖️ Liquidación Unilateral (Por Resolución)</strong>
+            <span class="text-slate-600 text-[11px]">Facultad de la entidad si no comparece el contratista (2 meses).</span>
+          </button>
+        </div>
+
+        <div class="p-4 rounded-2xl bg-slate-900 text-white space-y-2">
+          <strong class="text-xs font-bold text-slate-200 block">Balance Financiero Consolidado</strong>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 font-mono text-xs">
+            <div><span class="text-[10px] text-slate-400 block">Convenido</span><strong>$395.000.000</strong></div>
+            <div><span class="text-[10px] text-slate-400 block">Ejecutado</span><strong class="text-emerald-400">$395.000.000</strong></div>
+            <div><span class="text-[10px] text-slate-400 block">Liberar RP</span><strong class="text-sky-300">$0 COP</strong></div>
+            <div><span class="text-[10px] text-slate-400 block">Estado</span><strong class="text-emerald-400">Paz y Salvo</strong></div>
+          </div>
+        </div>
+
+        <button id="btn-firmar-liquidacion-html" onclick="suscribirLiquidacionHTML()" class="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-xs cursor-pointer">
+          Suscribir y Publicar Acta de Liquidación en SECOP II →
+        </button>
+
+        <div id="caja-exito-cierre-html" class="p-4 rounded-2xl bg-emerald-50 border border-emerald-300 space-y-2 hidden">
+          <strong class="text-emerald-900 block font-black">✓ ¡PROCESO CONTRACTUAL 100% FINALIZADO Y CERRADO EN SECOP II!</strong>
+          <p class="text-emerald-950/90 leading-snug">Se publicó el documento de liquidación en SECOP II, se activaron los amparos de estabilidad y calidad poscontractuales, y el expediente quedó formalmente archivado sin hallazgos preventivos.</p>
+        </div>
+      </div>
+
+      <div class="pt-2 flex justify-between">
+        <button onclick="empezarDeNuevo()" class="text-xs text-slate-400 hover:text-slate-900 font-bold cursor-pointer">← Estructurar un proceso nuevo</button>
+        <button onclick="simularDescarga()" class="px-5 py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl text-xs font-black cursor-pointer">Descargar Expediente Integral Completo (.docx)</button>
+      </div>
+    </div>
+
+    <!-- ================= MODAL DEL FLUJOGRAMA COMPLETO ================= -->
+    <div id="modal-flujograma" class="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+      <div class="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 space-y-4 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div>
+            <h3 class="text-xl font-black text-slate-900">Flujograma Maestro de Contratación</h3>
+            <p class="text-xs text-slate-500">Haz clic en cualquier etapa para moverte a ese nodo del proceso.</p>
+          </div>
+          <button onclick="toggleModalFlujograma(false)" class="p-2 text-slate-400 hover:text-slate-900 rounded-xl hover:bg-slate-100 cursor-pointer font-bold">✕</button>
+        </div>
+        <div class="space-y-2 text-xs">
+          <button onclick="irPaso(1); toggleModalFlujograma(false);" class="w-full p-3 rounded-2xl border border-slate-200 bg-slate-50 hover:bg-white text-left cursor-pointer block">
+            <strong class="text-slate-900 block">1. Rol y Situación de Partida</strong>
+            <span class="text-slate-500 text-[11px]">Nuevo con/sin CDP, rescate de desierto o borrador huérfano</span>
+          </button>
+          <button onclick="irPaso(2); toggleModalFlujograma(false);" class="w-full p-3 rounded-2xl border border-slate-200 bg-slate-50 hover:bg-white text-left cursor-pointer block">
+            <strong class="text-slate-900 block">2. Autoría y Firmas</strong>
+            <span class="text-slate-500 text-[11px]">Nombre y cargo del responsable institucional</span>
+          </button>
+          <button onclick="irPaso(3); toggleModalFlujograma(false);" class="w-full p-3 rounded-2xl border border-slate-200 bg-slate-50 hover:bg-white text-left cursor-pointer block">
+            <strong class="text-slate-900 block">3. Organización y Dependencia</strong>
+            <span class="text-slate-500 text-[11px]">Búsqueda con NIT oficial, código DANE y Centro de Costos</span>
+          </button>
+          <button onclick="irPaso(4); toggleModalFlujograma(false);" class="w-full p-3 rounded-2xl border-2 border-emerald-500 bg-emerald-50/40 hover:bg-white text-left cursor-pointer block">
+            <div class="flex items-center justify-between"><strong class="text-emerald-950">4. Verificación del Régimen Jurídico (Hito Clave)</strong><span class="bg-emerald-600 text-white font-mono text-[9px] px-1.5 py-0.5 rounded font-bold uppercase">Bifurcación</span></div>
+            <span class="text-emerald-900 text-[11px]">Estatuto General (Ley 80) vs Manual Propio (Derecho Privado) vs Banca Multilateral</span>
+          </button>
+          <button onclick="irPaso(5); toggleModalFlujograma(false);" class="w-full p-3 rounded-2xl border border-slate-200 bg-slate-50 hover:bg-white text-left cursor-pointer block">
+            <strong class="text-slate-900 block">5. Necesidad Técnica y Objeto</strong>
+            <span class="text-slate-500 text-[11px]">Redacción en lenguaje natural del objeto a contratar</span>
+          </button>
+          <button onclick="irPaso(6); toggleModalFlujograma(false);" class="w-full p-3 rounded-2xl border border-slate-200 bg-slate-50 hover:bg-white text-left cursor-pointer block">
+            <strong class="text-slate-900 block">6. Presupuesto Oficial y CDP</strong>
+            <span class="text-slate-500 text-[11px]">Valor estimado y número de disponibilidad (o continuar sin CDP para costear)</span>
+          </button>
+          <button onclick="irPaso(7); toggleModalFlujograma(false);" class="w-full p-3 rounded-2xl border-2 border-slate-900 bg-slate-900 text-white text-left cursor-pointer block">
+            <div class="flex items-center justify-between"><strong>7. La Mirada Preventiva (Ruta Jurídica y Blindaje)</strong><span class="bg-emerald-400 text-slate-950 font-mono text-[9px] px-1.5 py-0.5 rounded font-bold uppercase">Blindaje</span></div>
+            <span class="text-slate-300 text-[11px]">Cuidados fiscales, de proponentes y en territorio sin tribunales ni notas</span>
+          </button>
+          <button onclick="irPaso(8); toggleModalFlujograma(false);" class="w-full p-3 rounded-2xl border border-slate-200 bg-slate-50 hover:bg-white text-left cursor-pointer block">
+            <strong class="text-slate-900 block">8. Estudio de Mercado Empático</strong>
+            <span class="text-slate-500 text-[11px]">Proveedores BIC calificados, SECOP histórico o cotización con NIT</span>
+          </button>
+          <button onclick="irPaso(9); toggleModalFlujograma(false);" class="w-full p-3 rounded-2xl border border-slate-200 bg-slate-50 hover:bg-white text-left cursor-pointer block">
+            <strong class="text-slate-900 block">9. Expediente Blindado y Estudios Previos Word</strong>
+            <span class="text-slate-500 text-[11px]">Resumen y descarga de Estudios Previos (.docx) con autoría y cláusulas</span>
+          </button>
+          <button onclick="irPaso(10); toggleModalFlujograma(false);" class="w-full p-3 rounded-2xl border border-slate-200 bg-slate-50 hover:bg-white text-left cursor-pointer block">
+            <strong class="text-slate-900 block">10. SECOP II Transaccional y Adjudicación</strong>
+            <span class="text-slate-500 text-[11px]">Observaciones, adendas, apertura de sobres, evaluación e Inyector de Contingencias</span>
+          </button>
+          <button onclick="irPaso(11); toggleModalFlujograma(false);" class="w-full p-3 rounded-2xl border border-slate-200 bg-slate-50 hover:bg-white text-left cursor-pointer block">
+            <strong class="text-slate-900 block">11. Perfeccionamiento, Legalización y Acta de Inicio</strong>
+            <span class="text-slate-500 text-[11px]">Firma en SECOP II, Registro Presupuestal (RP), Garantía Única y Supervisión</span>
+          </button>
+          <button onclick="irPaso(12); toggleModalFlujograma(false);" class="w-full p-3 rounded-2xl border border-slate-200 bg-slate-50 hover:bg-white text-left cursor-pointer block">
+            <strong class="text-slate-900 block">12. Ejecución, Modificaciones y Sancionatorio</strong>
+            <span class="text-slate-500 text-[11px]">Seguimiento de bitácora, adiciones (tope del 50% Art. 40 Ley 80) y audiencia Art. 86</span>
+          </button>
+          <button onclick="irPaso(13); toggleModalFlujograma(false);" class="w-full p-3 rounded-2xl border border-slate-200 bg-slate-50 hover:bg-white text-left cursor-pointer block">
+            <strong class="text-slate-900 block">13. Recibo a Satisfacción, Liquidación y Cierre</strong>
+            <span class="text-slate-500 text-[11px]">Liquidación Bilateral vs Unilateral, balance presupuestal y archivo en SECOP II</span>
+          </button>
+        </div>
+        <div class="pt-2 flex justify-end">
+          <button onclick="toggleModalFlujograma(false)" class="px-5 py-2.5 bg-slate-900 text-white font-bold text-xs rounded-xl cursor-pointer">Cerrar</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <footer class="w-full max-w-2xl mx-auto pt-6 border-t border-slate-100 text-xs text-slate-400 flex items-center justify-between shrink-0">
+    <span>ProcureSim v2.0 • Interacción Humana Progresiva</span>
+    <span>Soberanía del Usuario & Cero Sesgos</span>
+  </footer>
+
+  <script>
+    let estado = {
+      paso: 1,
+      rol: 'COMPRO',
+      situacion: 'NUEVO_ORDINARIO',
+      nombre: '',
+      cargo: '',
+      entidad: null,
+      area: '',
+      regimen: 'LEY_80',
+      necesidad: '',
+      cdp: '',
+      valor: '',
+      proveedor: '',
+      rutaGanadora: 'Menor Cuantía con Convocatoria Limitada a Mipymes',
+      scoreRuta: 'Ruta Óptima y Blindada'
+    };
+
+    // Motor Dinámico Nacional: Cero listas precargadas o estáticas.
+    // Alcance universal: 1.103 municipios, 32 departamentos y todas las entidades de Colombia.
+
+    function seleccionarRolCompro() {
+      estado.rol = 'COMPRO';
+      const box = document.getElementById('box-brujula-entrada');
+      if (box) box.classList.remove('hidden');
+    }
+
+    function toggleCasosEspeciales() {
+      const drawer = document.getElementById('drawer-casos-especiales');
+      const txt = document.getElementById('txt-toggle-especiales');
+      if (drawer) {
+        const estaOculto = drawer.classList.contains('hidden');
+        if (estaOculto) {
+          drawer.classList.remove('hidden');
+          if (txt) txt.innerText = '▲ Ocultar casos especiales';
+        } else {
+          drawer.classList.add('hidden');
+          if (txt) txt.innerText = '▼ ¿Es un convenio, donación, arriendo o caso especial?';
+        }
+      }
+    }
+
+    function iniciarSituacion(sit, textoDefault) {
+      estado.situacion = sit;
+      if (sit === 'NUEVO_SIN_CDP') {
+        estado.cdp = '';
+      }
+      if (textoDefault) {
+        estado.necesidad = textoDefault;
+        const inputNec = document.getElementById('input-necesidad');
+        if (inputNec) inputNec.value = textoDefault;
+      }
+      irPaso(2);
+    }
+
+    function toggleModalFlujograma(abrir) {
+      const modal = document.getElementById('modal-flujograma');
+      if (abrir) {
+        modal.classList.remove('hidden');
+      } else {
+        modal.classList.add('hidden');
+      }
+    }
+
+    let enModoChecklist = false;
+
+    function toggleChecklistView() {
+      enModoChecklist = !enModoChecklist;
+      if (enModoChecklist) {
+        mostrarChecklist();
+      } else {
+        irPaso(estado.paso);
+      }
+    }
+
+    function mostrarChecklist() {
+      enModoChecklist = true;
+      for (let i = 1; i <= 13; i++) {
+        const el = document.getElementById('view-paso-' + i);
+        if (el) el.classList.add('hidden');
+      }
+      const chk = document.getElementById('view-checklist');
+      if (chk) chk.classList.remove('hidden');
+      const btn = document.getElementById('btn-top-checklist');
+      if (btn) btn.innerText = '← Volver al Proceso';
+      const topControles = document.getElementById('top-controles-contextuales');
+      if (topControles) topControles.classList.remove('hidden');
+      actualizarHistoria();
+      renderizarChecklist();
+    }
+
+    function continuarSinCdp() {
+      estado.cdp = '';
+      estado.valor = document.getElementById('input-valor')?.value || '';
+      mostrarChecklist();
+    }
+
+    function guardarConCdp() {
+      estado.cdp = document.getElementById('input-cdp')?.value || '';
+      estado.valor = document.getElementById('input-valor')?.value || '';
+      mostrarChecklist();
+    }
+
+    function renderizarChecklist() {
+      const ent = estado.entidad || { nombre: 'Entidad Pública', nit: 'Por definir', tipo: 'Entidad Oficial' };
+      document.getElementById('chk-entidad-resumen').innerText = ent.nombre + ' (' + (estado.area || 'Área por definir') + ')';
+      document.getElementById('chk-desc-entidad').innerText = ent.nombre + ' (NIT ' + ent.nit + ') • ' + (estado.area || 'Área en definición');
+      document.getElementById('chk-desc-regimen').innerText = estado.regimen === 'MANUAL_PROPIO' ? 'Manual Propio (Derecho Privado)' : estado.regimen === 'MULTILATERAL' ? 'Banca Multilateral' : 'Estatuto General (Ley 80 / 1150)';
+
+      const necInput = document.getElementById('input-necesidad');
+      if (necInput && necInput.value) {
+        estado.necesidad = necInput.value;
+      }
+      if (estado.necesidad) {
+        document.getElementById('chk-desc-necesidad').innerText = estado.necesidad;
+        document.getElementById('chk-ico-necesidad').innerHTML = '✓';
+        document.getElementById('chk-ico-necesidad').className = 'w-4 h-4 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-[10px]';
+      }
+
+      const bCdp = document.getElementById('chk-badge-cdp');
+      const dCdp = document.getElementById('chk-desc-cdp');
+      const iCdp = document.getElementById('chk-ico-cdp');
+      if (estado.cdp) {
+        bCdp.innerText = 'CDP: ' + estado.cdp;
+        bCdp.className = 'px-2.5 py-1 rounded-xl font-mono text-[11px] font-bold bg-emerald-100 text-emerald-800';
+        dCdp.innerText = 'CDP N° ' + estado.cdp + ' ($' + (estado.valor || '0') + ' COP)';
+        iCdp.innerHTML = '✓';
+        iCdp.className = 'w-4 h-4 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-[10px]';
+      } else {
+        bCdp.innerText = '📌 Estructurando sin CDP';
+        bCdp.className = 'px-2.5 py-1 rounded-xl font-mono text-[11px] font-bold bg-amber-100 text-amber-900 border border-amber-200';
+        dCdp.innerText = estado.valor ? `Valor estimado: $${estado.valor} COP (CDP pendiente formal)` : 'Avanzando en estructuración técnica sin CDP formal (se anexará antes de radicar).';
+        iCdp.innerHTML = '⏳';
+        iCdp.className = 'w-4 h-4 rounded-full bg-amber-100 text-amber-800 flex items-center justify-center text-[10px]';
+      }
+
+      if (estado.proveedor) {
+        document.getElementById('chk-desc-mercado').innerText = 'Proveedor: ' + estado.proveedor;
+        document.getElementById('chk-ico-mercado').innerHTML = '✓';
+        document.getElementById('chk-ico-mercado').className = 'w-4 h-4 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-[10px]';
+      }
+    }
+
+    function actualizarHistoria() {
+      const cont = document.getElementById('historia-expediente');
+      const cards = document.getElementById('historia-cards');
+      if (!cont || !cards) return;
+
+      if (enModoChecklist || estado.paso <= 1) {
+        cont.classList.add('hidden');
+        return;
+      }
+
+      cont.classList.remove('hidden');
+      cards.innerHTML = '';
+
+      // 1. Rol y Situación
+      if (estado.rol && estado.paso > 1) {
+        const sitLabels = {
+          NUEVO_ORDINARIO: 'Nuevo ordinario',
+          NUEVO_SIN_CDP: 'Formulación previa (Sin CDP)',
+          RESCATE_DESIERTO: 'Rescate de proceso desierto',
+          RESCATE_HUERFANO: 'Adopción de borrador huérfano'
+        };
+        cards.innerHTML += `
+          <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200/90 flex items-center justify-between text-xs transition-colors hover:bg-white">
+            <div class="flex items-center gap-2">
+              <span class="w-4 h-4 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center text-[10px] font-bold">✓</span>
+              <span class="text-slate-400 font-mono text-[10px]">1. Rol:</span>
+              <strong class="text-slate-900 font-bold">${estado.rol === 'COMPRO' ? 'Compro (Entidad Pública)' : 'Vendo (Proveedor / Contratista)'}</strong>
+              <span class="text-[10px] font-mono text-slate-500 bg-white px-2 py-0.5 rounded border border-slate-200">${sitLabels[estado.situacion] || 'Proceso Activo'}</span>
+            </div>
+            <button onclick="irPaso(1)" class="text-[11px] text-slate-400 hover:text-slate-900 font-bold cursor-pointer">Modificar</button>
+          </div>
+        `;
+      }
+
+      // 2. Autoría
+      if (estado.nombre && estado.paso > 2) {
+        cards.innerHTML += `
+          <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200/90 flex items-center justify-between text-xs transition-colors hover:bg-white">
+            <div class="flex items-center gap-2">
+              <span class="w-4 h-4 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center text-[10px] font-bold">✓</span>
+              <span class="text-slate-400 font-mono text-[10px]">2. Autor:</span>
+              <strong class="text-slate-900 font-bold">${estado.nombre}</strong>
+              <span class="text-slate-500 text-[11px]">(${estado.cargo || 'Funcionario'})</span>
+            </div>
+            <button onclick="irPaso(2)" class="text-[11px] text-slate-400 hover:text-slate-900 font-bold cursor-pointer">Modificar</button>
+          </div>
+        `;
+      }
+
+      // 3. Entidad y Área
+      if (estado.entidad && estado.paso > 3) {
+        cards.innerHTML += `
+          <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200/90 flex items-center justify-between text-xs transition-colors hover:bg-white">
+            <div class="flex items-center gap-2">
+              <span class="w-4 h-4 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center text-[10px] font-bold">✓</span>
+              <span class="text-slate-400 font-mono text-[10px]">3. Entidad:</span>
+              <strong class="text-slate-900 font-bold">${estado.entidad.nombre}</strong>
+              <span class="text-[10px] font-mono text-emerald-800 bg-emerald-50 px-1 rounded border border-emerald-200 font-bold">NIT ${estado.entidad.nit}</span>
+              ${estado.area ? `<span class="text-slate-500 text-[11px]">• ${estado.area}</span>` : ''}
+            </div>
+            <button onclick="irPaso(3)" class="text-[11px] text-slate-400 hover:text-slate-900 font-bold cursor-pointer">Modificar</button>
+          </div>
+        `;
+      }
+
+      // 4. Régimen
+      if (estado.regimen && estado.paso > 4) {
+        const regTxt = estado.regimen === 'MANUAL_PROPIO'
+          ? 'Manual Propio (Régimen Especial - Derecho Privado)'
+          : estado.regimen === 'MULTILATERAL'
+          ? 'Banca Multilateral / Convenio Internacional'
+          : 'Estatuto General (Ley 80 / 1150)';
+        cards.innerHTML += `
+          <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200/90 flex items-center justify-between text-xs transition-colors hover:bg-white">
+            <div class="flex items-center gap-2">
+              <span class="w-4 h-4 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center text-[10px] font-bold">✓</span>
+              <span class="text-slate-400 font-mono text-[10px]">4. Régimen:</span>
+              <strong class="text-slate-900 font-bold">${regTxt}</strong>
+            </div>
+            <button onclick="irPaso(4)" class="text-[11px] text-slate-400 hover:text-slate-900 font-bold cursor-pointer">Modificar</button>
+          </div>
+        `;
+      }
+
+      // 5. Necesidad
+      if (estado.necesidad && estado.paso > 5) {
+        cards.innerHTML += `
+          <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200/90 flex items-center justify-between text-xs transition-colors hover:bg-white">
+            <div class="flex items-center gap-2 truncate max-w-md">
+              <span class="w-4 h-4 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center text-[10px] font-bold shrink-0">✓</span>
+              <span class="text-slate-400 font-mono text-[10px] shrink-0">5. Objeto:</span>
+              <span class="text-slate-800 text-[11px] font-medium truncate">${estado.necesidad}</span>
+            </div>
+            <button onclick="irPaso(5)" class="text-[11px] text-slate-400 hover:text-slate-900 font-bold cursor-pointer shrink-0">Modificar</button>
+          </div>
+        `;
+      }
+
+      // 6. Presupuesto / CDP
+      if (estado.paso > 6) {
+        const hayCdp = Boolean(estado.cdp);
+        cards.innerHTML += `
+          <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200/90 flex items-center justify-between text-xs transition-colors hover:bg-white">
+            <div class="flex items-center gap-2">
+              <span class="w-4 h-4 rounded-full ${hayCdp ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'} flex items-center justify-center text-[10px] font-bold">
+                ${hayCdp ? '✓' : '⏳'}
+              </span>
+              <span class="text-slate-400 font-mono text-[10px]">6. Presupuesto:</span>
+              <strong class="text-slate-900 font-bold">
+                ${hayCdp ? `CDP N° ${estado.cdp} ($${estado.valor || '0'} COP)` : estado.valor ? `Valor estimado: $${estado.valor} COP (CDP pendiente)` : 'Estructurando sin CDP formal'}
+              </strong>
+            </div>
+            <button onclick="irPaso(6)" class="text-[11px] text-slate-400 hover:text-slate-900 font-bold cursor-pointer">Modificar</button>
+          </div>
+        `;
+      }
+
+      // 7. Ruta Legal y Blindaje
+      if (estado.paso > 7) {
+        cards.innerHTML += `
+          <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200/90 flex items-center justify-between text-xs transition-colors hover:bg-white">
+            <div class="flex items-center gap-2">
+              <span class="w-4 h-4 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center text-[10px] font-bold">✓</span>
+              <span class="text-slate-400 font-mono text-[10px]">7. Ruta Legal:</span>
+              <strong class="text-slate-900 font-bold">${estado.rutaGanadora}</strong>
+              <span class="font-mono text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded text-[10px] font-bold border border-emerald-200">Blindada</span>
+            </div>
+            <button onclick="irPaso(7)" class="text-[11px] text-slate-400 hover:text-slate-900 font-bold cursor-pointer">Modificar</button>
+          </div>
+        `;
+      }
+
+      // 8. Mercado
+      if (estado.proveedor && estado.paso > 8) {
+        cards.innerHTML += `
+          <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200/90 flex items-center justify-between text-xs transition-colors hover:bg-white">
+            <div class="flex items-center gap-2">
+              <span class="w-4 h-4 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center text-[10px] font-bold">✓</span>
+              <span class="text-slate-400 font-mono text-[10px]">8. Mercado:</span>
+              <strong class="text-slate-900 font-bold">${estado.proveedor}</strong>
+            </div>
+            <button onclick="irPaso(8)" class="text-[11px] text-slate-400 hover:text-slate-900 font-bold cursor-pointer">Modificar</button>
+          </div>
+        `;
+      }
+    }
+
+    function irPaso(n) {
+      enModoChecklist = false;
+      const chk = document.getElementById('view-checklist');
+      if (chk) chk.classList.add('hidden');
+
+      for (let i = 1; i <= 13; i++) {
+        const el = document.getElementById('view-paso-' + i);
+        if (el) el.classList.add('hidden');
+      }
+      const actual = document.getElementById('view-paso-' + n);
+      if (actual) actual.classList.remove('hidden');
+      
+      const topControles = document.getElementById('top-controles-contextuales');
+      if (topControles) {
+        if (n > 1) {
+          topControles.classList.remove('hidden');
+        } else {
+          topControles.classList.add('hidden');
+        }
+      }
+      const btnTop = document.getElementById('btn-top-checklist');
+      if (btnTop) btnTop.innerText = '📋 Lista de Chequeo';
+      estado.paso = n;
+
+      if (n === 4) {
+        renderizarPaso4();
+      } else if (n === 6) {
+        actualizarCalculoCuantiaHTML();
+      } else if (n === 7) {
+        renderizarMiradaPreventiva();
+      } else if (n === 8) {
+        renderizarPaso8();
+      } else if (n === 10) {
+        renderizarPaso10();
+      }
+
+      actualizarHistoria();
+    }
+
+    function elegirRol(rol) {
+      estado.rol = rol;
+      irPaso(2);
+    }
+
+    function guardarPaso2() {
+      estado.nombre = document.getElementById('input-nombre').value.trim() || 'Carmelo';
+      estado.cargo = document.getElementById('input-cargo').value.trim() || 'Director de Contratación';
+      irPaso(3);
+    }
+
+    function normalizarTexto(txt) {
+      return (txt || '')
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+
+    function clasificarEntidadNacional(nombre, deptoSugerido, ciudadSugerida, nitSugerido) {
+      const nNorm = normalizarTexto(nombre);
+      let depto = deptoSugerido || 'Colombia';
+      let muni = ciudadSugerida || 'Territorio Nacional';
+
+      if (!deptoSugerido || deptoSugerido === 'Colombia') {
+        if (nNorm.includes('huila') || nNorm.includes('neiva') || nNorm.includes('pitalito') || nNorm.includes('garzon')) depto = 'Huila';
+        else if (nNorm.includes('antioquia') || nNorm.includes('medellin') || nNorm.includes('bello') || nNorm.includes('itagui') || nNorm.includes('epm')) depto = 'Antioquia';
+        else if (nNorm.includes('bogota') || nNorm.includes('distrital') || nNorm.includes('cundinamarca')) depto = 'Bogotá D.C.';
+        else if (nNorm.includes('valle') || nNorm.includes('cali') || nNorm.includes('palmira') || nNorm.includes('emcali')) depto = 'Valle del Cauca';
+        else if (nNorm.includes('atlantico') || nNorm.includes('barranquilla') || nNorm.includes('soledad')) depto = 'Atlántico';
+        else if (nNorm.includes('santander') || nNorm.includes('bucaramanga') || nNorm.includes('floridablanca')) depto = 'Santander';
+        else if (nNorm.includes('bolivar') || nNorm.includes('cartagena')) depto = 'Bolívar';
+        else if (nNorm.includes('tolima') || nNorm.includes('ibague')) depto = 'Tolima';
+        else if (nNorm.includes('narino') || nNorm.includes('pasto')) depto = 'Nariño';
+        else if (nNorm.includes('meta') || nNorm.includes('villavicencio')) depto = 'Meta';
+      }
+
+      // 1. ESP (Servicios Públicos)
+      const esEsp = nNorm.includes('electrificadora') || nNorm.includes('electro') || nNorm.includes('energia') ||
+                    nNorm.includes('servicios publicos') || nNorm.includes('e.s.p') || nNorm.includes('esp') ||
+                    nNorm.includes('acueducto') || nNorm.includes('alcantarillado') || nNorm.includes('aseo') ||
+                    nNorm.includes('gas') || nNorm.includes('telecomunicaciones') || nNorm.includes('epm') || nNorm.includes('ceibas');
+      if (esEsp) {
+        return {
+          nombre: nombre.trim(),
+          nit: nitSugerido || 'NIT en verificación SECOP II',
+          departamento: depto,
+          municipio: muni,
+          detalle: `Empresa de Servicios Públicos Domiciliarios (E.S.P.) • ${muni} (${depto})`,
+          tipo: 'Empresa de Servicios Públicos (E.S.P.)',
+          regimen: 'MANUAL_PROPIO',
+          origen: 'INFERENCIA_NACIONAL'
+        };
+      }
+
+      // 2. ESE (Salud)
+      const esEse = nNorm.includes('ese') || nNorm.includes('e.s.e') || nNorm.includes('hospital') || nNorm.includes('salud') || nNorm.includes('clinica');
+      if (esEse) {
+        return {
+          nombre: nombre.trim(),
+          nit: nitSugerido || 'NIT en verificación SECOP II',
+          departamento: depto,
+          municipio: muni,
+          detalle: `Empresa Social del Estado (Sector Salud) • ${muni} (${depto})`,
+          tipo: 'Empresa Social del Estado (E.S.E.)',
+          regimen: 'MANUAL_PROPIO',
+          origen: 'INFERENCIA_NACIONAL'
+        };
+      }
+
+      // 3. Universidades Públicas
+      const esUni = nNorm.includes('universidad') || nNorm.includes('instituto tecnologico') || nNorm.includes('colegio mayor');
+      if (esUni) {
+        return {
+          nombre: nombre.trim(),
+          nit: nitSugerido || 'NIT en verificación SECOP II',
+          departamento: depto,
+          municipio: muni,
+          detalle: `Ente Universitario Autónomo (Ley 30/92) • ${muni} (${depto})`,
+          tipo: 'Educación Superior Pública',
+          regimen: 'MANUAL_PROPIO',
+          origen: 'INFERENCIA_NACIONAL'
+        };
+      }
+
+      // 4. CAR
+      const esCar = nNorm.includes('corporacion autonoma') || nNorm.includes('car') || nNorm.includes('cam') || nNorm.includes('cvc') || nNorm.includes('corpo');
+      if (esCar) {
+        return {
+          nombre: nombre.trim(),
+          nit: nitSugerido || 'NIT en verificación SECOP II',
+          departamento: depto,
+          municipio: muni,
+          detalle: `Corporación Autónoma Regional (Ley 99/93) • ${muni} (${depto})`,
+          tipo: 'Corporación Autónoma Regional (CAR)',
+          regimen: 'LEY_80',
+          origen: 'INFERENCIA_NACIONAL'
+        };
+      }
+
+      // 5. Alcaldías y Municipios
+      const esMuni = nNorm.includes('alcaldia') || nNorm.includes('municipio') || nNorm.includes('distrito');
+      if (esMuni) {
+        return {
+          nombre: nombre.trim(),
+          nit: nitSugerido || 'NIT en verificación SECOP II',
+          departamento: depto,
+          municipio: muni,
+          detalle: `Entidad Territorial Municipal / Distrital • ${muni} (${depto})`,
+          tipo: 'Entidad Territorial Municipal',
+          regimen: 'LEY_80',
+          origen: 'INFERENCIA_NACIONAL'
+        };
+      }
+
+      // 6. Gobernaciones
+      const esGob = nNorm.includes('gobernacion') || nNorm.includes('departamento de');
+      if (esGob) {
+        return {
+          nombre: nombre.trim(),
+          nit: nitSugerido || 'NIT en verificación SECOP II',
+          departamento: depto,
+          municipio: muni,
+          detalle: `Entidad Territorial Departamental • ${depto}`,
+          tipo: 'Entidad Territorial Departamental',
+          regimen: 'LEY_80',
+          origen: 'INFERENCIA_NACIONAL'
+        };
+      }
+
+      // 7. General Nacional
+      return {
+        nombre: nombre.trim(),
+        nit: nitSugerido || 'NIT en verificación SECOP II',
+        departamento: depto,
+        municipio: muni,
+        detalle: `Entidad Pública Oficial • ${muni} (${depto})`,
+        tipo: 'Entidad Pública',
+        regimen: 'LEY_80',
+        origen: 'INFERENCIA_NACIONAL'
+      };
+    }
+
+    async function buscarEntidad() {
+      const inputEl = document.getElementById('input-busqueda-entidad');
+      const valOriginal = inputEl?.value || '';
+      const qNorm = normalizarTexto(valOriginal);
+      const contenedor = document.getElementById('contenedor-resultados-entidad');
+      if (!contenedor) return;
+      contenedor.innerHTML = '';
+      contenedor.classList.remove('hidden');
+
+      if (!qNorm) {
+        return;
+      }
+
+      // 1. Inferencia inmediata nacional soberana
+      const inferida = clasificarEntidadNacional(valOriginal);
+      mostrarEntidadesEnContenedor([inferida]);
+
+      // 2. Consulta en vivo a Datos Abiertos de SECOP II
+      try {
+        const qEnc = encodeURIComponent(valOriginal.trim());
+        const url = `https://www.datos.gov.co/resource/jbjy-vk9h.json?$select=distinct nombre_entidad, nit_entidad, departamento_entidad, ciudad_entidad&$where=upper(nombre_entidad) like upper('%${qEnc}%')&$limit=6`;
+        const res = await fetch(url, { headers: { Accept: 'application/json' } });
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            const entidadesSecop = data.map(row => {
+              const ent = clasificarEntidadNacional(row.nombre_entidad, row.departamento_entidad, row.ciudad_entidad, row.nit_entidad);
+              ent.origen = 'SECOP_II_EN_VIVO';
+              return ent;
+            });
+            mostrarEntidadesEnContenedor(entidadesSecop);
+          }
+        }
+      } catch (e) {
+        // Mantiene la inferida
+      }
+    }
+
+    function mostrarEntidadesEnContenedor(lista) {
+      const contenedor = document.getElementById('contenedor-resultados-entidad');
+      contenedor.innerHTML = '';
+      lista.forEach(ent => {
+        const btn = document.createElement('button');
+        btn.className = 'w-full p-4 rounded-2xl border border-slate-200 hover:border-slate-900 bg-white hover:bg-slate-50/50 text-left text-xs cursor-pointer block transition-all group shadow-xs space-y-1';
+        btn.innerHTML = `
+          <div class="flex items-center justify-between gap-2">
+            <strong class="text-slate-900 text-sm group-hover:text-slate-950">${ent.nombre}</strong>
+            <div class="flex items-center gap-1 shrink-0">
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded font-bold border ${ent.origen === 'SECOP_II_EN_VIVO' ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-slate-100 text-slate-700 border-slate-200'}">
+                ${ent.origen === 'SECOP_II_EN_VIVO' ? '🌐 SECOP II en Vivo' : '⚡ Inferencia Nacional'}
+              </span>
+              <span class="text-[10px] font-mono text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded font-bold border border-emerald-200">NIT ${ent.nit}</span>
+            </div>
+          </div>
+          <span class="block text-[11px] text-slate-500 font-medium">${ent.tipo} • ${ent.detalle} • Régimen: <strong class="text-slate-800">${ent.regimen === 'MANUAL_PROPIO' ? 'Manual Propio (Derecho Privado)' : 'Ley 80 / 1150'}</strong></span>
+        `;
+        btn.onclick = () => seleccionarEntidad(ent);
+        contenedor.appendChild(btn);
+      });
+    }
+
+    function usarEntidadManual(nombre) {
+      const ent = {
+        nombre: nombre || 'Entidad Oficial',
+        nit: 'Por verificar',
+        detalle: 'Entidad Pública Nacional / Territorial',
+        tipo: 'Entidad Pública',
+        regimen: 'LEY_80'
+      };
+      seleccionarEntidad(ent);
+    }
+
+    function seleccionarEntidad(ent) {
+      estado.entidad = ent;
+      estado.regimen = ent.regimen;
+      document.getElementById('contenedor-resultados-entidad').classList.add('hidden');
+      document.getElementById('contenedor-entidad-seleccionada').classList.remove('hidden');
+      document.getElementById('ent-nit').innerText = 'NIT ' + ent.nit;
+      document.getElementById('ent-nombre').innerText = ent.nombre;
+      document.getElementById('ent-detalle').innerText = ent.detalle + ' • ' + ent.tipo;
+    }
+
+    function guardarPaso3() {
+      estado.area = document.getElementById('input-area')?.value.trim() || 'Subdirección de Gestión Ambiental';
+      irPaso(4);
+    }
+
+    function renderizarPaso4() {
+      const ent = estado.entidad || CATALOGO_ENTIDADES[0];
+      document.getElementById('p4-ent-nombre').innerText = ent.nombre;
+      document.getElementById('p4-ent-nit').innerText = 'NIT ' + ent.nit;
+      
+      const analisisEl = document.getElementById('p4-ent-analisis');
+      if (ent.regimen === 'MANUAL_PROPIO') {
+        if (ent.tipo.includes('Servicios Públicos') || ent.nombre.includes('Electrificadora') || ent.nombre.includes('Ceibas') || ent.nombre.includes('EPM')) {
+          analisisEl.innerHTML = '💡 <strong>Análisis Institucional:</strong> Al ser una <strong>Empresa de Servicios Públicos Domiciliarios (E.S.P.)</strong>, el Art. 31 de la Ley 142 de 1994 y Ley 143 de 1994 determinan que sus contratos se rigen por su <strong>Manual Interno de Contratación (Derecho Privado)</strong>, con observancia de los principios del Art. 209 C.P.';
+        } else if (ent.tipo.includes('Social del Estado') || ent.nombre.includes('Hospital')) {
+          analisisEl.innerHTML = '💡 <strong>Análisis Institucional:</strong> Al ser una <strong>Empresa Social del Estado (E.S.E.)</strong>, el Art. 195 de la Ley 100 de 1993 le otorga régimen contractual de Derecho Privado mediante su <strong>Manual Interno de Contratación</strong>.';
+        } else {
+          analisisEl.innerHTML = '💡 <strong>Análisis Institucional:</strong> Por su naturaleza de ' + ent.tipo + ', la normativa le faculta a contratar bajo su <strong>Manual Interno de Contratación (Derecho Privado)</strong>.';
+        }
+      } else {
+        analisisEl.innerHTML = '💡 <strong>Análisis Institucional:</strong> Al ser una ' + ent.tipo + ', sus procesos ordinarios se rigen vinculantemente por el <strong>Estatuto General de Contratación (Ley 80 / 1150)</strong>.';
+      }
+
+      seleccionarRegimenPaso4(estado.regimen || ent.regimen);
+    }
+
+    function seleccionarRegimenPaso4(reg) {
+      estado.regimen = reg;
+      const cLey = document.getElementById('card-regimen-ley80');
+      const cMan = document.getElementById('card-regimen-manual');
+      const cMul = document.getElementById('card-regimen-multilateral');
+
+      const chLey = document.getElementById('check-ley80');
+      const chMan = document.getElementById('check-manual');
+      const chMul = document.getElementById('check-multilateral');
+
+      cLey.className = 'w-full p-4 rounded-2xl border border-slate-200 bg-slate-50/60 hover:bg-white text-left cursor-pointer transition-all';
+      cMan.className = 'w-full p-4 rounded-2xl border border-slate-200 bg-slate-50/60 hover:bg-white text-left cursor-pointer transition-all';
+      cMul.className = 'w-full p-4 rounded-2xl border border-slate-200 bg-slate-50/60 hover:bg-white text-left cursor-pointer transition-all';
+
+      chLey.classList.add('hidden');
+      chMan.classList.add('hidden');
+      chMul.classList.add('hidden');
+
+      if (reg === 'LEY_80') {
+        cLey.className = 'w-full p-4 rounded-2xl border-2 border-slate-900 bg-white ring-2 ring-slate-900/10 text-left cursor-pointer transition-all';
+        chLey.classList.remove('hidden');
+      } else if (reg === 'MANUAL_PROPIO') {
+        cMan.className = 'w-full p-4 rounded-2xl border-2 border-slate-900 bg-white ring-2 ring-slate-900/10 text-left cursor-pointer transition-all';
+        chMan.classList.remove('hidden');
+      } else {
+        cMul.className = 'w-full p-4 rounded-2xl border-2 border-slate-900 bg-white ring-2 ring-slate-900/10 text-left cursor-pointer transition-all';
+        chMul.classList.remove('hidden');
+      }
+    }
+
+    function guardarPaso5() {
+      const val = document.getElementById('input-necesidad')?.value.trim();
+      if (val) estado.necesidad = val;
+      irPaso(6);
+    }
+
+    function renderizarMiradaPreventiva() {
+      const reg = estado.regimen;
+      const badge = document.getElementById('badge-preventivo-regimen');
+      const cont = document.getElementById('contenedor-alternativas-preventivas');
+      cont.innerHTML = '';
+
+      if (reg === 'MANUAL_PROPIO') {
+        badge.innerText = '🛡️ La Mirada Preventiva: Manual de Contratación Propio (Derecho Privado)';
+        estado.rutaGanadora = 'Convocatoria Pública por Manual Interno';
+        cont.innerHTML = `
+          <!-- Alternativa Manual Recomendada -->
+          <div class="p-5 rounded-3xl border-2 border-slate-900 bg-white ring-2 ring-slate-900/10 shadow-md space-y-3">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <strong class="text-sm font-black text-slate-900">Ruta Recomendada: Convocatoria Pública por Manual Interno</strong>
+                <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 ml-2">★ Recomendación Preventiva</span>
+                <p class="text-xs text-slate-500 mt-0.5">Manual Interno de la Entidad • Art. 13 Ley 1150/2007 • Art. 209 C.P.</p>
+              </div>
+              <span class="text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-xl border border-emerald-200">Ruta Óptima y Blindada</span>
+            </div>
+            <p class="text-xs text-slate-600">Apertura pública reglada bajo el manual: concurrencia amplia, transparencia y blindaje contra litigios de proveedores.</p>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2 border-t border-slate-100 text-xs">
+              <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                <span class="font-bold text-[11px] text-slate-900 block">🏛️ Cuidado Fiscal</span>
+                <p class="text-[11px] text-slate-600 mt-0.5">Cumple principios del Art. 209 C.P. Cero riesgo de favoritismo.</p>
+              </div>
+              <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                <span class="font-bold text-[11px] text-slate-900 block">⚖️ Cuidado Proponentes</span>
+                <p class="text-[11px] text-slate-600 mt-0.5">Reglas de juego claras y recepción de ofertas sin barreras arbitrarias.</p>
+              </div>
+              <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                <span class="font-bold text-[11px] text-slate-900 block">📍 Cuidado en Territorio</span>
+                <p class="text-[11px] text-slate-600 mt-0.5">Asegura soporte continuo y cumplimiento de indicadores de servicio.</p>
+              </div>
+            </div>
+          </div>
+        `;
+      } else if (reg === 'MULTILATERAL') {
+        badge.innerText = '🛡️ La Mirada Preventiva: Banca Multilateral (BID / Banco Mundial)';
+        estado.rutaGanadora = 'Comparación de Precios (Shopping Fiduciario)';
+        cont.innerHTML = `
+          <!-- Alternativa Multilateral Recomendada -->
+          <div class="p-5 rounded-3xl border-2 border-slate-900 bg-white ring-2 ring-slate-900/10 shadow-md space-y-3">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <strong class="text-sm font-black text-slate-900">Ruta Recomendada: Comparación de Precios (Shopping Fiduciario)</strong>
+                <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 ml-2">★ Recomendación Preventiva</span>
+                <p class="text-xs text-slate-500 mt-0.5">Convenio de Cooperación / Crédito • Art. 20 Ley 80 de 1993</p>
+              </div>
+              <span class="text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-xl border border-emerald-200">Ruta Óptima y Blindada</span>
+            </div>
+            <p class="text-xs text-slate-600">Procedimiento fiduciario ágil y transparente según el reglamento de adquisiciones del organismo donante/prestamista.</p>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2 border-t border-slate-100 text-xs">
+              <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                <span class="font-bold text-[11px] text-slate-900 block">🏛️ Cuidado Fiscal</span>
+                <p class="text-[11px] text-slate-600 mt-0.5">Cumple el acuerdo marco fiduciario internacional. Elegibilidad del gasto amparada.</p>
+              </div>
+              <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                <span class="font-bold text-[11px] text-slate-900 block">⚖️ Cuidado Proponentes</span>
+                <p class="text-[11px] text-slate-600 mt-0.5">Inoponibilidad de pliegos tipo locales por excepción expresa de ley.</p>
+              </div>
+              <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                <span class="font-bold text-[11px] text-slate-900 block">📍 Cuidado en Territorio</span>
+                <p class="text-[11px] text-slate-600 mt-0.5">Tiempos ágiles con revisión de no-objeción del banco.</p>
+              </div>
+            </div>
+          </div>
+        `;
+      } else {
+        badge.innerText = '🛡️ La Mirada Preventiva: Estatuto General (Ley 80 / 1150)';
+        estado.rutaGanadora = 'Menor Cuantía con Convocatoria Limitada a Mipymes';
+        cont.innerHTML = `
+          <!-- Alternativa Ley 80 Recomendada -->
+          <div class="p-5 rounded-3xl border-2 border-slate-900 bg-white ring-2 ring-slate-900/10 shadow-md space-y-3">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <strong class="text-sm font-black text-slate-900">Ruta Recomendada: Menor Cuantía con Limitación a Mipymes</strong>
+                <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 ml-2">★ Recomendación Preventiva</span>
+                <p class="text-xs text-slate-500 mt-0.5">Ley 1150/2007 Art. 2 • Ley 2069/2020 Art. 34 • Dcto 1860/2021</p>
+              </div>
+              <span class="text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-xl border border-emerald-200">Ruta Óptima y Blindada</span>
+            </div>
+            <p class="text-xs text-slate-600">Ruta blindada recomendada: amparo legal pleno, fomento regional, pondera calidad y soporte en territorio.</p>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2 border-t border-slate-100 text-xs">
+              <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                <span class="font-bold text-[11px] text-slate-900 block">🏛️ Cuidado Fiscal</span>
+                <p class="text-[11px] text-slate-600 mt-0.5">Cumple el principio de planeación integral (unidad de objeto). Cero riesgo de fraccionamiento.</p>
+              </div>
+              <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                <span class="font-bold text-[11px] text-slate-900 block">⚖️ Cuidado Proponentes</span>
+                <p class="text-[11px] text-slate-600 mt-0.5">Alta solidez procesal. La limitación formal a Mipymes ampara el proceso contra demandas.</p>
+              </div>
+              <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                <span class="font-bold text-[11px] text-slate-900 block">📍 Cuidado en Territorio</span>
+                <p class="text-[11px] text-slate-600 mt-0.5">Permite exigir soporte técnico en menos de 48h en el municipio.</p>
+              </div>
+            </div>
+          </div>
+          <!-- Alternativa A -->
+          <div class="p-4 rounded-2xl border border-slate-200 bg-slate-50/60 opacity-80 flex items-center justify-between text-xs">
+            <div>
+              <strong class="text-slate-800">Ruta Alternativa: Subasta Inversa Electrónica (CTU)</strong>
+              <p class="text-[11px] text-slate-500">Riesgo si el contratista entrega bienes sin soporte ni calibración en territorio.</p>
+            </div>
+            <span class="font-mono font-bold text-slate-500">Alternativa</span>
+          </div>
+        `;
+      }
+    }
+
+    function finalizarRefHistorica() {
+      const ref = document.getElementById('input-ref-historica')?.value.trim();
+      finalizar(ref || 'Proceso de referencia en SECOP II');
+    }
+
+    function consultarNitManual() {
+      const nit = document.getElementById('input-nit-manual')?.value.trim();
+      finalizar(nit ? `Proveedor NIT ${nit} (Verificado en RUES)` : 'PROVEEDOR REGIONAL CONSULTADO (RUES)');
+    }
+
+    const DEDUCCIONES_DEPARTAMENTALES = {
+      Huila: { depto: 'Huila', pct: 3.5, desglose: 'Pro-Cultura 1.5% + Adulto Mayor 2.0%', base: 'Ordenanza Departamental del Huila' },
+      Antioquia: { depto: 'Antioquia', pct: 3.0, desglose: 'UdeA 0.5% + Pro-Desarrollo 1.0% + Adulto Mayor 1.5%', base: 'Ordenanza 012 de la Asamblea de Antioquia' },
+      Bogota: { depto: 'Bogotá D.C.', pct: 3.5, desglose: 'Universidad Distrital 1.5% + Pro-Cultura 1.0% + Adulto Mayor 1.0%', base: 'Acuerdo Distrital 645 y Estatuto Tributario de Bogotá' },
+      Valle: { depto: 'Valle del Cauca', pct: 4.0, desglose: 'Univalle 1.5% + Pro-Cultura 1.5% + Hospitales 1.0%', base: 'Ordenanza Departamental del Valle' },
+      Atlantico: { depto: 'Atlántico', pct: 3.0, desglose: 'Pro-Cultura 1.5% + Adulto Mayor 1.5%', base: 'Estatuto Tributario Departamental del Atlántico' },
+      Santander: { depto: 'Santander', pct: 3.5, desglose: 'UIS 1.5% + Pro-Cultura 1.0% + Adulto Mayor 1.0%', base: 'Ordenanza de Santander y Acuerdo Municipal' },
+      Bolivar: { depto: 'Bolívar', pct: 3.0, desglose: 'Unicartagena 1.0% + Pro-Cultura 1.0% + Adulto Mayor 1.0%', base: 'Ordenanza Departamental de Bolívar' },
+      Cundinamarca: { depto: 'Cundinamarca', pct: 3.5, desglose: 'U. Cundinamarca 1.0% + Pro-Cultura 1.5% + Adulto Mayor 1.0%', base: 'Estatuto de Rentas de Cundinamarca' },
+      Tolima: { depto: 'Tolima', pct: 3.5, desglose: 'Pro-Universidad 1.5% + Pro-Cultura 1.0% + Adulto Mayor 1.0%', base: 'Ordenanza Departamental del Tolima' }
+    };
+
+    function obtenerEstampillasDepto(deptoNombre) {
+      const dNorm = normalizarTexto(deptoNombre);
+      for (const k of Object.keys(DEDUCCIONES_DEPARTAMENTALES)) {
+        if (dNorm.includes(normalizarTexto(k))) return DEDUCCIONES_DEPARTAMENTALES[k];
+      }
+      return { depto: deptoNombre || 'Nacional', pct: 3.0, desglose: 'Pro-Cultura 1.5% + Adulto Mayor 1.5%', base: 'Estatuto Tributario Territorial' };
+    }
+
+    function actualizarCalculoCuantiaHTML() {
+      const card = document.getElementById('card-analisis-cuantia');
+      const inputVal = document.getElementById('input-valor');
+      const valTxt = inputVal ? inputVal.value : (estado.valor || '0');
+      const valorNum = parseFloat(valTxt.replace(/\D/g, '')) || 0;
+      if (valorNum <= 0) {
+        if (card) card.classList.add('hidden');
+        return;
+      }
+      if (card) card.classList.remove('hidden');
+
+      const smmlv2026 = 1423500;
+      const smmlv = Math.round((valorNum / smmlv2026) * 10) / 10;
+      const txtSmmlv = document.getElementById('txt-smmlv-calculado');
+      if (txtSmmlv) txtSmmlv.innerText = smmlv.toLocaleString('es-CO') + ' SMMLV';
+
+      let mod = 'Selección Abreviada de Menor Cuantía';
+      let exp = `Valor (${smmlv} SMMLV) en rango de Menor Cuantía territorial (tope: 650 SMMLV). Permite limitar a Mipymes.`;
+
+      if (estado.regimen === 'MANUAL_PROPIO') {
+        mod = smmlv <= 500 ? 'Solicitud Privada de Ofertas (Manual Interno)' : 'Convocatoria Pública por Manual Interno';
+        exp = `Bajo Manual Propio (Derecho Privado), ${smmlv} SMMLV se tramitan según los rangos internos de la entidad con principios del Art. 209 C.P.`;
+      } else if (smmlv <= 65) {
+        mod = 'Mínima Cuantía (Art. 2 num. 5 Ley 1150)';
+        exp = `El valor es inferior al 10% de la menor cuantía (65 SMMLV). Procedimiento ágil: menor precio y sin RUP obligatorio.`;
+      } else if (smmlv > 650) {
+        mod = 'Licitación Pública (Art. 2 num. 1 Ley 1150)';
+        exp = `Supera el tope de Menor Cuantía (650 SMMLV). Es obligatorio adelantar Licitación Pública con pliegos tipo CCE.`;
+      }
+
+      const txtMod = document.getElementById('txt-modalidad-cuantia');
+      const txtExp = document.getElementById('txt-explicacion-cuantia');
+      if (txtMod) txtMod.innerText = mod;
+      if (txtExp) txtExp.innerText = exp;
+    }
+
+    function generarRiesgosConpesHTML(depto, obj) {
+      const dNorm = normalizarTexto(depto);
+      const oNorm = normalizarTexto(obj);
+      const riesgos = [];
+
+      if (dNorm.includes('huila') || dNorm.includes('tolima') || dNorm.includes('cauca') || dNorm.includes('antioquia') || dNorm.includes('santander') || dNorm.includes('narino')) {
+        riesgos.push({
+          tit: 'Lluvias y deslizamientos en red vial cordillerana',
+          mit: 'Suspensión concertada por fuerza mayor o ajuste en cronograma reglado de entregas.',
+          tipo: 'CLIMÁTICO • COMPARTIDO',
+          just: 'Topografía de ladera y cordillera andina en ' + depto
+        });
+      } else if (dNorm.includes('amazonas') || dNorm.includes('choco') || dNorm.includes('guainia') || dNorm.includes('vaupes') || dNorm.includes('putumayo')) {
+        riesgos.push({
+          tit: 'Variación de niveles fluviales y lluvias torrenciales',
+          mit: 'Programación de fletes fluviales según calendario hidrográfico.',
+          tipo: 'CLIMÁTICO • ENTIDAD',
+          just: 'Acceso logístico primordialmente fluvial en ' + depto
+        });
+      } else if (dNorm.includes('atlantico') || dNorm.includes('bolivar') || dNorm.includes('magdalena') || dNorm.includes('guajira') || dNorm.includes('cesar')) {
+        riesgos.push({
+          tit: 'Temperaturas extremas y salinidad en el litoral',
+          mit: 'Embalajes especiales anticorrosivos y protección térmica.',
+          tipo: 'CLIMÁTICO • CONTRATISTA',
+          just: 'Condiciones de humedad y salinidad costera en ' + depto
+        });
+      } else {
+        riesgos.push({
+          tit: 'Temporadas invernales e inundaciones en zonas de descargue',
+          mit: 'Puntos de acopio intermedio y holgura climática.',
+          tipo: 'CLIMÁTICO • COMPARTIDO',
+          just: 'Monitoreo de cuencas hidrográficas de ' + depto
+        });
+      }
+
+      riesgos.push({
+        tit: 'Sobrecostos y demoras en fletes veredales de última milla',
+        mit: 'Costeo integral del transporte rural en presupuesto oficial (Paso 8).',
+        tipo: 'LOGÍSTICA • CONTRATISTA',
+        just: 'Dispersión rural y vías terciarias en ' + depto
+      });
+
+      if (oNorm.includes('sensor') || oNorm.includes('software') || oNorm.includes('tecnolog') || oNorm.includes('computador')) {
+        riesgos.push({
+          tit: 'Variación de TRM / USD en componentes electrónicos importados',
+          mit: 'Fórmula de ajuste si la TRM fluctúa más del 15%.',
+          tipo: 'MERCADO • CONTRATISTA',
+          just: 'Componentes tecnológicos importados'
+        });
+      } else if (oNorm.includes('obra') || oNorm.includes('cemento') || oNorm.includes('vial')) {
+        riesgos.push({
+          tit: 'Aumento de precio en ACPM, acero y agregados pétreos',
+          mit: 'Acta de precios unitarios con índice DANE ICCO.',
+          tipo: 'MERCADO • COMPARTIDO',
+          just: 'Costos del sector infraestructura'
+        });
+      }
+
+      return riesgos;
+    }
+
+    function renderizarPaso8() {
+      const depto = estado.entidad?.departamento || (estado.entidad?.detalle ? estado.entidad.detalle.split('(')[1]?.replace(')', '') : 'Huila') || 'Huila';
+      const confEst = obtenerEstampillasDepto(depto);
+      
+      const inpEst = document.getElementById('input-pct-estampillas');
+      if (inpEst) inpEst.value = confEst.pct;
+      const lblEst = document.getElementById('label-pct-estampillas');
+      if (lblEst) lblEst.innerText = `% Estampillas (Sugerido ${confEst.depto}: ${confEst.pct}%):`;
+      const txtLegal = document.getElementById('txt-base-legal-estampillas');
+      if (txtLegal) txtLegal.innerText = `${confEst.desglose} • ${confEst.base}`;
+      actualizarCalculoEstampillasHTML();
+
+      // Renderizar Proveedores Dinámicos
+      renderizarProveedoresDinamicos(generarProveedoresSectorialesHTML(estado.necesidad || 'suministro', depto));
+
+      // Renderizar Riesgos CONPES Dinámicos
+      const contRiesgos = document.getElementById('contenedor-riesgos-conpes-dinamicos');
+      if (contRiesgos) {
+        const riesgos = generarRiesgosConpesHTML(depto, estado.necesidad || '');
+        contRiesgos.innerHTML = riesgos.map(r => `
+          <div class="p-2 rounded-xl bg-slate-50 border border-slate-200 text-[11px] space-y-0.5">
+            <div class="flex items-center justify-between">
+              <strong class="text-slate-900 font-bold">${r.tit}</strong>
+              <span class="font-mono text-[9px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 font-bold">${r.tipo}</span>
+            </div>
+            <p class="text-slate-600">🛡️ Mitigación: ${r.mit}</p>
+            <span class="text-[10px] text-slate-400 block font-mono">📍 ${r.just}</span>
+          </div>
+        `).join('');
+      }
+    }
+
+    function generarProveedoresSectorialesHTML(termino, depto) {
+      const tNorm = normalizarTexto(termino);
+      const dLimpio = depto || 'Territorial';
+      const provs = [];
+
+      if (tNorm.includes('sensor') || tNorm.includes('software') || tNorm.includes('computador') || tNorm.includes('tecnolog') || tNorm.includes('camara')) {
+        provs.push({
+          nombre: `SOLUCIONES TECNOLÓGICAS DE ${dLimpio.toUpperCase()} S.A.S. (BIC)`,
+          nit: '901.458.712-4',
+          sector: 'Tecnología, Telecomunicaciones y Monitoreo Electrónico',
+          beneficio: 'Sociedad BIC • RUP Activo • Prioridad Mipyme Ley 2069/2020',
+          origen: '⚡ Inferencia Sectorial'
+        });
+        provs.push({
+          nombre: `INTEGRADORES ANDINOS DE COLOMBIA LTDA.`,
+          nit: '800.198.423-1',
+          sector: 'Sistemas Informáticos, Redes y Sensores Ambientales',
+          beneficio: 'Inscrito en RUP • Capacidad técnica y financiera certificada',
+          origen: '⚡ Inferencia Sectorial'
+        });
+      } else if (tNorm.includes('obra') || tNorm.includes('construccion') || tNorm.includes('vial') || tNorm.includes('infraestructura')) {
+        provs.push({
+          nombre: `CONSORCIO DE INFRAESTRUCTURA Y VÍAS DE ${dLimpio.toUpperCase()}`,
+          nit: '901.782.341-9',
+          sector: 'Construcción de Obras Civiles y Mantenimiento Vial',
+          beneficio: 'RUP Vigente con K de contratación superior a 5.000 SMMLV',
+          origen: '⚡ Inferencia Sectorial'
+        });
+      } else {
+        provs.push({
+          nombre: `SUMINISTROS INTEGRALES Y LOGÍSTICA DE ${dLimpio.toUpperCase()} S.A.S.`,
+          nit: '900.892.411-3',
+          sector: 'Dotación, Suministros Generales y Operación Logística',
+          beneficio: 'Proveedor Calificado en RUP • Empresa Formal de la Región',
+          origen: '⚡ Inferencia Sectorial'
+        });
+      }
+
+      return provs;
+    }
+
+    function renderizarProveedoresDinamicos(lista) {
+      const cont = document.getElementById('contenedor-proveedores-dinamicos');
+      if (!cont) return;
+      cont.innerHTML = lista.map(p => `
+        <div class="p-4 rounded-2xl border border-slate-200 bg-slate-50/60 space-y-2">
+          <div class="flex justify-between items-center gap-2">
+            <strong class="text-xs font-black text-slate-900">${p.nombre}</strong>
+            <div class="flex items-center gap-1.5 shrink-0">
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded font-bold border ${p.origen.includes('SECOP') ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-slate-100 text-slate-700 border-slate-200'}">${p.origen}</span>
+              <span class="text-[10px] font-mono text-slate-500 bg-white px-2 py-0.5 rounded border border-slate-200 font-bold">NIT ${p.nit}</span>
+            </div>
+          </div>
+          <p class="text-[11px] text-slate-600">${p.sector}</p>
+          <span class="text-[10px] font-mono text-emerald-700 block font-bold">${p.beneficio}</span>
+          ${p.refSecop ? `<p class="text-[10px] font-mono text-slate-500 bg-white p-1.5 rounded border border-slate-200">📋 SECOP Ref: ${p.refSecop}</p>` : ''}
+          <button onclick="finalizar('${p.nombre}')" class="w-full py-2.5 bg-slate-900 text-white rounded-xl text-xs font-black cursor-pointer hover:bg-slate-800 mt-1">
+            Solicitar cotización / vincular este proveedor →
+          </button>
+        </div>
+      `).join('');
+    }
+
+    async function consultarProveedoresSecopEnVivoHTML() {
+      const cont = document.getElementById('contenedor-proveedores-dinamicos');
+      if (!cont) return;
+      cont.innerHTML = '<div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-center text-xs text-slate-500 font-bold animate-pulse">🌐 Consultando proveedores adjudicados en SECOP II...</div>';
+      
+      const depto = estado.entidad?.departamento || 'Huila';
+      const termino = estado.necesidad || 'suministro';
+      try {
+        const qEnc = encodeURIComponent(termino.trim().slice(0, 15));
+        const url = `https://www.datos.gov.co/resource/jbjy-vk9h.json?$select=proveedor_adjudicado, documento_proveedor, valor_del_contrato, id_del_portafolio&$where=upper(descripcion_del_proceso) like upper('%${qEnc}%') and proveedor_adjudicado is not null&$limit=4`;
+        const res = await fetch(url, { headers: { Accept: 'application/json' } });
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            const proveedoresSecop = data.map(d => ({
+              nombre: (d.proveedor_adjudicado || 'PROVEEDOR ADJUDICADO EN SECOP').toUpperCase(),
+              nit: d.documento_proveedor || 'En verificación',
+              sector: 'Contratista con antecedentes de adjudicación en SECOP II',
+              beneficio: 'Experiencia contractual comprobada en SECOP II',
+              refSecop: `${d.id_del_portafolio || 'SECOP II'} | $${parseInt(d.valor_del_contrato || '0').toLocaleString('es-CO')} COP`,
+              origen: '🌐 SECOP II en Vivo'
+            }));
+            renderizarProveedoresDinamicos(proveedoresSecop);
+            return;
+          }
+        }
+      } catch (e) {
+        // Fallback a inferidos
+      }
+      renderizarProveedoresDinamicos(generarProveedoresSectorialesHTML(termino, depto));
+    }
+
+    function actualizarCalculoEstampillasHTML() {
+      const pct = parseFloat(document.getElementById('input-pct-estampillas')?.value || '3.5') || 3.5;
+      const flete = parseFloat(document.getElementById('input-flete-veredal')?.value || '5000000') || 5000000;
+      const base = parseFloat((estado.valor || '420000000').replace(/\D/g, '')) || 420000000;
+      const ded = Math.round(base * (pct / 100));
+      const txtEst = document.getElementById('txt-calc-estampillas');
+      const txtFle = document.getElementById('txt-calc-flete');
+      if (txtEst) txtEst.innerText = `- $${ded.toLocaleString('es-CO')} COP`;
+      if (txtFle) txtFle.innerText = `+ $${flete.toLocaleString('es-CO')} COP`;
+    }
+
+    function finalizarConEstampillas() {
+      const pct = document.getElementById('input-pct-estampillas')?.value || '3.5';
+      const flete = document.getElementById('input-flete-veredal')?.value || '5000000';
+      finalizar(`Costeo Integral Realista (Estampillas: ${pct}% • Flete veredal: $${parseInt(flete).toLocaleString('es-CO')} COP)`);
+    }
+
+    function finalizar(prov) {
+      estado.proveedor = prov;
+      document.getElementById('res-autor').innerText = (estado.nombre || 'Carmelo') + ' (' + (estado.cargo || 'Funcionario') + ')';
+      document.getElementById('res-entidad').innerText = estado.entidad ? (estado.entidad.nombre + ' (NIT ' + estado.entidad.nit + ')') : 'Corporación Autónoma Regional del Alto Magdalena (CAM)';
+      document.getElementById('res-area').innerText = estado.area || 'Subdirección de Gestión Ambiental';
+      document.getElementById('res-regimen').innerText = estado.regimen === 'MANUAL_PROPIO' ? 'Manual de Contratación Propio (Régimen Especial - Derecho Privado)' : estado.regimen === 'MULTILATERAL' ? 'Banca Multilateral / Convenio Internacional' : 'Estatuto General (Ley 80 / 1150)';
+      document.getElementById('res-ruta').innerText = estado.rutaGanadora;
+      document.getElementById('res-score').innerText = 'Ruta Óptima y Blindada';
+      document.getElementById('res-objeto').innerText = estado.necesidad || 'Suministro e instalación de sensores y equipos de monitoreo ambiental';
+      
+      if (estado.cdp) {
+        document.getElementById('res-valor').innerText = 'CDP N° ' + estado.cdp + ' ($' + (estado.valor || '420.000.000') + ' COP)';
+      } else if (estado.valor) {
+        document.getElementById('res-valor').innerText = 'Valor estimado: $' + estado.valor + ' COP (CDP pendiente formal)';
+      } else {
+        document.getElementById('res-valor').innerText = 'Estructurando sin CDP previo (anexar antes de radicar)';
+      }
+
+      document.getElementById('res-mercado').innerText = estado.proveedor;
+      irPaso(9);
+    }
+
+    function renderizarPaso10() {
+      const ent = estado.entidad || { nombre: 'Entidad Estatal Oficial', nit: '891.180.000-1' };
+      const nitCorto = ent.nit ? ent.nit.replace(/\D/g, '').slice(0, 4) : '2026';
+      const idEl = document.getElementById('secop-id-proceso');
+      if (idEl) idEl.innerText = `ID: CO1.BDOS.${nitCorto}.${estado.cdp || '2026'}`;
+      const pBadge = document.getElementById('secop-presupuesto-badge');
+      if (pBadge) pBadge.innerText = `Presupuesto: $${(estado.valor || '420.000.000')} COP`;
+      const entNom = document.getElementById('secop-entidad-nombre');
+      if (entNom) entNom.innerText = ent.nombre;
+      const objTxt = document.getElementById('secop-objeto-txt');
+      if (objTxt) objTxt.innerText = 'Objeto: ' + (estado.necesidad || 'Suministro e instalación requeridos para el cumplimiento misional.');
+      const subMeta = document.getElementById('secop-subtitulo-meta');
+      if (subMeta) subMeta.innerText = `Modalidad: ${estado.rutaGanadora || 'Menor Cuantía'} • Responsable: ${estado.nombre || 'Carmelo'} (${estado.cargo || 'Funcionario'})`;
+
+      const resEnt = document.getElementById('secop-res-entidad');
+      if (resEnt) resEnt.innerText = ent.nombre;
+      const resOrd = document.getElementById('secop-res-ordenador');
+      if (resOrd) resOrd.innerText = `${estado.nombre || 'Carmelo'} (${estado.cargo || 'Director de Contratación'})`;
+
+      // Reiniciar visibilidad de subsecciones
+      document.getElementById('secop-seccion-observaciones')?.classList.remove('hidden');
+      document.getElementById('secop-seccion-sobres')?.classList.add('hidden');
+      document.getElementById('secop-seccion-evaluacion')?.classList.add('hidden');
+      document.getElementById('secop-seccion-adjudicacion')?.classList.add('hidden');
+
+      renderCatalogoIncidentesHTML();
+      renderIncidenteActivoHTML();
+      actualizarTablaEvaluacionHTML();
+
+      marcarPasoSecop(1);
+    }
+
+    function marcarPasoSecop(pasoNum) {
+      for (let i = 1; i <= 4; i++) {
+        const el = document.getElementById('fase-step-' + i);
+        if (!el) continue;
+        if (i <= pasoNum) {
+          el.className = 'p-2 rounded-xl text-center border bg-emerald-500/20 text-emerald-300 border-emerald-500/40 font-bold';
+        } else {
+          el.className = 'p-2 rounded-xl text-center border bg-slate-800/60 text-slate-400 border-slate-700';
+        }
+      }
+    }
+
+    function publicarAdendaSecopHTML() {
+      document.getElementById('secop-seccion-observaciones')?.classList.add('hidden');
+      document.getElementById('secop-seccion-sobres')?.classList.remove('hidden');
+      marcarPasoSecop(2);
+    }
+
+    function desencriptarSobresSecopHTML() {
+      document.getElementById('secop-seccion-sobres')?.classList.add('hidden');
+      document.getElementById('secop-seccion-evaluacion')?.classList.remove('hidden');
+      marcarPasoSecop(3);
+    }
+
+    function adjudicarProcesoSecopHTML() {
+      document.getElementById('secop-seccion-evaluacion')?.classList.add('hidden');
+      document.getElementById('secop-seccion-adjudicacion')?.classList.remove('hidden');
+      marcarPasoSecop(4);
+    }
+
+    function simularDescarga() {
+      const btn = document.getElementById('btn-descarga-texto');
+      btn.innerText = 'Generando Estudios Previos con Cláusulas de Blindaje...';
+      setTimeout(() => {
+        btn.innerText = '✓ ¡Documento Word Generado Exitosamente!';
+        setTimeout(() => {
+          btn.innerText = 'Descargar Estudios Previos Blindados (.docx)';
+        }, 3000);
+      }, 1200);
+    }
+
+    function empezarDeNuevo() {
+      estado = {
+        paso: 1,
+        rol: 'COMPRO',
+        situacion: 'NUEVO_ORDINARIO',
+        nombre: '',
+        cargo: '',
+        entidad: null,
+        area: '',
+        regimen: 'LEY_80',
+        necesidad: '',
+        cdp: '',
+        valor: '',
+        proveedor: '',
+        rutaGanadora: 'Menor Cuantía con Convocatoria Limitada a Mipymes',
+        scoreRuta: 'Ruta Óptima y Blindada'
+      };
+      document.getElementById('input-nombre').value = '';
+      document.getElementById('input-cargo').value = '';
+      document.getElementById('input-busqueda-entidad').value = '';
+      document.getElementById('input-area').value = '';
+      document.getElementById('input-necesidad').value = '';
+      document.getElementById('input-cdp').value = '';
+      document.getElementById('input-valor').value = '';
+      document.getElementById('box-brujula-entrada').classList.add('hidden');
+      incidenteSecopActivo = 'FLUJO_LIMPIO_ORDINARIO';
+      dilemaSecopEleccion = null;
+      renderIncidenteActivoHTML();
+      actualizarTablaEvaluacionHTML();
+      irPaso(1);
+    }
+
+    // ----------------------------------------------------
+    // INYECTOR DE CONTINGENCIAS Y RAREZAS EN SECOP II
+    // ----------------------------------------------------
+    const INCIDENTES_SECOP = {
+      FLUJO_LIMPIO_ORDINARIO: {
+        id: 'FLUJO_LIMPIO_ORDINARIO',
+        tituloHumano: '1. Proceso Ordinario Limpio (Flujo Ideal)',
+        etapaOcurrencia: 'AUDIENCIA DE ADJUDICACIÓN',
+        icono: '✨',
+        resumenHecho: 'El proceso transcurre sin caídas de plataforma, sin reclamaciones temerarias y con pluralidad de oferentes habilitados.',
+        dilemaServidor: 'Verificar minuciosamente la matriz de evaluación y adjudicar a la mejor propuesta objetiva.',
+        errorComunFatal: 'Creer que siempre habrá controversia y dilatar innecesariamente la adjudicación.',
+        protocoloLegalCorrecto: 'Expedir el informe definitivo, correr traslado legal y emitir resolución motivada de adjudicación.',
+        normativaYJurisprudencia: 'Art. 2 Ley 1150 de 2007 • Principio de Selección Objetiva Art. 29 Ley 80 de 1993.',
+        consecuenciaProcesal: 'Adjudicación exitosa y paso a Registro Presupuestal (RP) y firma electrónica.'
+      },
+      CAIDA_PLATAFORMA_INDISPONIBILIDAD: {
+        id: 'CAIDA_PLATAFORMA_INDISPONIBILIDAD',
+        tituloHumano: '2. Caída de SECOP II en Cierre (Protocolo de Indisponibilidad)',
+        etapaOcurrencia: 'CIERRE DE OFERTAS',
+        icono: '⚡',
+        resumenHecho: 'A las 09:42 AM (el cierre es a las 10:00 AM), el servidor de SECOP II colapsa arrojando Error 500 y timeout a los oferentes.',
+        dilemaServidor: '¿Cierro el proceso con la única oferta que subió temprano o recibo las demás por correo?',
+        errorComunFatal: 'Cerrar el proceso ignorando las quejas de los proponentes, generando nulidad absoluta por violar la libre concurrencia.',
+        protocoloLegalCorrecto: 'Validar si la falla ocurrió en las 4 horas previas. Exigir radicado de Mesa de Ayuda de CCE y correo previo al cierre. Esperar Certificado de Indisponibilidad de CCE y permitir radicación por correo dentro de las 48 horas siguientes.',
+        normativaYJurisprudencia: 'Protocolo Oficial de Indisponibilidad de Colombia Compra Eficiente • Circulares Externas SECOP II.',
+        consecuenciaProcesal: 'Recepción subsidiaria por correo electrónico oficial y prórroga reglada del cronograma.'
+      },
+      PRECIO_ARTIFICIALMENTE_BAJO: {
+        id: 'PRECIO_ARTIFICIALMENTE_BAJO',
+        tituloHumano: '3. Alerta de Precio Artificialmente Bajo (-55%)',
+        etapaOcurrencia: 'EVALUACIÓN',
+        icono: '📉',
+        resumenHecho: 'Con presupuesto de $420M, un proponente oferta $189M. El comité evaluador sospecha que no podrá ejecutar o dejará la obra botada.',
+        dilemaServidor: '¿Lo rechazo de inmediato por ser muy barato o tengo que aceptarlo porque es la oferta más económica?',
+        errorComunFatal: 'Rechazarlo automáticamente sin requerimiento previo. CCE y el Consejo de Estado prohíben el rechazo sumario.',
+        protocoloLegalCorrecto: 'Emitir requerimiento formal por escrito pidiendo justificación de APU y estructura de costos. Si demuestra que cubre salarios mínimos legales, insumos y fletes, se valida. Si no sustenta o no cubre costos de ley, se rechaza motivadamente.',
+        normativaYJurisprudencia: 'Art. 2.2.1.1.2.2.4 Decreto 1082 de 2015 • Guía de Precios Artificialmente Bajos CCE.',
+        consecuenciaProcesal: 'Requerimiento contradictorio obligatorio antes de cualquier decisión de descalificación.'
+      },
+      POLIZA_EXTEMPORANEA_LEY_1882: {
+        id: 'POLIZA_EXTEMPORANEA_LEY_1882',
+        tituloHumano: '4. Póliza Fechada Después del Cierre (Trampa de Subsanabilidad)',
+        etapaOcurrencia: 'TRASLADO',
+        icono: '🛑',
+        resumenHecho: 'El cierre fue a las 10:00 AM. El oferente adjuntó carátula de póliza expedida por la aseguradora a las 11:30 AM.',
+        dilemaServidor: 'El contratista argumenta que la Ley 1882 permite subsanar requisitos habilitantes y que la póliza no da puntaje.',
+        errorComunFatal: 'Aceptar la póliza con fecha posterior creyendo que es subsanable, violando la prohibición legal expresa.',
+        protocoloLegalCorrecto: 'La Ley 1882 prohíbe acreditar circunstancias posteriores al cierre y consagra expresamente que la no entrega de la garantía junto con la oferta es insubsanable. RECHAZO AUTOMÁTICO.',
+        normativaYJurisprudencia: 'Artículo 5 Ley 1882 de 2018 • Sentencias de Unificación Consejo de Estado Sección Tercera.',
+        consecuenciaProcesal: 'Rechazo definitivo de la propuesta sin posibilidad de subsanación.'
+      },
+      COLUSION_MISMA_IP_METADATOS: {
+        id: 'COLUSION_MISMA_IP_METADATOS',
+        tituloHumano: '5. Indicios Graves de Colusión y Cartelización Digital',
+        etapaOcurrencia: 'EVALUACIÓN',
+        icono: '🕵️',
+        resumenHecho: 'Dos consorcios supuestamente rivales radicaron en SECOP II desde la misma IP pública y sus PDFs tienen los mismos metadatos y erratas.',
+        dilemaServidor: '¿Finjo que no me di cuenta porque no soy juez penal o tomo acciones en el proceso?',
+        errorComunFatal: 'Adjudicar al consorcio colusorio configurando posible complicidad en el delito de colusión en contratación.',
+        protocoloLegalCorrecto: 'Evaluar la pérdida de independencia y pluralidad de oferentes para rechazar las ofertas colusorias. Compulsa de copias inmediata con trazabilidad digital a la Superintendencia de Industria y Comercio (SIC) y Fiscalía General de la Nación.',
+        normativaYJurisprudencia: 'Art. 410A Código Penal • Art. 47 num. 9 Decreto 2153 de 1992 • Guía SIC de Licitaciones Colusorias.',
+        consecuenciaProcesal: 'Rechazo por violación a la selección objetiva y apertura de investigación sancionatoria en la SIC.'
+      },
+      EMPATE_CASCADA_LEY_2069: {
+        id: 'EMPATE_CASCADA_LEY_2069',
+        tituloHumano: '6. Empate Técnico Absoluto a 100 Puntos (Cascada Ley 2069)',
+        etapaOcurrencia: 'AUDIENCIA DE ADJUDICACIÓN',
+        icono: '🎯',
+        resumenHecho: 'Dos proponentes obtienen 100.00 puntos matemáticos perfectos. Ambos reclaman ser los adjudicatarios legítimos.',
+        dilemaServidor: '¿Tiro una moneda al aire o adjudico al que radicó primero?',
+        errorComunFatal: 'Hacer un sorteo de inmediato sin agotar los criterios obligatorios de desempate fijados por el Congreso.',
+        protocoloLegalCorrecto: 'Aplicar la cascada del Art. 35 Ley 2069: 1. Bienes nacionales, 2. Mipyme, 3. Mujeres, 4. Empleo a personas con discapacidad (Dcto 392), 5. Sociedad BIC. Si persiste el empate tras el paso 7, sorteo por balotas en audiencia pública.',
+        normativaYJurisprudencia: 'Artículo 35 Ley 2069 de 2020 • Decreto 1860 de 2021 • Decreto 392 de 2018.',
+        consecuenciaProcesal: 'Desempate reglado por preferencia legal, evitando demandas de nulidad del proponente no favorecido.'
+      },
+      TUTELA_MEDIDA_CAUTELAR_SUSPENSION: {
+        id: 'TUTELA_MEDIDA_CAUTELAR_SUSPENSION',
+        tituloHumano: '7. Medida Cautelar de Tutela 15 Minutos antes de Adjudicar',
+        etapaOcurrencia: 'AUDIENCIA DE ADJUDICACIÓN',
+        icono: '⚖️',
+        resumenHecho: 'A las 09:45 AM, un juzgado notifica auto admisorio de tutela de un oferente descalificado ordenando la suspensión preventiva del proceso.',
+        dilemaServidor: '¿Adjudico rápido antes de que se enteren o acato la orden del juez y congelo el proceso?',
+        errorComunFatal: 'Adjudicar ignorando la medida cautelar. Incurre en Fraude a Resolución Judicial (Art. 454 C.P.) y arresto por desacato.',
+        protocoloLegalCorrecto: 'Suspender inmediatamente la audiencia en el estado en que se encuentre. Levantar acta en SECOP II y remitir informe al juzgado rindiendo descargos sobre la legalidad de la evaluación.',
+        normativaYJurisprudencia: 'Decreto 2591 de 1991 • Artículo 454 Código Penal (Fraude a Resolución Judicial).',
+        consecuenciaProcesal: 'Suspensión procesal obligatoria hasta que el juez constitucional falle o levante la medida cautelar.'
+      },
+      INHABILIDAD_SOBREVINIENTE_SIBOR: {
+        id: 'INHABILIDAD_SOBREVINIENTE_SIBOR',
+        tituloHumano: '8. Inhabilidad Sobreviniente en SIBOR de Contraloría',
+        etapaOcurrencia: 'AUDIENCIA DE ADJUDICACIÓN',
+        icono: '🚫',
+        resumenHecho: 'El oferente 1° en orden de elegibilidad amaneció reportado con fallo de responsabilidad fiscal en el Boletín de la Contraloría (SIBOR).',
+        dilemaServidor: '¿Le adjudico porque cuando cerró el proceso no estaba inhabilitado o tengo que rechazarlo?',
+        errorComunFatal: 'Adjudicar argumentando que el reporte fue posterior al cierre. El contrato estatal no puede celebrarse con inhabilitados.',
+        protocoloLegalCorrecto: 'Verificar la firmeza del reporte en el SIBOR. Descartar al inhabilitado por imposibilidad legal sobreviniente y adjudicar al segundo calificado en el orden de elegibilidad.',
+        normativaYJurisprudencia: 'Artículos 8 y 9 Ley 80 de 1993 • Ley 610 de 2000 (Responsabilidad Fiscal).',
+        consecuenciaProcesal: 'Paso al segundo elegible y notificación formal de la inhabilidad sobreviniente.'
+      },
+      PROPONENTE_UNICO_HABILITADO: {
+        id: 'PROPONENTE_UNICO_HABILITADO',
+        tituloHumano: '9. Proponente Único Habilitado (Temor a Declarar Desierta)',
+        etapaOcurrencia: 'AUDIENCIA DE ADJUDICACIÓN',
+        icono: '👤',
+        resumenHecho: 'Solo un proponente presentó oferta o solo uno resultó habilitado tras el informe de evaluación.',
+        dilemaServidor: '¿Declaro desierto el proceso por falta de pluralidad o puedo adjudicarle válidamente?',
+        errorComunFatal: 'Declarar desierta la licitación por el simple hecho de haber un solo oferente. Esto genera demanda por lucro cesante y daño patrimonial.',
+        protocoloLegalCorrecto: 'La Ley 1150 permite expresamente adjudicar a la oferta única si esta cumple plenamente los pliegos de condiciones y el presupuesto oficial. No se requiere pluralidad mínima para adjudicar.',
+        normativaYJurisprudencia: 'Artículo 2 numeral 1 Ley 1150 de 2007 • Jurisprudencia reiterada Consejo de Estado.',
+        consecuenciaProcesal: 'Adjudicación legítima y vinculante al único oferente calificado.'
+      }
+    };
+
+    let incidenteSecopActivo = 'FLUJO_LIMPIO_ORDINARIO';
+    let dilemaSecopEleccion = null;
+    let catalogoIncidentesAbierto = false;
+
+    function toggleCatalogoIncidentesHTML() {
+      catalogoIncidentesAbierto = !catalogoIncidentesAbierto;
+      const grid = document.getElementById('grid-selector-incidentes');
+      const lbl = document.getElementById('btn-catalogo-incidentes-lbl');
+      const icon = document.getElementById('btn-catalogo-incidentes-icon');
+      if (grid) {
+        if (catalogoIncidentesAbierto) {
+          grid.classList.remove('hidden');
+          lbl.innerText = 'Ocultar Catálogo';
+          icon.innerText = '▲';
+        } else {
+          grid.classList.add('hidden');
+          lbl.innerText = 'Cambiar Escenario';
+          icon.innerText = '▼';
+        }
+      }
+    }
+
+    function renderCatalogoIncidentesHTML() {
+      const grid = document.getElementById('grid-selector-incidentes');
+      if (!grid) return;
+      grid.innerHTML = Object.values(INCIDENTES_SECOP).map(inc => {
+        const sel = incidenteSecopActivo === inc.id;
+        return `
+          <button
+            type="button"
+            onclick="seleccionarIncidenteHTML('${inc.id}')"
+            class="p-2.5 rounded-2xl text-left border transition-all cursor-pointer flex items-start gap-2.5 ${
+              sel ? 'bg-indigo-600 text-white border-indigo-700 shadow-sm' : 'bg-white hover:bg-indigo-50/50 text-slate-700 border-slate-200'
+            }"
+          >
+            <span class="text-base shrink-0 mt-0.5">${inc.icono}</span>
+            <div class="min-w-0">
+              <p class="text-xs font-bold leading-tight ${sel ? 'text-white' : 'text-slate-900'}">${inc.tituloHumano}</p>
+              <span class="text-[10px] font-mono block mt-0.5 ${sel ? 'text-indigo-200' : 'text-slate-400'}">Etapa: ${inc.etapaOcurrencia}</span>
+            </div>
+          </button>
+        `;
+      }).join('');
+    }
+
+    function seleccionarIncidenteHTML(id) {
+      incidenteSecopActivo = id;
+      dilemaSecopEleccion = null;
+      renderCatalogoIncidentesHTML();
+      renderIncidenteActivoHTML();
+      actualizarTablaEvaluacionHTML();
+      actualizarResolucionAdjudicacionHTML();
+    }
+
+    function renderIncidenteActivoHTML() {
+      const contenedor = document.getElementById('tarjeta-incidente-activo');
+      if (!contenedor) return;
+      const inc = INCIDENTES_SECOP[incidenteSecopActivo] || INCIDENTES_SECOP.FLUJO_LIMPIO_ORDINARIO;
+
+      let htmlDilemaOpciones = '';
+      if (inc.id !== 'FLUJO_LIMPIO_ORDINARIO') {
+        htmlDilemaOpciones = `
+          <div class="space-y-2 pt-1">
+            <span class="text-[11px] font-bold text-slate-700 block">¿Qué decisión adoptas como Ordenador del Gasto o Evaluador?</span>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button
+                type="button"
+                onclick="elegirDilemaHTML('TRAMPA')"
+                class="p-3 rounded-xl text-left border transition-all cursor-pointer space-y-1 ${
+                  dilemaSecopEleccion === 'TRAMPA' ? 'bg-rose-50 border-rose-300 ring-2 ring-rose-400/20' : 'bg-white hover:bg-slate-50 border-slate-200'
+                }"
+              >
+                <div class="flex items-center gap-1.5 text-rose-700 font-bold text-xs">
+                  <span>⚠️</span>
+                  <span>Opción A: Decisión Intuitiva Rápida</span>
+                </div>
+                <p class="text-[11px] text-slate-600 leading-snug">${inc.errorComunFatal.slice(0, 85)}...</p>
+              </button>
+
+              <button
+                type="button"
+                onclick="elegirDilemaHTML('BLINDAJE')"
+                class="p-3 rounded-xl text-left border transition-all cursor-pointer space-y-1 ${
+                  dilemaSecopEleccion === 'BLINDAJE' ? 'bg-emerald-50 border-emerald-300 ring-2 ring-emerald-400/20' : 'bg-white hover:bg-slate-50 border-slate-200'
+                }"
+              >
+                <div class="flex items-center gap-1.5 text-emerald-700 font-bold text-xs">
+                  <span>🛡️</span>
+                  <span>Opción B: Protocolo de Blindaje Legal</span>
+                </div>
+                <p class="text-[11px] text-slate-600 leading-snug">${inc.protocoloLegalCorrecto.slice(0, 85)}...</p>
+              </button>
+            </div>
+          </div>
+        `;
+      }
+
+      let htmlFeedback = '';
+      if (dilemaSecopEleccion === 'TRAMPA') {
+        htmlFeedback = `
+          <div class="p-4 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-900 space-y-2">
+            <div class="flex items-center gap-2 font-black text-rose-800">
+              <span>💥 ERROR FATAL FRECUENTE DETECTADO</span>
+            </div>
+            <p class="leading-relaxed"><strong>Consecuencia: </strong>${inc.errorComunFatal}</p>
+            <div class="text-[11px] bg-white/70 p-2.5 rounded-lg border border-rose-200 text-rose-800 font-medium">
+              <strong>Peligro Jurídico:</strong> Esta actuación genera nulidad del acto de adjudicación, investigaciones disciplinarias en Procuraduría por violación a la selección objetiva, y condena de reparación patrimonial en el Tribunal Administrativo.
+            </div>
+            <button
+              type="button"
+              onclick="elegirDilemaHTML('BLINDAJE')"
+              class="mt-1 text-[11px] font-bold text-emerald-700 hover:text-emerald-800 underline cursor-pointer"
+            >
+              ← Corregir y aplicar el protocolo de blindaje legal recomendado
+            </button>
+          </div>
+        `;
+      } else if (dilemaSecopEleccion === 'BLINDAJE') {
+        htmlFeedback = `
+          <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-950 space-y-2">
+            <div class="flex items-center gap-2 font-black text-emerald-800">
+              <span>🛡️ ¡EXCELENTE DECISIÓN! PROCEDIMIENTO 100% BLINDADO</span>
+            </div>
+            <p class="leading-relaxed text-emerald-900"><strong>Protocolo Correcto: </strong>${inc.protocoloLegalCorrecto}</p>
+            <div class="p-2.5 rounded-lg bg-white/80 border border-emerald-200 space-y-1 text-[11px]">
+              <div class="text-emerald-900 font-bold">Fundamento Legal y Jurisprudencial:</div>
+              <div class="font-mono text-emerald-800">${inc.normativaYJurisprudencia}</div>
+              <div class="text-slate-600 pt-1"><strong>Efecto en la Simulación:</strong> ${inc.consecuenciaProcesal}</div>
+            </div>
+          </div>
+        `;
+      }
+
+      contenedor.innerHTML = `
+        <div class="p-4 rounded-2xl bg-white border border-indigo-100 shadow-sm space-y-3">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="text-xl">${inc.icono}</span>
+              <div>
+                <strong class="text-xs font-black text-slate-900 block">${inc.tituloHumano}</strong>
+                <span class="text-[10px] font-mono text-slate-400">Ocurrencia: ${inc.etapaOcurrencia}</span>
+              </div>
+            </div>
+            ${inc.id !== 'FLUJO_LIMPIO_ORDINARIO' ? `
+              <button
+                type="button"
+                onclick="seleccionarIncidenteHTML('FLUJO_LIMPIO_ORDINARIO')"
+                class="text-[10px] font-bold text-slate-400 hover:text-slate-600 underline cursor-pointer"
+              >
+                Restablecer a Flujo Ideal
+              </button>
+            ` : ''}
+          </div>
+
+          <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-700 space-y-1">
+            <div class="flex items-center gap-1.5 font-bold text-slate-900">
+              <span>⚠️ El Hecho Procesal en SECOP II:</span>
+            </div>
+            <p class="leading-relaxed text-slate-600">${inc.resumenHecho}</p>
+          </div>
+
+          <div class="p-3 rounded-xl bg-amber-50/70 border border-amber-200/80 text-xs text-amber-900 space-y-1">
+            <strong>⚖️ Dilema del Servidor y Comité de Contratación:</strong>
+            <p class="text-amber-800 leading-snug">${inc.dilemaServidor}</p>
+          </div>
+
+          ${htmlDilemaOpciones}
+          ${htmlFeedback}
+        </div>
+      `;
+    }
+
+    function elegirDilemaHTML(tipo) {
+      dilemaSecopEleccion = tipo;
+      renderIncidenteActivoHTML();
+      actualizarTablaEvaluacionHTML();
+      actualizarResolucionAdjudicacionHTML();
+    }
+
+    function actualizarTablaEvaluacionHTML() {
+      const tbody = document.getElementById('secop-tabla-evaluacion-body');
+      if (!tbody) return;
+
+      if (incidenteSecopActivo === 'PROPONENTE_UNICO_HABILITADO') {
+        tbody.innerHTML = `
+          <tr class="bg-emerald-50/60 font-medium">
+            <td class="py-3 font-bold text-slate-900">1. SOLUCIONES TERRITORIALES S.A.S. (BIC)<span class="text-[10px] text-emerald-700 block font-normal">Proponente Único Habilitado • Pliegos 100% Cumplidos</span></td>
+            <td class="py-3 font-mono text-slate-700">$395.000.000</td>
+            <td class="py-3"><span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">CUMPLE</span></td>
+            <td class="py-3 font-mono">60.00 pts</td>
+            <td class="py-3 font-mono">40.00 pts</td>
+            <td class="py-3 font-mono font-black text-emerald-800 text-sm">100.00 pts (1° Adjudicatario)</td>
+          </tr>
+        `;
+      } else if (incidenteSecopActivo === 'EMPATE_CASCADA_LEY_2069') {
+        tbody.innerHTML = `
+          <tr class="bg-emerald-50/70 font-medium">
+            <td class="py-3 font-bold text-slate-900">1. SOLUCIONES TERRITORIALES S.A.S. (BIC)<span class="text-[10px] text-emerald-700 block font-normal">Empate resuelto por Cascada Ley 2069: Mipyme + Dcto 392 (Discapacidad)</span></td>
+            <td class="py-3 font-mono text-slate-700">$395.000.000</td>
+            <td class="py-3"><span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">CUMPLE</span></td>
+            <td class="py-3 font-mono">60.00 pts</td>
+            <td class="py-3 font-mono">40.00 pts</td>
+            <td class="py-3 font-mono font-black text-emerald-800 text-sm">100.00 pts (1° Ganador Cascada)</td>
+          </tr>
+          <tr class="bg-amber-50/40">
+            <td class="py-3 font-bold text-slate-900">2. INGENIERÍA NACIONAL INTEGRADA S.A.<span class="text-[10px] text-amber-700 block font-normal">Empate técnico a 100 pts • Cede prelación ante Mipyme (Ley 2069 Art. 35)</span></td>
+            <td class="py-3 font-mono text-slate-700">$395.000.000</td>
+            <td class="py-3"><span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">CUMPLE</span></td>
+            <td class="py-3 font-mono">60.00 pts</td>
+            <td class="py-3 font-mono">40.00 pts</td>
+            <td class="py-3 font-mono font-bold text-slate-700">100.00 pts (2° Lugar)</td>
+          </tr>
+          <tr>
+            <td class="py-3 font-bold text-slate-900">3. CONSORCIO ANDINO 2026<span class="text-[10px] text-slate-500 block font-normal">Unión Temporal</span></td>
+            <td class="py-3 font-mono text-slate-700">$405.000.000</td>
+            <td class="py-3"><span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">CUMPLE</span></td>
+            <td class="py-3 font-mono">54.20 pts</td>
+            <td class="py-3 font-mono">30.00 pts</td>
+            <td class="py-3 font-mono font-bold text-slate-700">84.20 pts (3°)</td>
+          </tr>
+        `;
+      } else if (incidenteSecopActivo === 'PRECIO_ARTIFICIALMENTE_BAJO') {
+        tbody.innerHTML = `
+          <tr class="bg-emerald-50/60 font-medium">
+            <td class="py-3 font-bold text-slate-900">1. SOLUCIONES TERRITORIALES S.A.S. (BIC)<span class="text-[10px] text-emerald-700 block font-normal">Propuesta equilibrada y sustentada • Mipyme</span></td>
+            <td class="py-3 font-mono text-slate-700">$395.000.000</td>
+            <td class="py-3"><span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">CUMPLE</span></td>
+            <td class="py-3 font-mono">58.50 pts</td>
+            <td class="py-3 font-mono">40.00 pts</td>
+            <td class="py-3 font-mono font-black text-emerald-800 text-sm">98.50 pts (1° Adjudicatario)</td>
+          </tr>
+          <tr class="bg-rose-50/50">
+            <td class="py-3 font-bold text-slate-900">2. CONSTRUCTORA LOW COST S.A.S.<span class="text-[10px] text-rose-700 block font-normal font-bold">Alerta Precio Artificialmente Bajo (-55%) • Requerido formalmente APU</span></td>
+            <td class="py-3 font-mono text-rose-700 font-bold">$189.000.000</td>
+            <td class="py-3"><span class="px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 text-[10px] font-bold">NO SUBSANÓ APU</span></td>
+            <td class="py-3 font-mono text-slate-400">0.00 pts</td>
+            <td class="py-3 font-mono text-slate-400">0.00 pts</td>
+            <td class="py-3 font-mono font-bold text-rose-600">RECHAZO MOTIVADO</td>
+          </tr>
+          <tr>
+            <td class="py-3 font-bold text-slate-900">3. CONSORCIO ANDINO 2026<span class="text-[10px] text-slate-500 block font-normal">Unión Temporal</span></td>
+            <td class="py-3 font-mono text-slate-700">$405.000.000</td>
+            <td class="py-3"><span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">CUMPLE</span></td>
+            <td class="py-3 font-mono">54.20 pts</td>
+            <td class="py-3 font-mono">30.00 pts</td>
+            <td class="py-3 font-mono font-bold text-slate-700">84.20 pts (2°)</td>
+          </tr>
+        `;
+      } else if (incidenteSecopActivo === 'POLIZA_EXTEMPORANEA_LEY_1882') {
+        tbody.innerHTML = `
+          <tr class="bg-emerald-50/60 font-medium">
+            <td class="py-3 font-bold text-slate-900">1. SOLUCIONES TERRITORIALES S.A.S. (BIC)<span class="text-[10px] text-emerald-700 block font-normal">Póliza constituida antes del cierre (09:15 AM)</span></td>
+            <td class="py-3 font-mono text-slate-700">$395.000.000</td>
+            <td class="py-3"><span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">CUMPLE</span></td>
+            <td class="py-3 font-mono">58.50 pts</td>
+            <td class="py-3 font-mono">40.00 pts</td>
+            <td class="py-3 font-mono font-black text-emerald-800 text-sm">98.50 pts (1° Adjudicatario)</td>
+          </tr>
+          <tr>
+            <td class="py-3 font-bold text-slate-900">2. INGENIERÍA NACIONAL INTEGRADA S.A.<span class="text-[10px] text-slate-500 block font-normal">Póliza válida y vigente</span></td>
+            <td class="py-3 font-mono text-slate-700">$370.000.000</td>
+            <td class="py-3"><span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">CUMPLE</span></td>
+            <td class="py-3 font-mono">60.00 pts</td>
+            <td class="py-3 font-mono">25.00 pts</td>
+            <td class="py-3 font-mono font-bold text-slate-700">85.00 pts (2°)</td>
+          </tr>
+          <tr class="bg-rose-50/50">
+            <td class="py-3 font-bold text-slate-900">3. CONSORCIO ANDINO 2026<span class="text-[10px] text-rose-700 block font-normal font-bold">Póliza expedida 11:30 AM (Cierre 10:00 AM) • Insubsanable Art. 5 Ley 1882</span></td>
+            <td class="py-3 font-mono text-slate-700">$405.000.000</td>
+            <td class="py-3"><span class="px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 text-[10px] font-bold">NO CUMPLE</span></td>
+            <td class="py-3 font-mono text-slate-400">0.00 pts</td>
+            <td class="py-3 font-mono text-slate-400">0.00 pts</td>
+            <td class="py-3 font-mono font-bold text-rose-600">RECHAZO DE LEY</td>
+          </tr>
+        `;
+      } else if (incidenteSecopActivo === 'COLUSION_MISMA_IP_METADATOS') {
+        tbody.innerHTML = `
+          <tr class="bg-emerald-50/60 font-medium">
+            <td class="py-3 font-bold text-slate-900">1. SOLUCIONES TERRITORIALES S.A.S. (BIC)<span class="text-[10px] text-emerald-700 block font-normal">Oferta autónoma e independiente verificada</span></td>
+            <td class="py-3 font-mono text-slate-700">$395.000.000</td>
+            <td class="py-3"><span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">CUMPLE</span></td>
+            <td class="py-3 font-mono">58.50 pts</td>
+            <td class="py-3 font-mono">40.00 pts</td>
+            <td class="py-3 font-mono font-black text-emerald-800 text-sm">98.50 pts (1° Adjudicatario)</td>
+          </tr>
+          <tr class="bg-rose-50/60">
+            <td class="py-3 font-bold text-slate-900">2. INGENIERÍA NACIONAL INTEGRADA S.A.<span class="text-[10px] text-rose-700 block font-normal font-bold">Alerta SIC/CCE: Misma IP pública (190.24.88.12) y metadatos que oferente 3</span></td>
+            <td class="py-3 font-mono text-slate-700">$370.000.000</td>
+            <td class="py-3"><span class="px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 text-[10px] font-bold">NO HABILITADO</span></td>
+            <td class="py-3 font-mono text-slate-400">0.00 pts</td>
+            <td class="py-3 font-mono text-slate-400">0.00 pts</td>
+            <td class="py-3 font-mono font-bold text-rose-600">RECHAZO COLUSORIO</td>
+          </tr>
+          <tr class="bg-rose-50/60">
+            <td class="py-3 font-bold text-slate-900">3. CONSORCIO ANDINO 2026<span class="text-[10px] text-rose-700 block font-normal font-bold">Alerta SIC/CCE: Cartelización digital • Copias a SIC y Fiscalía</span></td>
+            <td class="py-3 font-mono text-slate-700">$405.000.000</td>
+            <td class="py-3"><span class="px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 text-[10px] font-bold">NO HABILITADO</span></td>
+            <td class="py-3 font-mono text-slate-400">0.00 pts</td>
+            <td class="py-3 font-mono text-slate-400">0.00 pts</td>
+            <td class="py-3 font-mono font-bold text-rose-600">RECHAZO COLUSORIO</td>
+          </tr>
+        `;
+      } else if (incidenteSecopActivo === 'INHABILIDAD_SOBREVINIENTE_SIBOR') {
+        tbody.innerHTML = `
+          <tr class="bg-rose-50/60">
+            <td class="py-3 font-bold text-slate-900">1. SOLUCIONES TERRITORIALES S.A.S.<span class="text-[10px] text-rose-700 block font-normal font-bold">Inhabilidad Sobreviniente en SIBOR Contraloría • Descarte legal obligatorio</span></td>
+            <td class="py-3 font-mono text-slate-700">$395.000.000</td>
+            <td class="py-3"><span class="px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 text-[10px] font-bold">INHABILITADO</span></td>
+            <td class="py-3 font-mono text-slate-400">58.50 pts</td>
+            <td class="py-3 font-mono text-slate-400">40.00 pts</td>
+            <td class="py-3 font-mono font-bold text-rose-600">DESCARTE SIBOR</td>
+          </tr>
+          <tr class="bg-emerald-50/70 font-medium">
+            <td class="py-3 font-bold text-slate-900">2. INGENIERÍA NACIONAL INTEGRADA S.A.<span class="text-[10px] text-emerald-700 block font-normal">Segundo en orden de elegibilidad • Habilitado y sin inhabilidades</span></td>
+            <td class="py-3 font-mono text-slate-700">$370.000.000</td>
+            <td class="py-3"><span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">CUMPLE</span></td>
+            <td class="py-3 font-mono">60.00 pts</td>
+            <td class="py-3 font-mono">25.00 pts</td>
+            <td class="py-3 font-mono font-black text-emerald-800 text-sm">85.00 pts (1° Adjudicatario)</td>
+          </tr>
+          <tr>
+            <td class="py-3 font-bold text-slate-900">3. CONSORCIO ANDINO 2026<span class="text-[10px] text-slate-500 block font-normal">Unión Temporal</span></td>
+            <td class="py-3 font-mono text-slate-700">$405.000.000</td>
+            <td class="py-3"><span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">CUMPLE</span></td>
+            <td class="py-3 font-mono">54.20 pts</td>
+            <td class="py-3 font-mono">30.00 pts</td>
+            <td class="py-3 font-mono font-bold text-slate-700">84.20 pts (2°)</td>
+          </tr>
+        `;
+      } else {
+        tbody.innerHTML = `
+          <tr class="bg-emerald-50/60 font-medium">
+            <td class="py-3 font-bold text-slate-900">1. SOLUCIONES TERRITORIALES S.A.S. (BIC)<span class="text-[10px] text-emerald-700 block font-normal">Prioridad Mipyme Ley 2069/2020</span></td>
+            <td class="py-3 font-mono text-slate-700">$395.000.000</td>
+            <td class="py-3"><span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">CUMPLE</span></td>
+            <td class="py-3 font-mono">58.50 pts</td>
+            <td class="py-3 font-mono">40.00 pts</td>
+            <td class="py-3 font-mono font-black text-emerald-800 text-sm">98.50 pts (1°)</td>
+          </tr>
+          <tr>
+            <td class="py-3 font-bold text-slate-900">2. INGENIERÍA NACIONAL INTEGRADA S.A.<span class="text-[10px] text-slate-500 block font-normal">Gran Empresa Bogotá</span></td>
+            <td class="py-3 font-mono text-slate-700">$370.000.000</td>
+            <td class="py-3"><span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">CUMPLE</span></td>
+            <td class="py-3 font-mono">60.00 pts</td>
+            <td class="py-3 font-mono">25.00 pts</td>
+            <td class="py-3 font-mono font-bold text-slate-700">85.00 pts (2°)</td>
+          </tr>
+          <tr>
+            <td class="py-3 font-bold text-slate-900">3. CONSORCIO ANDINO 2026<span class="text-[10px] text-slate-500 block font-normal">Unión Temporal</span></td>
+            <td class="py-3 font-mono text-slate-700">$405.000.000</td>
+            <td class="py-3"><span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">CUMPLE</span></td>
+            <td class="py-3 font-mono">54.20 pts</td>
+            <td class="py-3 font-mono">30.00 pts</td>
+            <td class="py-3 font-mono font-bold text-slate-700">84.20 pts (3°)</td>
+          </tr>
+        `;
+      }
+    }
+
+    function actualizarResolucionAdjudicacionHTML() {
+      const ganadorEl = document.getElementById('secop-res-ganador');
+      const valorEl = document.getElementById('secop-res-valor');
+      const puntajeEl = document.getElementById('secop-res-puntaje');
+
+      if (!ganadorEl || !valorEl || !puntajeEl) return;
+
+      if (incidenteSecopActivo === 'INHABILIDAD_SOBREVINIENTE_SIBOR') {
+        ganadorEl.innerText = 'INGENIERÍA NACIONAL INTEGRADA S.A. • NIT 800.231.902-1 (2° en Orden de Elegibilidad por Inhabilidad de Soluciones Territoriales)';
+        valorEl.innerText = '$370.000.000 COP';
+        puntajeEl.innerText = '85.00 puntos';
+      } else if (incidenteSecopActivo === 'PROPONENTE_UNICO_HABILITADO' || incidenteSecopActivo === 'EMPATE_CASCADA_LEY_2069') {
+        ganadorEl.innerText = 'SOLUCIONES TERRITORIALES S.A.S. (BIC) • NIT 901.458.712-4';
+        valorEl.innerText = '$395.000.000 COP';
+        puntajeEl.innerText = '100.00 puntos';
+      } else {
+        ganadorEl.innerText = 'SOLUCIONES TERRITORIALES S.A.S. (BIC) • NIT 901.458.712-4';
+        valorEl.innerText = '$395.000.000 COP';
+        puntajeEl.innerText = '98.50 puntos';
+      }
+    }
+
+    // ----------------------------------------------------
+    // PASOS 11, 12 Y 13: ETAPA CONTRACTUAL Y POSTCONTRACTUAL
+    // ----------------------------------------------------
+    let polizaAprobadaHTMLState = false;
+    let actaInicioSuscritaHTMLState = false;
+    let tipoLiquidacionHTMLState = 'BILATERAL';
+
+    function aprobarPolizaHTML() {
+      polizaAprobadaHTMLState = true;
+      const badge = document.getElementById('badge-poliza-html');
+      const btn = document.getElementById('btn-aprobar-poliza-html');
+      if (badge) {
+        badge.className = 'text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold';
+        badge.innerText = '✓ Póliza Aprobada';
+      }
+      if (btn) {
+        btn.className = 'w-full mt-2 py-2 bg-emerald-100 border border-emerald-300 rounded-xl text-emerald-950 font-bold text-xs cursor-default';
+        btn.innerText = '✓ Garantía Única Aprobada Formalmente';
+      }
+    }
+
+    function suscribirActaInicioHTML() {
+      if (!polizaAprobadaHTMLState) {
+        alert('Debe aprobar la Garantía Única antes de suscribir el Acta de Inicio.');
+        return;
+      }
+      actaInicioSuscritaHTMLState = true;
+      const badge = document.getElementById('badge-acta-inicio-html');
+      const btn = document.getElementById('btn-suscribir-inicio-html');
+      const nextBtn = document.getElementById('btn-ir-paso-12');
+      if (badge) {
+        badge.className = 'text-[10px] font-mono px-2 py-1 rounded font-black bg-emerald-600 text-white';
+        badge.innerText = 'ACTA DE INICIO EN FIRME';
+      }
+      if (btn) {
+        btn.className = 'w-full py-3 bg-emerald-50 border border-emerald-300 text-emerald-900 rounded-2xl font-bold text-xs cursor-default';
+        btn.innerText = '✓ Acta de Inicio Suscrita a Satisfacción (Plazo en Curso)';
+      }
+      if (nextBtn) {
+        nextBtn.classList.remove('hidden');
+      }
+    }
+
+    function cambiarAvanceEjecucionHTML(pct) {
+      const barra = document.getElementById('barra-progreso-html');
+      if (barra) barra.style.width = pct + '%';
+    }
+
+    function validarAdicionHTML() {
+      const inp = document.getElementById('input-adicion-html');
+      const res = document.getElementById('resultado-adicion-html');
+      if (!inp || !res) return;
+      const val = parseFloat(inp.value.replace(/\D/g, '') || '0');
+      const limite = 395000000 * 0.50; // $197.500.000 COP
+      const pct = (val / 395000000) * 100;
+
+      if (val <= limite) {
+        res.className = 'p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-950';
+        res.innerHTML = `✓ Adición procedente (${pct.toFixed(1)}%). Respeta el límite perentorio del 50% ($${limite.toLocaleString('es-CO')} COP) del Artículo 40 de la Ley 80 de 1993. Requiere CDP previo y adición de póliza.`;
+      } else {
+        res.className = 'p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-950 font-medium';
+        res.innerHTML = `💥 ADICIÓN ILEGAL (${pct.toFixed(1)}%). Supera el tope máximo del 50% ($${limite.toLocaleString('es-CO')} COP) de la Ley 80 de 1993. Genera nulidad y presunto delito de Contrato sin Cumplimiento de Requisitos Legales (Art. 410 C.P.).`;
+      }
+    }
+
+    function seleccionarTipoLiquidacionHTML(tipo) {
+      tipoLiquidacionHTMLState = tipo;
+      const btnBil = document.getElementById('btn-liq-bilateral');
+      const btnUni = document.getElementById('btn-liq-unilateral');
+      const btnFirmar = document.getElementById('btn-firmar-liquidacion-html');
+      if (tipo === 'BILATERAL') {
+        if (btnBil) btnBil.className = 'p-3 rounded-2xl border-2 border-emerald-500 bg-emerald-50/30 text-left cursor-pointer';
+        if (btnUni) btnUni.className = 'p-3 rounded-2xl border border-slate-200 bg-white text-left cursor-pointer';
+        if (btnFirmar) btnFirmar.innerText = 'Suscribir y Publicar Acta Bilateral de Liquidación en SECOP II →';
+      } else {
+        if (btnBil) btnBil.className = 'p-3 rounded-2xl border border-slate-200 bg-white text-left cursor-pointer';
+        if (btnUni) btnUni.className = 'p-3 rounded-2xl border-2 border-amber-500 bg-amber-50/30 text-left cursor-pointer';
+        if (btnFirmar) btnFirmar.innerText = 'Expedir y Publicar Resolución de Liquidación Unilateral en SECOP II →';
+      }
+    }
+
+    function suscribirLiquidacionHTML() {
+      const btn = document.getElementById('btn-firmar-liquidacion-html');
+      const caja = document.getElementById('caja-exito-cierre-html');
+      const badge = document.getElementById('badge-estado-proceso-13');
+      if (btn) btn.classList.add('hidden');
+      if (caja) caja.classList.remove('hidden');
+      if (badge) {
+        badge.innerText = 'PROCESO CERRADO Y LIQUIDADO';
+        badge.className = 'text-xs font-mono font-bold text-white bg-emerald-600 px-2.5 py-0.5 rounded';
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // BATERÍA DE PRUEBAS DE ESTRÉS Y VALIDACIÓN EMPÁTICA (10 PROCESOS ALEATORIOS)
+    // -------------------------------------------------------------------------
+    const CASOS_PRUEBA_FUNCIONARIO = {
+      1: {
+        paso: 6,
+        nombre: 'Diego Fernando Parra',
+        cargo: 'Secretario de Gobierno y Planeación',
+        entidad: { nombre: 'Alcaldía Municipal de El Doncello (Caquetá)', nit: '891.190.045-2', depto: 'Caquetá' },
+        area: 'Secretaría de Planeación Municipal',
+        regimen: 'LEY_80',
+        necesidad: 'Mantenimiento preventivo y correctivo de la red de alcantarillado pluvial en el barrio Simón Bolívar.',
+        cdp: '2026-042',
+        valor: '38.500.000',
+        rutaGanadora: 'Mínima Cuantía (Hasta 40 SMMLV para 6ª Categoría)'
+      },
+      2: {
+        paso: 4,
+        nombre: 'Dra. Marcela Gómez',
+        cargo: 'Subdirectora Administrativa y Financiera',
+        entidad: { nombre: 'ESE Hospital Universitario San Jorge de Pereira', nit: '891.480.033-1', depto: 'Risaralda' },
+        area: 'Subdirección de Suministros Hospitalarios',
+        regimen: 'MANUAL_PROPIO',
+        necesidad: 'Adquisición de medicamentos oncológicos y material médico-quirúrgico de alta complejidad para urgencias.',
+        cdp: '2026-118',
+        valor: '1.250.000.000',
+        rutaGanadora: 'Convocatoria Pública - Manual Propio ESE (Derecho Privado)'
+      },
+      3: {
+        paso: 7,
+        nombre: 'Arq. Nelson Quintero',
+        cargo: 'Secretario de Infraestructura Municipal',
+        entidad: { nombre: 'Municipio de San Roque (Antioquia)', nit: '890.981.122-3', depto: 'Antioquia' },
+        area: 'Secretaría de Obras Públicas',
+        regimen: 'LEY_80',
+        necesidad: 'Construcción de 800 metros de placa huella en la vereda El Balsamar mediante convenio solidario.',
+        cdp: '2026-077',
+        valor: '85.000.000',
+        rutaGanadora: 'Convenio Solidario con Junta de Acción Comunal (Ley 2160 de 2021)'
+      },
+      4: {
+        paso: 8,
+        nombre: 'Ing. Andrés Felipe Mora',
+        cargo: 'Director de Infraestructura Vial',
+        entidad: { nombre: 'Gobernación de Cundinamarca', nit: '899.999.114-1', depto: 'Cundinamarca' },
+        area: 'Secretaría de Transporte y Movilidad',
+        regimen: 'LEY_80',
+        necesidad: 'Pavimentación asfáltica y construcción de obras de drenaje en el corredor secundario Zipaquirá - Briceño.',
+        cdp: '2026-902',
+        valor: '14.800.000.000',
+        rutaGanadora: 'Licitación Pública de Obra con Pliegos Tipo CCE'
+      },
+      5: {
+        paso: 10,
+        nombre: 'Ing. Carmelo',
+        cargo: 'Director de Contratación y TIC',
+        entidad: { nombre: 'Corporación Autónoma Regional del Alto Magdalena (CAM)', nit: '891.180.000-1', depto: 'Huila' },
+        area: 'Dirección de Gestión Ambiental y Red Hidrológica',
+        regimen: 'LEY_80',
+        necesidad: 'Suministro e instalación de equipos y sensores de monitoreo hidrometeorológico.',
+        cdp: '2026-048',
+        valor: '395.000.000',
+        rutaGanadora: 'Selección Abreviada Menor Cuantía Limitada a Mipymes',
+        incidente: 'PRECIO_ARTIFICIALMENTE_BAJO',
+        dilema: 'BLINDAJE'
+      },
+      6: {
+        paso: 9,
+        nombre: 'Dra. Sandra Milena Torres',
+        cargo: 'Jefe de Oficina Jurídica',
+        entidad: { nombre: 'Aguas del Huila S.A. E.S.P.', nit: '891.180.203-9', depto: 'Huila' },
+        area: 'Gerencia Técnica de Acueducto y Alcantarillado',
+        regimen: 'MANUAL_PROPIO',
+        necesidad: 'Optimización y ampliación de la planta de tratamiento de agua potable (PTAP) fase II.',
+        cdp: '2026-301',
+        valor: '3.400.000.000',
+        rutaGanadora: 'Contratación bajo Manual Propio de Servicios Públicos (Ley 142 de 1994)'
+      },
+      7: {
+        paso: 6,
+        nombre: 'Dr. Jorge Eliécer Castro',
+        cargo: 'Director Operativo de Tránsito',
+        entidad: { nombre: 'Instituto Municipal de Tránsito y Transporte de Chía', nit: '832.001.458-0', depto: 'Cundinamarca' },
+        area: 'Subdirección de Seguridad Vial',
+        regimen: 'LEY_80',
+        necesidad: 'Adquisición de parque automotor institucional y motocicletas de patrullaje vial de características uniformes.',
+        cdp: '2026-064',
+        valor: '320.000.000',
+        rutaGanadora: 'Subasta Inversa Electrónica de Bienes de Características Técnicas Uniformes'
+      },
+      8: {
+        paso: 11,
+        nombre: 'Dr. Álvaro Becerra',
+        cargo: 'Secretario General',
+        entidad: { nombre: 'Universidad Surcolombiana (USCO)', nit: '891.180.084-2', depto: 'Huila' },
+        area: 'Vicerrectoría Académica',
+        regimen: 'MANUAL_PROPIO',
+        necesidad: 'Contratación de servicios docentes especializados y desarrollo de plataforma de analítica académica.',
+        cdp: '2026-215',
+        valor: '210.000.000',
+        rutaGanadora: 'Contrato de Servicios - Estatuto de Contratación Universitaria',
+        polizaAprobada: true
+      },
+      9: {
+        paso: 12,
+        nombre: 'Abg. Carolina Restrepo',
+        cargo: 'Supervisora de Contratos TIC',
+        entidad: { nombre: 'Ministerio de Tecnologías de la Información y las Comunicaciones (MinTIC)', nit: '899.999.053-1', depto: 'Bogotá D.C.' },
+        area: 'Dirección de Infraestructura y Conectividad',
+        regimen: 'LEY_80',
+        necesidad: 'Conectividad satelital y soporte técnico de centros digitales educativos en zonas rurales dispersas.',
+        cdp: '2026-1402',
+        valor: '8.500.000.000',
+        rutaGanadora: 'Licitación Pública de Conectividad Nacional',
+        avance: 75
+      },
+      10: {
+        paso: 13,
+        nombre: 'Ing. Germán Pardo',
+        cargo: 'Subdirector de Obras y Liquidación',
+        entidad: { nombre: 'Instituto de Desarrollo Urbano (IDU - Bogotá)', nit: '899.999.026-3', depto: 'Bogotá D.C.' },
+        area: 'Subdirección General de Infraestructura',
+        regimen: 'LEY_80',
+        necesidad: 'Construcción y adecuación de espacio público, aceras y ciclo-infraestructura en la Localidad de Suba.',
+        cdp: '2026-5501',
+        valor: '5.800.000.000',
+        rutaGanadora: 'Licitación Pública de Infraestructura Urbana',
+        tipoLiquidacion: 'BILATERAL',
+        salvedades: true
+      }
+    };
+
+    function cargarCasoPrueba(num) {
+      const c = CASOS_PRUEBA_FUNCIONARIO[num];
+      if (!c) return;
+
+      estado.nombre = c.nombre;
+      estado.cargo = c.cargo;
+      estado.entidad = c.entidad;
+      estado.area = c.area;
+      estado.regimen = c.regimen;
+      estado.necesidad = c.necesidad;
+      estado.cdp = c.cdp;
+      estado.valor = c.valor;
+      estado.rutaGanadora = c.rutaGanadora;
+
+      if (c.incidente) {
+        incidenteSecopActivo = c.incidente;
+      }
+      if (c.dilema) {
+        dilemaSecopEleccion = c.dilema;
+      }
+      if (c.polizaAprobada) {
+        polizaAprobadaHTMLState = true;
+        actaInicioSuscritaHTMLState = true;
+      }
+
+      irPaso(c.paso);
+    }
+
+    // Inicializar catálogo y tarjeta al cargar
+    window.addEventListener('DOMContentLoaded', () => {
+      renderCatalogoIncidentesHTML();
+      renderIncidenteActivoHTML();
+      actualizarTablaEvaluacionHTML();
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const casoParam = parseInt(urlParams.get('caso'));
+      if (casoParam && CASOS_PRUEBA_FUNCIONARIO[casoParam]) {
+        cargarCasoPrueba(casoParam);
+      }
+    });
+  </script>
+</body>
+</html>

@@ -21,6 +21,14 @@ export interface IncidenteSecopDetalle {
   resumenHecho: string;
   dilemaServidor: string;
   errorComunFatal: string;
+  /** Postura neutral (sin adjetivos ni emojis) que corresponde al error frecuente. */
+  posturaTrampa: string;
+  /** Postura neutral que corresponde al procedimiento ajustado a derecho. */
+  posturaCorrecta: string;
+  /** Consecuencia jurídica específica de la postura equivocada. */
+  peligroJuridico: string;
+  /** Nivel de riesgo para la bitácora de auditoría. */
+  nivelRiesgo: 'BAJO' | 'MEDIO' | 'ALTO' | 'CRITICO';
   protocoloLegalCorrecto: string;
   normativaYJurisprudencia: string;
   consecuenciaProcesal: string;
@@ -36,6 +44,10 @@ export class SecopIncidentsSimulatorEngine {
       resumenHecho: 'El proceso transcurre sin caídas de plataforma, sin reclamaciones temerarias y con pluralidad de oferentes habilitados.',
       dilemaServidor: 'Verificar minuciosamente la matriz de evaluación y adjudicar a la mejor propuesta objetiva.',
       errorComunFatal: 'Creer que siempre habrá controversia y dilatar innecesariamente la adjudicación.',
+      posturaTrampa: 'Dilatar la adjudicación y solicitar verificaciones adicionales no previstas en los pliegos, ante la posibilidad de una controversia posterior.',
+      posturaCorrecta: 'Expedir el informe definitivo de evaluación, correr el traslado legal y adjudicar mediante resolución motivada a la mejor propuesta objetiva.',
+      peligroJuridico: 'Una dilación sin sustento puede vencer los términos del cronograma y afectar el principio de eficacia de la contratación.',
+      nivelRiesgo: 'BAJO',
       protocoloLegalCorrecto: 'Expedir el informe definitivo, correr traslado legal y emitir resolución motivada de adjudicación.',
       normativaYJurisprudencia: 'Art. 2 Ley 1150 de 2007 • Principio de Selección Objetiva Art. 29 Ley 80 de 1993.',
       consecuenciaProcesal: 'Adjudicación exitosa y paso a Registro Presupuestal (RP) y firma electrónica.'
@@ -49,6 +61,10 @@ export class SecopIncidentsSimulatorEngine {
       resumenHecho: 'A las 09:42 AM (el cierre es a las 10:00 AM), el servidor de SECOP II colapsa arrojando Error 500 y timeout a los oferentes.',
       dilemaServidor: '¿Cierro el proceso con la única oferta que subió temprano o recibo las demás por correo?',
       errorComunFatal: 'Cerrar el proceso ignorando las quejas de los proponentes, generando nulidad absoluta por violar la libre concurrencia.',
+      posturaTrampa: 'Cerrar el proceso a la hora prevista con la única oferta que alcanzó a cargarse en la plataforma.',
+      posturaCorrecta: 'Verificar el reporte de falla ante la Mesa de Ayuda de Colombia Compra Eficiente, esperar el certificado de indisponibilidad y permitir la radicación subsidiaria por correo oficial dentro del plazo que se fije.',
+      peligroJuridico: 'Violación de la libre concurrencia e igualdad de los oferentes; riesgo de nulidad del proceso.',
+      nivelRiesgo: 'ALTO',
       protocoloLegalCorrecto: 'Validar si la falla ocurrió en las 4 horas previas. Exigir radicado de Mesa de Ayuda de CCE y correo previo al cierre. Esperar Certificado de Indisponibilidad de CCE y permitir radicación por correo dentro de las 48 horas siguientes.',
       normativaYJurisprudencia: 'Protocolo Oficial de Indisponibilidad de Colombia Compra Eficiente • Circulares Externas SECOP II.',
       consecuenciaProcesal: 'Recepción subsidiaria por correo electrónico oficial y prórroga reglada del cronograma.'
@@ -62,6 +78,10 @@ export class SecopIncidentsSimulatorEngine {
       resumenHecho: 'Con presupuesto de $420M, un proponente oferta $190M. El comité evaluador sospecha que no podrá ejecutar o dejará la obra botada.',
       dilemaServidor: '¿Lo rechazo de inmediato por ser muy barato o tengo que aceptarlo porque es la oferta más económica?',
       errorComunFatal: 'Rechazarlo automáticamente sin requerimiento previo. CCE y el Consejo de Estado prohíben el rechazo automático.',
+      posturaTrampa: 'Rechazar la oferta de inmediato por estar muy por debajo del presupuesto oficial.',
+      posturaCorrecta: 'Requerir por escrito al oferente la justificación del valor (APU y estructura de costos) y decidir de forma motivada con base en su respuesta.',
+      peligroJuridico: 'Un rechazo sin requerimiento previo vulnera el debido proceso y la selección objetiva; puede dar lugar a nulidad del acto y a reparación patrimonial.',
+      nivelRiesgo: 'ALTO',
       protocoloLegalCorrecto: 'Emitir requerimiento formal por escrito pidiendo justificación de APU y estructura de costos. Si demuestra que cubre salarios mínimos legales, insumos y fletes, se valida. Si no sustenta o no cubre costos de ley, se rechaza motivadamente.',
       normativaYJurisprudencia: 'Art. 2.2.1.1.2.2.4 Decreto 1082 de 2015 • Guía de Precios Artificialmente Bajos CCE.',
       consecuenciaProcesal: 'Requerimiento contradictorio obligatorio antes de cualquier decisión de descalificación.'
@@ -75,6 +95,10 @@ export class SecopIncidentsSimulatorEngine {
       resumenHecho: 'El cierre fue a las 10:00 AM. El oferente adjuntó recibo de pago o carátula de póliza expedida por la aseguradora a las 11:30 AM.',
       dilemaServidor: 'El contratista argumenta que la Ley 1882 permite subsanar requisitos que no dan puntaje y que la póliza solo habilita.',
       errorComunFatal: 'Aceptar la póliza con fecha posterior creyendo que es subsanable, violando la prohibición legal expresa.',
+      posturaTrampa: 'Aceptar la póliza expedida a las 11:30 AM como documento subsanable.',
+      posturaCorrecta: 'Rechazar la oferta, al tratarse de una garantía de seriedad expedida después del cierre del proceso.',
+      peligroJuridico: 'Aceptar una garantía posterior al cierre vulnera el Art. 5 de la Ley 1882 de 2018 y la igualdad entre oferentes; el acto de adjudicación queda expuesto a nulidad.',
+      nivelRiesgo: 'ALTO',
       protocoloLegalCorrecto: 'La Ley 1882 prohíbe acreditar circunstancias posteriores al cierre y consagra expresamente que la no entrega de la póliza junto con la oferta no es subsanable. RECHAZO AUTOMÁTICO.',
       normativaYJurisprudencia: 'Artículo 5 Ley 1882 de 2018 • Sentencias de Unificación Consejo de Estado Sección Tercera.',
       consecuenciaProcesal: 'Rechazo definitivo de la propuesta sin posibilidad de subsanación.'
@@ -88,6 +112,10 @@ export class SecopIncidentsSimulatorEngine {
       resumenHecho: 'Dos consorcios supuestamente competidores radicaron en SECOP II desde la misma IP pública y sus PDFs tienen los mismos metadatos y faltas ortográficas.',
       dilemaServidor: '¿Finjo que no me di cuenta porque no soy juez penal o tomo acciones en el proceso?',
       errorComunFatal: 'Adjudicar al consorcio colusorio configurando posible complicidad en el delito de colusión en contratación.',
+      posturaTrampa: 'Continuar la evaluación sin dar tratamiento a los indicios y adjudicar a la oferta mejor puntuada.',
+      posturaCorrecta: 'Documentar los indicios, valorar la pérdida de independencia de las ofertas conforme a los pliegos y dar traslado a la Superintendencia de Industria y Comercio y a la Fiscalía General de la Nación.',
+      peligroJuridico: 'Posible responsabilidad disciplinaria y penal del servidor por omisión frente a indicios de colusión; riesgo de nulidad de la adjudicación.',
+      nivelRiesgo: 'CRITICO',
       protocoloLegalCorrecto: 'Evaluar la pérdida de independencia y pluralidad de oferentes para rechazar las ofertas colusorias. Compulsa de copias inmediata con trazabilidad digital a la Superintendencia de Industria y Comercio (SIC) y Fiscalía General de la Nación.',
       normativaYJurisprudencia: 'Art. 410A Código Penal • Art. 47 num. 9 Decreto 2153 de 1992 • Guía SIC de Licitaciones Colusorias.',
       consecuenciaProcesal: 'Rechazo por violación a la selección objetiva y apertura de investigación sancionatoria en la SIC.'
@@ -101,7 +129,11 @@ export class SecopIncidentsSimulatorEngine {
       resumenHecho: 'Dos proponentes obtienen 100.00 puntos matemáticos perfectos. Ambos reclaman ser los adjudicatarios legítimos.',
       dilemaServidor: '¿Tiro una moneda al aire o adjudico al que radicó primero?',
       errorComunFatal: 'Hacer un sorteo de inmediato sin agotar los criterios obligatorios de desempate fijados por el Congreso.',
-      protocoloLegalCorrecto: 'Aplicar la cascada del Art. 35 Ley 2069: 1. Bienes nacionales, 2. Mipyme, 3. Mujeres, 4. Empleo a personas con discapacidad (Dcto 392), 5. Sociedad BIC. Si persiste el empate tras el paso 7, sorteo por balotas en audiencia pública.',
+      posturaTrampa: 'Definir el empate de inmediato por sorteo.',
+      posturaCorrecta: 'Aplicar en orden los criterios de desempate del Art. 35 de la Ley 2069 de 2020 y, solo si persiste el empate, realizar el sorteo en audiencia pública.',
+      peligroJuridico: 'Omitir los criterios legales de desempate permite al proponente no favorecido demandar la adjudicación.',
+      nivelRiesgo: 'MEDIO',
+      protocoloLegalCorrecto: 'Aplicar la cascada del Art. 35 Ley 2069: 1. Bienes nacionales, 2. Mipyme, 3. Mujeres, 4. Empleo a personas con discapacidad (Dcto 392), 5. Sociedad BIC. Si persiste el empate tras agotar los criterios legales aplicables, sorteo por balotas en audiencia pública.',
       normativaYJurisprudencia: 'Artículo 35 Ley 2069 de 2020 • Decreto 1860 de 2021 • Decreto 392 de 2018.',
       consecuenciaProcesal: 'Desempate reglado por preferencia legal, evitando demandas de nulidad del proponente no favorecido.'
     },
@@ -114,6 +146,10 @@ export class SecopIncidentsSimulatorEngine {
       resumenHecho: 'A las 09:45 AM, un juzgado notifica auto admisorio de tutela de un oferente descalificado ordenando la suspensión preventiva del proceso.',
       dilemaServidor: '¿Adjudico rápido antes de que se enteren o acato la orden del juez y congelo el proceso?',
       errorComunFatal: 'Adjudicar ignorando la medida cautelar. Incurre en Fraude a Resolución Judicial (Art. 454 C.P.) y arresto por desacato.',
+      posturaTrampa: 'Continuar con la audiencia y adjudicar, dejando la respuesta a la tutela para después.',
+      posturaCorrecta: 'Suspender la audiencia en el estado en que se encuentre, dejar constancia en SECOP II y rendir informe al juzgado.',
+      peligroJuridico: 'Incumplir una medida cautelar puede configurar desacato y fraude a resolución judicial (Art. 454 C.P.).',
+      nivelRiesgo: 'CRITICO',
       protocoloLegalCorrecto: 'Suspender inmediatamente la audiencia en el estado en que se encuentre. Levantar acta en SECOP II y remitir informe al juzgado rindiendo descargos sobre la legalidad de la evaluación.',
       normativaYJurisprudencia: 'Decreto 2591 de 1991 • Artículo 454 Código Penal (Fraude a Resolución Judicial).',
       consecuenciaProcesal: 'Suspensión procesal obligatoria hasta que el juez constitucional falle o levante la medida cautelar.'
@@ -127,6 +163,10 @@ export class SecopIncidentsSimulatorEngine {
       resumenHecho: 'El oferente 1° en orden de elegibilidad amaneció reportado con fallo de responsabilidad fiscal en el Boletín de la Contraloría (SIBOR).',
       dilemaServidor: '¿Le adjudico porque cuando cerró el proceso no estaba inhabilitado o tengo que rechazarlo?',
       errorComunFatal: 'Adjudicar argumentando que el reporte fue posterior al cierre. El contrato estatal no puede celebrarse con inhabilitados.',
+      posturaTrampa: 'Adjudicar al primer elegible, considerando que el reporte es posterior al cierre del proceso.',
+      posturaCorrecta: 'Verificar la firmeza del reporte, descartar al oferente inhabilitado y evaluar la adjudicación al siguiente en el orden de elegibilidad.',
+      peligroJuridico: 'Contratar con un inhabilitado compromete la validez del contrato y la responsabilidad del servidor (Arts. 8 y 9 Ley 80 de 1993).',
+      nivelRiesgo: 'ALTO',
       protocoloLegalCorrecto: 'Verificar la firmeza del reporte en el SIBOR. Descartar al inhabilitado por imposibilidad legal sobreviniente y adjudicar al segundo calificado en el orden de elegibilidad.',
       normativaYJurisprudencia: 'Artículos 8 y 9 Ley 80 de 1993 • Ley 610 de 2000 (Responsabilidad Fiscal).',
       consecuenciaProcesal: 'Paso al segundo elegible y notificación formal de la inhabilidad sobreviniente.'
@@ -140,6 +180,10 @@ export class SecopIncidentsSimulatorEngine {
       resumenHecho: 'Solo un proponente presentó oferta o solo uno resultó habilitado tras el informe de evaluación.',
       dilemaServidor: '¿Declaro desierto el proceso por falta de pluralidad o puedo adjudicarle válidamente?',
       errorComunFatal: 'Declarar desierta la licitación por el simple hecho de haber un solo oferente. Esto genera demanda por lucro cesante y daño patrimonial.',
+      posturaTrampa: 'Declarar desierto el proceso por no haber pluralidad de oferentes.',
+      posturaCorrecta: 'Verificar que la oferta cumpla los pliegos y el presupuesto oficial y adjudicar de forma motivada al único proponente habilitado.',
+      peligroJuridico: 'Declarar desierto un proceso con oferta hábil puede generar reclamaciones por daño patrimonial y afecta la eficacia del proceso.',
+      nivelRiesgo: 'MEDIO',
       protocoloLegalCorrecto: 'La Ley 1150 permite expresamente adjudicar a la oferta única si esta cumple plenamente los pliegos de condiciones y el presupuesto oficial. No se requiere pluralidad mínima para adjudicar.',
       normativaYJurisprudencia: 'Artículo 2 numeral 1 Ley 1150 de 2007 • Jurisprudencia reiterada Consejo de Estado.',
       consecuenciaProcesal: 'Adjudicación legítima y vinculante al único oferente calificado.'

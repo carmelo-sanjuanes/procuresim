@@ -1,4 +1,4 @@
-import { SMMLV_2026 } from '../domain/constants';
+import { SMMLV_2026, smmlvDelAnio } from '../domain/constants';
 // Motor de Ciclo de Vida Contractual, Ejecución, Modificaciones y Liquidación
 // Fundamento Legal: Ley 80 de 1993, Ley 1150 de 2007, Ley 1474 de 2011 (Estatuto Anticorrupción),
 // Decreto 1082 de 2015, Ley 2195 de 2022 (Transparencia) y CPACA (Ley 1437 de 2011).
@@ -89,33 +89,44 @@ export class ContractExecutionLifecycleEngine {
    * Evalúa la viabilidad jurídica de una adición contractual conforme al Artículo 40 de la Ley 80 de 1993
    * Regla de oro: No puede adicionarse en más del 50% del valor inicial expresado en SMMLV.
    */
-  public static validarAdicionPresupuestal(valorInicialCOP: number, valorAdicionPropuestaCOP: number): {
+  public static validarAdicionPresupuestal(
+    valorInicialCOP: number,
+    valorAdicionPropuestaCOP: number,
+    anioSuscripcion: number = 2026
+  ): {
     esValida: boolean;
     porcentajeAdicion: number;
     limiteMaximo50COP: number;
     mensajeLegal: string;
     riesgoResponsabilidad: string;
   } {
-    const limite50 = valorInicialCOP * 0.50;
-    const porcentaje = (valorAdicionPropuestaCOP / valorInicialCOP) * 100;
+    // Art. 40 Ley 80/1993 (parágrafo): el valor adicionado no puede exceder el 50 % del valor
+    // inicial del contrato expresado en SMMLV. El valor inicial se convierte con el SMMLV del
+    // año de suscripción; la adición se convierte con el SMMLV vigente (2026) al adicionar.
+    const smmlvFirma = smmlvDelAnio(anioSuscripcion);
+    const valorInicialSMMLV = valorInicialCOP / smmlvFirma;
+    const adicionSMMLV = valorAdicionPropuestaCOP / SMMLV_2026;
+    const limiteSMMLV = valorInicialSMMLV * 0.5;
+    const limite50 = Math.round(limiteSMMLV * SMMLV_2026);
+    const porcentaje = (adicionSMMLV / valorInicialSMMLV) * 100;
+    const detalleSmmlv = `Valor inicial: ${valorInicialSMMLV.toFixed(1)} SMMLV (SMMLV ${anioSuscripcion}: $${smmlvFirma.toLocaleString('es-CO')}); tope de adición: ${limiteSMMLV.toFixed(1)} SMMLV ≈ $${limite50.toLocaleString('es-CO')} COP con SMMLV 2026.`;
 
     if (valorAdicionPropuestaCOP <= limite50) {
       return {
         esValida: true,
         porcentajeAdicion: parseFloat(porcentaje.toFixed(2)),
         limiteMaximo50COP: limite50,
-        mensajeLegal: `✓ Adición procedente (${porcentaje.toFixed(1)}%). Respeta el límite perentorio del 50% previsto en el inciso 2° del Artículo 40 de la Ley 80 de 1993. Requiere CDP previo y ajuste proporcional de las pólizas.`,
+        mensajeLegal: `✓ Adición procedente (${porcentaje.toFixed(2)}%). Respeta el límite del 50% del parágrafo del Artículo 40 de la Ley 80 de 1993. ${detalleSmmlv} Requiere CDP previo y ajuste proporcional de las pólizas.`,
         riesgoResponsabilidad: 'Blindado disciplinaria y penalmente siempre que esté justificada la necesidad técnica sobreviniente.'
       };
-    } else {
-      return {
-        esValida: false,
-        porcentajeAdicion: parseFloat(porcentaje.toFixed(2)),
-        limiteMaximo50COP: limite50,
-        mensajeLegal: `❌ ADICIÓN ILEGAL (${porcentaje.toFixed(1)}%). Supera el tope perentorio del 50% ($${limite50.toLocaleString('es-CO')} COP) establecido en el Artículo 40 de la Ley 80 de 1993.`,
-        riesgoResponsabilidad: 'Configura presunto delito de Contrato sin Cumplimiento de Requisitos Legales (Art. 410 C.P.) e investigación disciplinaria por falta gravísima en Procuraduría.'
-      };
     }
+    return {
+      esValida: false,
+      porcentajeAdicion: parseFloat(porcentaje.toFixed(2)),
+      limiteMaximo50COP: limite50,
+      mensajeLegal: `❌ ADICIÓN ILEGAL (${porcentaje.toFixed(2)}%). Supera el tope del 50% establecido en el parágrafo del Artículo 40 de la Ley 80 de 1993. ${detalleSmmlv}`,
+      riesgoResponsabilidad: 'Configura presunto delito de Contrato sin Cumplimiento de Requisitos Legales (Art. 410 C.P.) e investigación disciplinaria por falta gravísima en Procuraduría.'
+    };
   }
 
   /**
@@ -170,6 +181,25 @@ export class ContractExecutionLifecycleEngine {
       blindajeDebidoProceso:
         'Se respetaron las 5 etapas preclusivas del Art. 86 Ley 1474: 1. Citación detallada con informe del supervisor, 2. Vinculación de la compañía de seguros garante, 3. Oportunidad oral y escrita de descargos, 4. Motivación técnica de la resolución en audiencia pública, y 5. Resolución inmediata del recurso de reposición en estrados.'
     };
+  }
+
+  /**
+   * Simulador de multa por retraso. La multa efectiva depende de lo pactado en el contrato
+   * (Art. 17 Ley 1150/2007: multas como apremio al cumplimiento, proporcionales y sin
+   * exceder lo pactado). Los porcentajes de entrada son supuestos del usuario.
+   */
+  public static calcularMultaPorRetraso(
+    valorContratoCOP: number,
+    plazoDias: number,
+    retrasoPct: number,
+    tasaDiariaPct: number,
+    topePct: number
+  ): { diasRetraso: number; multaBrutaCOP: number; topeCOP: number; multaAplicableCOP: number; seAplicoTope: boolean } {
+    const diasRetraso = Math.max(0, Math.round(plazoDias * (retrasoPct / 100)));
+    const multaBrutaCOP = Math.round(valorContratoCOP * (tasaDiariaPct / 100) * diasRetraso);
+    const topeCOP = Math.round(valorContratoCOP * (topePct / 100));
+    const seAplicoTope = multaBrutaCOP > topeCOP;
+    return { diasRetraso, multaBrutaCOP, topeCOP, multaAplicableCOP: seAplicoTope ? topeCOP : multaBrutaCOP, seAplicoTope };
   }
 
   /**

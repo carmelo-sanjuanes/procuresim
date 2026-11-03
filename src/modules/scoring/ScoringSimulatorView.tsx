@@ -1,4 +1,4 @@
-import { SMMLV_2026 } from '../../core/domain/constants';
+import { SMMLV_2026, UVT_2026 } from '../../core/domain/constants';
 import React, { useState } from 'react';
 import {
   Calculator,
@@ -646,7 +646,7 @@ export const ScoringSimulatorView: React.FC = () => {
                   <strong>SMMLV:</strong> ${SMMLV_2026.toLocaleString('es-CO')} COP
                 </span>
                 <span>
-                  <strong>UVT:</strong> $49.799 COP
+                  <strong>UVT:</strong> ${UVT_2026.toLocaleString('es-CO')} COP
                 </span>
               </div>
             </div>

@@ -82,10 +82,9 @@ export class AbnormallyLowPriceEngine {
         esSospechosa,
         motivoAlerta: motivo,
         requerimientoEmitido: esSospechosa,
-        sustentacionRadicada: esSospechosa
-          ? 'El proponente manifiesta contar con economías de escala mayoristas y stock propio de importación sin intermediarios.'
-          : undefined,
-        evaluacionComite: esSospechosa ? 'ACEPTADA_CON_SUSTENTO' : undefined
+        // La sustentación del proponente y la decisión del comité las aporta el usuario; el simulador no las inventa.
+        sustentacionRadicada: undefined,
+        evaluacionComite: esSospechosa ? 'EN_REVISION' : undefined
       };
     });
 

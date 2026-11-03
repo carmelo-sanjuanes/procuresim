@@ -305,6 +305,25 @@ export interface EventoAuditoria {
   detalles: string;
 }
 
+export type OrigenObservacionBitacora =
+  | 'VEEDURIA_CIUDADANA'
+  | 'CONTRALORIA'
+  | 'PROCURADURIA'
+  | 'DECISION_SIMULADOR'
+  | 'OTRO';
+
+export interface ObservacionBitacora {
+  id: string;
+  /** Fecha ISO (AAAA-MM-DD) en que se registró la observación. */
+  fecha: string;
+  origen: OrigenObservacionBitacora;
+  descripcion: string;
+  normaInfringida: string;
+  nivelRiesgo: 'BAJO' | 'MEDIO' | 'ALTO' | 'CRITICO';
+  /** true si la digitó el usuario; false si la generó el simulador. */
+  manual: boolean;
+}
+
 export type TipoControversia =
   | 'RECURSO_REPOSICION_ADJUDICACION' // Contra acto de adjudicación o declaratoria de desierta
   | 'SANCIONATORIO_MULTA_INCUMPLIMIENTO' // Art. 86 Ley 1474/2011 (Multas, cláusula penal, caducidad)

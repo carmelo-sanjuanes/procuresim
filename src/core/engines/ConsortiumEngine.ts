@@ -60,6 +60,38 @@ export class ConsortiumEngine {
   }
 
   /**
+   * Inhabilidad o incompatibilidad sobreviniente de un integrante (Art. 9 Ley 80 de 1993).
+   * El integrante cede su participación a un tercero con autorización escrita previa de la entidad;
+   * nunca a otro integrante del mismo consorcio o unión temporal.
+   */
+  public static evaluarInhabilidadSobreviniente(
+    miembros: MiembroAsociacion[],
+    idMiembroInhabilitado: string
+  ): { aplica: boolean; porcentajeACeder: number; remanente: string; pasos: string[]; fundamento: string } {
+    const afectado = miembros.find((m) => m.id === idMiembroInhabilitado);
+    const fundamento = 'Art. 9 Ley 80 de 1993 (inhabilidades e incompatibilidades sobrevinientes).';
+    if (!afectado) {
+      return { aplica: false, porcentajeACeder: 0, remanente: '', pasos: [], fundamento };
+    }
+    const resto = miembros.filter((m) => m.id !== idMiembroInhabilitado);
+    const porcentajeACeder = afectado.porcentajeParticipacion || 0;
+    const remanente = resto.map((m) => `${m.razonSocial}: ${m.porcentajeParticipacion}%`).join(' • ') || 'sin otros integrantes';
+    return {
+      aplica: true,
+      porcentajeACeder,
+      remanente,
+      fundamento,
+      pasos: [
+        `Verificar la firmeza y el alcance del reporte que afecta a ${afectado.razonSocial}.`,
+        `${afectado.razonSocial} debe ceder su participación (${porcentajeACeder}%) a un tercero, con autorización escrita previa de la entidad contratante.`,
+        'La cesión no puede hacerse a favor de otro integrante del consorcio o unión temporal.',
+        'El tercero cesionario debe cumplir los requisitos habilitantes que cubría el integrante saliente y no estar inhabilitado.',
+        'Si no es posible la cesión, el integrante debe renunciar a su participación en la ejecución; la entidad valida que el proponente plural conserve los requisitos exigidos.'
+      ]
+    };
+  }
+
+  /**
    * Genera el documento formal redactado de asociación
    */
   public static redactarDocumentoAsociacion(

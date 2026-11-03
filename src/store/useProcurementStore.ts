@@ -8,6 +8,7 @@ import type {
   ProponenteDatos,
   AnalisisEstudioMercado,
   EventoAuditoria,
+  ObservacionBitacora,
   OfertaPresentada,
   EstadoProceso,
   ControversiaContractual,
@@ -37,6 +38,7 @@ interface ProcurementState {
   proveedores: ProponenteDatos[];
   estudiosMercado: AnalisisEstudioMercado[];
   eventosAuditoria: EventoAuditoria[];
+  bitacoraObservaciones: ObservacionBitacora[];
   controversias: ControversiaContractual[];
   asociaciones: AsociacionPlural[];
   parametrosRegulatorios: ParametrosEntornoRegulatorio;
@@ -81,6 +83,7 @@ interface ProcurementState {
   responderControversia: (controversiaId: string, respuesta: any, nuevoEstado: any) => void;
   guardarAsociacion: (asociacion: AsociacionPlural) => void;
   registrarAuditoria: (modulo: string, accion: string, detalles: string, rol?: 'ENTIDAD' | 'PROVEEDOR' | 'AUDITOR' | 'SISTEMA') => void;
+  registrarObservacionBitacora: (obs: Omit<ObservacionBitacora, 'id' | 'fecha' | 'manual'> & { manual?: boolean }) => void;
   reiniciarDatosDemo: () => void;
   exportarEstadoJSON: () => string;
   importarEstadoJSON: (jsonString: string) => boolean;
@@ -144,6 +147,8 @@ export const useProcurementStore = create<ProcurementState>()(
   toggleGuiaAsistente: () => {
     set((state) => ({ guiaAsistenteExpandida: !state.guiaAsistenteExpandida }));
   },
+
+  bitacoraObservaciones: [],
 
   eventosAuditoria: [
     {
@@ -439,6 +444,27 @@ export const useProcurementStore = create<ProcurementState>()(
     );
   },
 
+  registrarObservacionBitacora: (obs) => {
+    const nueva: ObservacionBitacora = {
+      id: `OBS-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      fecha: new Date().toISOString().split('T')[0],
+      origen: obs.origen,
+      descripcion: obs.descripcion,
+      normaInfringida: obs.normaInfringida,
+      nivelRiesgo: obs.nivelRiesgo,
+      manual: obs.manual ?? false
+    };
+    set((state) => ({
+      bitacoraObservaciones: [nueva, ...state.bitacoraObservaciones.slice(0, 199)]
+    }));
+    get().registrarAuditoria(
+      'LEGAL WATCHDOG',
+      `Observación registrada (${obs.origen}) — riesgo ${obs.nivelRiesgo}`,
+      `${obs.normaInfringida}: ${obs.descripcion}`,
+      'AUDITOR'
+    );
+  },
+
   responderControversia: (controversiaId: string, respuesta: string, nuevoEstado: ControversiaContractual['estado']) => {
     set((state) => ({
       controversias: state.controversias.map((c) =>
@@ -601,6 +627,7 @@ export const useProcurementStore = create<ProcurementState>()(
         asociaciones: state.asociaciones,
         estudiosMercado: state.estudiosMercado,
         eventosAuditoria: state.eventosAuditoria,
+        bitacoraObservaciones: state.bitacoraObservaciones,
         procesoSeleccionadoId: state.procesoSeleccionadoId,
         proveedorActivoId: state.proveedorActivoId
       })

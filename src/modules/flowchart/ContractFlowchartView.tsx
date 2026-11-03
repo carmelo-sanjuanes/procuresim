@@ -41,6 +41,8 @@ import { useProcurementStore } from '../../store/useProcurementStore';
 import { soundEffects } from '../../utils/soundEffects';
 import { launchConfetti } from '../../utils/confetti';
 import { DocumentEngine } from '../../core/engines/DocumentEngine';
+import { ObjectTypologyEngine, ETIQUETAS_TIPOLOGIA, type TipologiaObjeto } from '../../core/engines/ObjectTypologyEngine';
+import { descargarActaLiquidacionWord } from '../../core/engines/ActaLiquidacionEngine';
 import {
   ARQUETIPOS_ESTRUCTURACION,
   detectarArquetipo,
@@ -204,12 +206,100 @@ const ALT_MINIMA_CUANTIA: AlternativaAuditoria = {
   ]
 };
 
+
+const jueces3 = (fiscal: string, litigio: string, operativo: string): AlternativaAuditoria['jueces'] => ({
+  fiscal: { titulo: 'Cuidado Fiscal (Contraloría / Planeación)', estado: 'APROBADO', score: 90, dictamen: fiscal },
+  litigio: { titulo: 'Cuidado con Proponentes (Apertura y Pluralidad)', estado: 'APROBADO', score: 85, dictamen: litigio },
+  operativo: { titulo: 'Cuidado Operativo (En Territorio)', estado: 'APROBADO', score: 88, dictamen: operativo }
+});
+
+const ALT_CONTRATACION_DIRECTA: AlternativaAuditoria = {
+  id: 'CONTRATACION_DIRECTA_SERVICIOS',
+  titulo: 'Contratación Directa (Servicios Profesionales)',
+  modalidad: 'Contratación Directa por prestación de servicios profesionales y de apoyo a la gestión',
+  fundamento: 'Ley 1150/2007 Art. 2 num. 4 lit. h y Decreto 1082 de 2015 Art. 2.2.1.2.1.4.9',
+  puntaje: 90,
+  esRecomendada: false,
+  resumen: 'Procede para servicios profesionales o de apoyo a la gestión, o para trabajos artísticos, cuando se puede identificar a la persona con la idoneidad y experiencia requeridas. No exige pluralidad de ofertas, pero sí estudios previos y acto de justificación.',
+  jueces: jueces3(
+    'Documenta la idoneidad y experiencia del contratista y la razonabilidad del valor (estudio de mercado o de honorarios).',
+    'Baja exposición a observaciones, pero el expediente debe sustentar por qué se contrata directamente a esa persona.',
+    'Certifica que no existe personal de planta suficiente para la actividad y que no hay subordinación; exige afiliación y pago al SGSSS.'
+  ),
+  clausulasBlindaje: [
+    'Certificación de insuficiencia o inexistencia de personal de planta para el objeto.',
+    'Verificar idoneidad y experiencia con soportes y revisar antecedentes disciplinarios, fiscales y judiciales.',
+    'Obligaciones sin subordinación ni horario; afiliación y pago al SGSSS como condición de cada pago.'
+  ]
+};
+
+const ALT_ACUERDO_MARCO: AlternativaAuditoria = {
+  id: 'ACUERDO_MARCO_TVEC',
+  titulo: 'Acuerdo Marco de Precios (Tienda Virtual del Estado)',
+  modalidad: 'Selección Abreviada por Acuerdo Marco de Precios - orden de compra en la Tienda Virtual del Estado Colombiano (TVEC)',
+  fundamento: 'Ley 1150/2007 Art. 2 num. 2 lit. a y Decreto 1082 de 2015 Art. 2.2.1.2.1.2.7 y ss.',
+  puntaje: 90,
+  esRecomendada: false,
+  resumen: 'Si existe un instrumento de agregación de demanda vigente para el bien o servicio, la entidad debe comprar por el catálogo. Verifica en la TVEC que el instrumento esté vigente y que los precios y condiciones se ajusten a la necesidad.',
+  jueces: jueces3(
+    'Precios previamente negociados por Colombia Compra Eficiente; la entidad conserva la obligación de verificar necesidad y disponibilidad (CDP previo).',
+    'Proceso estandarizado con baja exposición a observaciones; la competencia se da dentro del catálogo.',
+    'Los plazos y la garantía de entrega los fija el instrumento; revisar cobertura en el territorio de ejecución.'
+  ),
+  clausulasBlindaje: [
+    'Verificar en la TVEC que el instrumento de agregación de demanda esté vigente para el bien requerido.',
+    'Obtener el CDP antes de emitir la orden de compra.',
+    'Adjuntar la ficha técnica y las condiciones de entrega y garantía del catálogo a la orden de compra.'
+  ]
+};
+
+const ALT_CONVENIO_JAC: AlternativaAuditoria = {
+  id: 'CONVENIO_SOLIDARIO_JAC',
+  titulo: 'Contrato con Organismo de Acción Comunal',
+  modalidad: 'Contratación directa con organismos de acción comunal para obras de interés comunitario',
+  fundamento: 'Ley 2166 de 2021 Art. 95 y Decreto 142 de 2023',
+  puntaje: 90,
+  esRecomendada: false,
+  resumen: 'Permite a las entidades territoriales contratar con la Junta de Acción Comunal obras pequeñas de su comunidad, con límites de valor y requisitos de personería, cuenta bancaria y supervisión técnica. Verifica el tope vigente y los requisitos en el Decreto 142 de 2023.',
+  jueces: jueces3(
+    'Verifica el tope de valor aplicable y que el objeto sea una obra o servicio de interés comunitario en el territorio de la JAC.',
+    'Exige personería jurídica vigente y órganos de dirección al día; la JAC debe estar inscrita y no tener inhabilidades.',
+    'Requiere cuenta bancaria exclusiva para el contrato y supervisión técnica de la entidad, con interventoría o apoyo técnico cuando corresponda.'
+  ),
+  clausulasBlindaje: [
+    'Certificado de existencia y representación de la JAC vigente y cuenta bancaria exclusiva.',
+    'Supervisión técnica de la entidad (ingeniero o arquitecto) con visitas y actas de avance.',
+    'Verificar el tope de valor y los demás requisitos del Decreto 142 de 2023 antes de contratar.'
+  ]
+};
+
 /** Rutas de Ley 80 según la cuantía determinada; la recomendada es la que corresponde legalmente. */
-export const construirAlternativasLey80 = (nivel: NivelCuantia): AlternativaAuditoria[] => {
+export const construirAlternativasLey80 = (nivel: NivelCuantia, necesidadTexto: string = ''): AlternativaAuditoria[] => {
   const marcar = (a: AlternativaAuditoria, rec: boolean): AlternativaAuditoria => ({ ...a, esRecomendada: rec });
-  if (nivel === 'MAYOR') return [marcar(ALT_LICITACION, true), marcar(ALT_SUBASTA_INVERSA, false), marcar(ALT_TVEC, false)];
-  if (nivel === 'MINIMA') return [marcar(ALT_SUBASTA_INVERSA, false), marcar(ALT_MINIMA_CUANTIA, true), marcar(ALT_TVEC, false)];
-  return [marcar(ALT_SUBASTA_INVERSA, false), marcar(ALT_MENOR_CUANTIA, true), marcar(ALT_TVEC, false)];
+  const base: AlternativaAuditoria[] =
+    nivel === 'MAYOR'
+      ? [marcar(ALT_LICITACION, true), marcar(ALT_SUBASTA_INVERSA, false), marcar(ALT_TVEC, false)]
+      : nivel === 'MINIMA'
+      ? [marcar(ALT_SUBASTA_INVERSA, false), marcar(ALT_MINIMA_CUANTIA, true), marcar(ALT_TVEC, false)]
+      : [marcar(ALT_SUBASTA_INVERSA, false), marcar(ALT_MENOR_CUANTIA, true), marcar(ALT_TVEC, false)];
+
+  const t = (necesidadTexto || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const sinRec = (lista: AlternativaAuditoria[]) => lista.map((a) => marcar(a, false));
+  const sinTvec = (lista: AlternativaAuditoria[]) => lista.filter((a) => a.id !== 'TVEC_CATALOGO');
+
+  // Convenio / contrato con Junta de Acción Comunal (obras comunitarias)
+  if (/junta de accion comunal|\bjac\b|accion comunal/.test(t) && nivel !== 'MAYOR') {
+    return [marcar(ALT_CONVENIO_JAC, true), ...sinRec(sinTvec(base))];
+  }
+  // Servicios profesionales y de apoyo a la gestión: contratación directa
+  if (ObjectTypologyEngine.inferir(necesidadTexto) === 'SERVICIOS_PROFESIONALES') {
+    return [marcar(ALT_CONTRATACION_DIRECTA, true), ...sinRec(sinTvec(base))];
+  }
+  // Bienes con posible instrumento de agregación de demanda (Acuerdo Marco de Precios)
+  if (/computador|portatil|combustible|papeleria|vehiculo|aseo|cafeteria|equipos? de computo|impresora/.test(t)) {
+    return [marcar(ALT_ACUERDO_MARCO, true), ...sinRec(sinTvec(base))];
+  }
+  return base;
 };
 
 export const ALTERNATIVAS_LEY_80: AlternativaAuditoria[] = construirAlternativasLey80('MENOR');
@@ -423,7 +513,7 @@ export const ALTERNATIVAS_MULTILATERAL: AlternativaAuditoria[] = [
 export const ALTERNATIVAS_AUDITORIA = ALTERNATIVAS_LEY_80;
 
 export const ContractFlowchartView: React.FC = () => {
-  const { procesoSeleccionadoId, procesos } = useProcurementStore();
+  const { procesoSeleccionadoId, procesos, registrarObservacionBitacora } = useProcurementStore();
   const procesoActivo = procesos.find((p) => p.id === procesoSeleccionadoId) || procesos[0];
 
   // Estado del flujo
@@ -486,15 +576,20 @@ export const ContractFlowchartView: React.FC = () => {
   // 8. Etapas Contractual y Postcontractual (Pasos 11, 12 y 13)
   // Paso 11: Perfeccionamiento y Legalización
   const [rpExpedido, setRpExpedido] = useState<boolean>(true);
-  const [numeroRP, setNumeroRP] = useState<string>('RP-2026-0892');
+  const [numeroRP, setNumeroRP] = useState<string>('');
   const [polizaAprobada, setPolizaAprobada] = useState<boolean>(false);
-  const [supervisorNombre, setSupervisorNombre] = useState<string>('Ing. Juan Camilo Roa (Profesional Universitario)');
+  const [supervisorNombre, setSupervisorNombre] = useState<string>('Por designar por el ordenador del gasto');
   const [actaInicioSuscrita, setActaInicioSuscrita] = useState<boolean>(false);
 
   // Paso 12: Ejecución, Modificaciones y Sancionatorio
   const [avanceEjecucionPct, setAvanceEjecucionPct] = useState<number>(100);
   const [mostrarSimuladorAdicion, setMostrarSimuladorAdicion] = useState<boolean>(false);
   const [valorAdicionInput, setValorAdicionInput] = useState<string>('');
+  const [anioSuscripcion, setAnioSuscripcion] = useState<number>(2026);
+  const [multaRetrasoPct, setMultaRetrasoPct] = useState<string>('30');
+  const [multaPlazoDias, setMultaPlazoDias] = useState<string>('90');
+  const [multaTasaDiaria, setMultaTasaDiaria] = useState<string>('0.1');
+  const [multaTope, setMultaTope] = useState<string>('10');
   const [resultadoAdicion, setResultadoAdicion] = useState<{
     esValida: boolean;
     porcentajeAdicion: number;
@@ -511,6 +606,10 @@ export const ContractFlowchartView: React.FC = () => {
   const [textoSalvedades, setTextoSalvedades] = useState<string>('');
   const [presupuestoAnualEntidad, setPresupuestoAnualEntidad] = useState<string>('');
   const [liquidacionCompletada, setLiquidacionCompletada] = useState<boolean>(false);
+  const [tipologiaManual, setTipologiaManual] = useState<TipologiaObjeto | null>(null);
+  const tipologiaInferida = ObjectTypologyEngine.inferir(necesidad);
+  const tipologiaObjeto: TipologiaObjeto | null = tipologiaManual ?? tipologiaInferida;
+  const constanciaRecibo = ObjectTypologyEngine.constancia(tipologiaObjeto);
 
   // Análisis Matemático y Jurídico Dinámico de Cuantías (SMMLV 2026: $1.750.905 — Decreto 1469 de 2025)
   const analisisCuantia = DynamicRiskAndThresholdsEngine.calcularCuantia(
@@ -527,7 +626,7 @@ export const ContractFlowchartView: React.FC = () => {
       ? ALTERNATIVAS_MANUAL_PROPIO
       : regimenSeleccionado === 'MULTILATERAL'
       ? ALTERNATIVAS_MULTILATERAL
-      : construirAlternativasLey80(nivelCuantia);
+      : construirAlternativasLey80(nivelCuantia, necesidad);
   const idsAlternativas = alternativasActivas.map((x) => x.id).join('|');
 
   // Valores de la simulación derivados del presupuesto del usuario (no fijos)
@@ -917,7 +1016,7 @@ export const ContractFlowchartView: React.FC = () => {
                   id: 'cdp',
                   pasoDestino: 6,
                   titulo: '4. Presupuesto Estimado y Disponibilidad Presupuestal (CDP)',
-                  detalle: numeroCdp ? `CDP N° ${numeroCdp} ($${valorCdp || '0'} COP)` : valorCdp ? `Valor estimado: $${valorCdp} COP (CDP pendiente de incorporación)` : 'Avanzando en estructuración técnica sin CDP previo (se incorporará antes de radicar).',
+                  detalle: numeroCdp ? `CDP N° ${numeroCdp} ($${valorCdp || '0'} COP)` : valorCdp ? `Valor estimado: $${valorCdp} COP (CDP en trámite de expedición ante la Secretaría de Hacienda / Dirección Financiera)` : 'Avanzando en estructuración técnica sin CDP previo (se incorporará antes de radicar).',
                   completado: Boolean(numeroCdp.trim() || valorCdp.trim()),
                   advertencia: !numeroCdp.trim(),
                   accionTexto: numeroCdp ? 'Modificar CDP' : 'Ingresar valor o CDP →'
@@ -1183,7 +1282,7 @@ export const ContractFlowchartView: React.FC = () => {
                     </span>
                     <span className="text-slate-400 font-mono text-[10px]">6. Presupuesto:</span>
                     <strong className="text-slate-900 font-bold">
-                      {numeroCdp ? `CDP N° ${numeroCdp} ($${valorCdp || '0'} COP)` : valorCdp ? `Valor estimado: $${valorCdp} COP (CDP pendiente)` : 'Estructurando sin CDP formal'}
+                      {numeroCdp ? `CDP N° ${numeroCdp} ($${valorCdp || '0'} COP)` : valorCdp ? `Valor estimado: $${valorCdp} COP (CDP en trámite de expedición)` : 'CDP: En trámite de expedición ante la Secretaría de Hacienda / Dirección Financiera'}
                     </strong>
                   </div>
                   <button
@@ -3130,51 +3229,49 @@ export const ContractFlowchartView: React.FC = () => {
                           </span>
 
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                            {/* Opción Trampa Común */}
-                            <button
-                              type="button"
-                              onClick={() => {
-                                soundEffects.playClick();
-                                setDilemaEleccion('TRAMPA');
-                              }}
-                              className={`p-3 rounded-xl text-left border transition-all cursor-pointer space-y-1 ${
-                                dilemaEleccion === 'TRAMPA'
-                                  ? 'bg-rose-50 border-rose-300 ring-2 ring-rose-400/20'
-                                  : 'bg-white hover:bg-slate-50 border-slate-200'
-                              }`}
-                            >
-                              <div className="flex items-center gap-1.5 text-rose-700 font-bold text-xs">
-                                <span>⚠️</span>
-                                <span>Opción A: Decisión Intuitiva Rápida</span>
-                              </div>
-                              <p className="text-[11px] text-slate-600 leading-snug">
-                                {inc.errorComunFatal.slice(0, 85)}...
-                              </p>
-                            </button>
-
-                            {/* Opción Blindaje Legal */}
-                            <button
-                              type="button"
-                              onClick={() => {
-                                soundEffects.playSuccess();
-                                launchConfetti();
-                                setDilemaEleccion('BLINDAJE');
-                                setAccionIncidenteTomada(true);
-                              }}
-                              className={`p-3 rounded-xl text-left border transition-all cursor-pointer space-y-1 ${
-                                dilemaEleccion === 'BLINDAJE'
-                                  ? 'bg-emerald-50 border-emerald-300 ring-2 ring-emerald-400/20'
-                                  : 'bg-white hover:bg-slate-50 border-slate-200'
-                              }`}
-                            >
-                              <div className="flex items-center gap-1.5 text-emerald-700 font-bold text-xs">
-                                <ShieldCheck className="w-3.5 h-3.5" />
-                                <span>Opción B: Protocolo de Blindaje Legal</span>
-                              </div>
-                              <p className="text-[11px] text-slate-600 leading-snug">
-                                {inc.protocoloLegalCorrecto.slice(0, 85)}...
-                              </p>
-                            </button>
+                            {(() => {
+                              // Orden alternado de forma determinista por incidente, para que la
+                              // posición de la postura correcta no delate la respuesta.
+                              const invertido = Array.from(incidenteActivo).reduce((acc, ch) => acc + ch.charCodeAt(0), 0) % 2 === 1;
+                              const posturas = [
+                                { clave: 'TRAMPA' as const, texto: inc.posturaTrampa },
+                                { clave: 'BLINDAJE' as const, texto: inc.posturaCorrecta }
+                              ];
+                              const ordenadas = invertido ? [posturas[1], posturas[0]] : posturas;
+                              return ordenadas.map((pos, idx) => {
+                                const letra = idx === 0 ? 'A' : 'B';
+                                const elegida = dilemaEleccion === pos.clave;
+                                return (
+                                  <button
+                                    key={pos.clave}
+                                    type="button"
+                                    onClick={() => {
+                                      soundEffects.playClick();
+                                      setDilemaEleccion(pos.clave);
+                                      if (pos.clave === 'BLINDAJE') {
+                                        soundEffects.playSuccess();
+                                        launchConfetti();
+                                        setAccionIncidenteTomada(true);
+                                      }
+                                      registrarObservacionBitacora({
+                                        origen: 'DECISION_SIMULADOR',
+                                        descripcion: `${inc.tituloHumano} — Postura ${letra} elegida: ${pos.texto}`,
+                                        normaInfringida: inc.normativaYJurisprudencia,
+                                        nivelRiesgo: pos.clave === 'TRAMPA' ? inc.nivelRiesgo : 'BAJO'
+                                      });
+                                    }}
+                                    className={`p-3 rounded-xl text-left border transition-all cursor-pointer space-y-1 ${
+                                      elegida
+                                        ? 'bg-slate-100 border-slate-400 ring-2 ring-slate-400/30'
+                                        : 'bg-white hover:bg-slate-50 border-slate-200'
+                                    }`}
+                                  >
+                                    <div className="text-slate-800 font-bold text-xs">Postura {letra}</div>
+                                    <p className="text-[11px] text-slate-600 leading-snug">{pos.texto}</p>
+                                  </button>
+                                );
+                              });
+                            })()}
                           </div>
                         </div>
                       )}
@@ -3183,13 +3280,13 @@ export const ContractFlowchartView: React.FC = () => {
                       {dilemaEleccion === 'TRAMPA' && (
                         <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-900 space-y-2 animate-fadeIn">
                           <div className="flex items-center gap-2 font-black text-rose-800">
-                            <span>💥 ERROR FATAL FRECUENTE DETECTADO</span>
+                            <span>Esta postura corresponde a un error frecuente</span>
                           </div>
                           <p className="leading-relaxed text-rose-900/90">
                             <strong>Consecuencia: </strong>{inc.errorComunFatal}
                           </p>
                           <div className="text-[11px] bg-white/70 p-2.5 rounded-lg border border-rose-200 text-rose-800 font-medium">
-                            <strong>Peligro Jurídico:</strong> Esta actuación genera nulidad del acto de adjudicación, investigaciones disciplinarias en Procuraduría por violación a la selección objetiva, y condena de reparación patrimonial en el Tribunal Administrativo.
+                            <strong>Riesgo jurídico de esta postura:</strong> {inc.peligroJuridico}
                           </div>
                           <button
                             type="button"
@@ -3201,7 +3298,7 @@ export const ContractFlowchartView: React.FC = () => {
                             }}
                             className="mt-1 text-[11px] font-bold text-emerald-700 hover:text-emerald-800 underline cursor-pointer"
                           >
-                            ← Corregir y aplicar el protocolo de blindaje legal recomendado
+                            ← Ver y aplicar la postura ajustada a derecho
                           </button>
                         </div>
                       )}
@@ -3211,7 +3308,7 @@ export const ContractFlowchartView: React.FC = () => {
                         <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-950 space-y-2 animate-fadeIn">
                           <div className="flex items-center gap-2 font-black text-emerald-800">
                             <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                            <span>¡EXCELENTE DECISIÓN! PROCEDIMIENTO 100% BLINDADO</span>
+                            <span>Postura ajustada a derecho</span>
                           </div>
                           <p className="leading-relaxed text-emerald-900">
                             <strong>Protocolo Correcto: </strong>{inc.protocoloLegalCorrecto}
@@ -3275,7 +3372,7 @@ export const ContractFlowchartView: React.FC = () => {
                       «Consultamos si se previó en el presupuesto el costo de las estampillas departamentales ({porcentajeEstampillas}%) y el flete de última milla para evitar que el contratista suspenda entregas en veredas.»
                     </p>
                     <div className="text-[11px] text-emerald-800 bg-emerald-50 p-2 rounded-xl border border-emerald-200">
-                      <strong>Respuesta de la Entidad (Proyectada):</strong> Se ratifica que en el estudio de mercado (Paso 8) se costearon integralmente las retenciones territoriales y el flete rural.
+                      <strong>Respuesta de la Entidad (Proyectada):</strong> La entidad verificará, antes de publicar el pliego definitivo, que el estudio de mercado y el presupuesto oficial incluyan las retenciones territoriales y el transporte a zona rural; si no estuvieran, se ajustarán mediante adenda.
                     </div>
                   </div>
                 </div>
@@ -3283,6 +3380,12 @@ export const ContractFlowchartView: React.FC = () => {
                 <button
                   onClick={() => {
                     soundEffects.playSuccess();
+                    registrarObservacionBitacora({
+                      origen: 'VEEDURIA_CIUDADANA',
+                      descripcion: 'Veeduría consulta si el presupuesto previó estampillas departamentales y flete de última milla (observación simulada).',
+                      normaInfringida: 'Art. 25 num. 12 Ley 80 de 1993 y Art. 2.2.1.1.1.6.1 Decreto 1082 de 2015 (análisis del sector y costos)',
+                      nivelRiesgo: 'MEDIO'
+                    });
                     setAdendaPublicada(true);
                     setFaseSecop('APERTURA_SOBRES');
                   }}
@@ -3827,14 +3930,14 @@ export const ContractFlowchartView: React.FC = () => {
                     </strong>
                   </div>
                   <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-sky-100 text-sky-800 font-bold">
-                    {numeroRP}
+                    {numeroRP || 'En trámite'}
                   </span>
                 </div>
                 <p className="text-[11px] text-slate-600">
-                  Expedido por el Área de Presupuesto. Ampara la obligación contra el CDP oficial {numeroCdp || '2026-104'}, garantizando que los recursos están legalmente comprometidos.
+                  Lo expide el Área de Presupuesto una vez suscrito el contrato, para comprometer los recursos con cargo al CDP. {numeroCdp ? `CDP N° ${numeroCdp}.` : '«CDP: En trámite de expedición ante la Secretaría de Hacienda / Dirección Financiera».'}
                 </p>
                 <div className="text-[10px] font-mono text-sky-900 bg-white/80 p-2 rounded-xl border border-sky-200">
-                  ✓ Cumple Decreto 111 de 1996 (Estatuto Orgánico de Presupuesto).
+                  Referencia: Decreto 111 de 1996 (Estatuto Orgánico de Presupuesto) — el RP es requisito de perfeccionamiento del compromiso.
                 </div>
               </div>
 
@@ -3911,10 +4014,10 @@ export const ContractFlowchartView: React.FC = () => {
                   </span>
                 </div>
                 <p className="text-[11px] text-slate-600 leading-snug">
-                  Conforme a los Artículos 83 y 84 del Estatuto Anticorrupción, se designa al servidor público de planta <strong>{supervisorNombre}</strong> para ejercer el control técnico, administrativo, financiero y jurídico del contrato.
+                  Conforme a los Artículos 83 y 84 del Estatuto Anticorrupción, se debe designar al servidor público de planta que ejercerá la supervisión: <strong>{supervisorNombre}</strong> para ejercer el control técnico, administrativo, financiero y jurídico del contrato.
                 </p>
                 <div className="text-[10px] font-mono text-amber-900 bg-white/80 p-2 rounded-xl border border-amber-200">
-                  ✓ Se verificó no incurrir en conflicto de interés ni en causales de inhabilidad o incompatibilidad sobreviniente.
+                  Antes de la designación debe verificarse que no exista conflicto de interés ni causal de inhabilidad o incompatibilidad.
                 </div>
               </div>
             </div>
@@ -4129,6 +4232,13 @@ export const ContractFlowchartView: React.FC = () => {
               {mostrarSimuladorAdicion && (
                 <div className="space-y-3 pt-1 animate-fadeIn">
                   <div className="p-3.5 bg-white rounded-2xl border border-indigo-100 space-y-2">
+                    <div className="flex flex-wrap items-center gap-2 text-xs">
+                      <label htmlFor="anio-suscripcion" className="font-bold text-slate-800">Año de suscripción del contrato inicial:</label>
+                      <select id="anio-suscripcion" value={anioSuscripcion} onChange={(e) => setAnioSuscripcion(Number(e.target.value))} className="px-2 py-1 rounded-lg border border-slate-300 bg-white">
+                        {[2020, 2021, 2022, 2023, 2024, 2025, 2026].map((a) => (<option key={a} value={a}>{a}</option>))}
+                      </select>
+                      <span className="text-slate-400">(el 50% se mide en SMMLV de esa fecha — Art. 40 Ley 80)</span>
+                    </div>
                     <label className="text-xs font-bold text-slate-800 block">
                       Ingresa el valor de la adición propuesta en COP:
                     </label>
@@ -4145,7 +4255,7 @@ export const ContractFlowchartView: React.FC = () => {
                         onClick={() => {
                           soundEffects.playClick();
                           const val = parseFloat(valorAdicionInput || '0');
-                          const res = ContractExecutionLifecycleEngine.validarAdicionPresupuestal(valorAdjudicado, val);
+                          const res = ContractExecutionLifecycleEngine.validarAdicionPresupuestal(valorAdjudicado, val, anioSuscripcion);
                           setResultadoAdicion(res);
                         }}
                         className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold cursor-pointer transition-all"
@@ -4159,24 +4269,24 @@ export const ContractFlowchartView: React.FC = () => {
                         type="button"
                         onClick={() => {
                           setValorAdicionInput(String(adicionLegal));
-                          const res = ContractExecutionLifecycleEngine.validarAdicionPresupuestal(valorAdjudicado, adicionLegal);
+                          const res = ContractExecutionLifecycleEngine.validarAdicionPresupuestal(valorAdjudicado, adicionLegal, anioSuscripcion);
                           setResultadoAdicion(res);
                         }}
                         className="text-[10px] text-indigo-600 hover:underline cursor-pointer"
                       >
-                        Probar Adición Legal ({abreviarM(adicionLegal)} - {pctAdicion(adicionLegal)}%)
+                        Probar adición moderada ({abreviarM(adicionLegal)} - {pctAdicion(adicionLegal)}%)
                       </button>
                       <span className="text-slate-300">•</span>
                       <button
                         type="button"
                         onClick={() => {
                           setValorAdicionInput(String(adicionIlegal));
-                          const res = ContractExecutionLifecycleEngine.validarAdicionPresupuestal(valorAdjudicado, adicionIlegal);
+                          const res = ContractExecutionLifecycleEngine.validarAdicionPresupuestal(valorAdjudicado, adicionIlegal, anioSuscripcion);
                           setResultadoAdicion(res);
                         }}
                         className="text-[10px] text-rose-600 hover:underline cursor-pointer"
                       >
-                        Probar Adición Ilegal ({abreviarM(adicionIlegal)} - {pctAdicion(adicionIlegal)}%)
+                        Probar adición elevada ({abreviarM(adicionIlegal)} - {pctAdicion(adicionIlegal)}%)
                       </button>
                     </div>
                   </div>
@@ -4235,8 +4345,40 @@ export const ContractFlowchartView: React.FC = () => {
                 <div className="space-y-3 pt-1 animate-fadeIn text-xs">
                   <div className="p-3.5 bg-white rounded-2xl border border-amber-200 space-y-2">
                     <strong className="text-slate-900 block font-bold">
-                      Caso: Retraso Injustificado del 30% en Entrega de Sensores
+                      Caso: retraso injustificado en la ejecución del contrato
                     </strong>
+                    <p className="text-[10px] text-slate-500">
+                      Supuestos editables de la simulación. La multa real es la que hayas pactado en el contrato.
+                    </p>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[10px]">
+                      <label className="space-y-0.5">Retraso (% del plazo)
+                        <input value={multaRetrasoPct} onChange={(e) => setMultaRetrasoPct(e.target.value.replace(/[^\d.]/g, ''))} className="w-full px-2 py-1 rounded-lg border border-slate-300 font-mono" />
+                      </label>
+                      <label className="space-y-0.5">Plazo total (días)
+                        <input value={multaPlazoDias} onChange={(e) => setMultaPlazoDias(e.target.value.replace(/\D/g, ''))} className="w-full px-2 py-1 rounded-lg border border-slate-300 font-mono" />
+                      </label>
+                      <label className="space-y-0.5">Multa diaria pactada (% del valor)
+                        <input value={multaTasaDiaria} onChange={(e) => setMultaTasaDiaria(e.target.value.replace(/[^\d.]/g, ''))} className="w-full px-2 py-1 rounded-lg border border-slate-300 font-mono" />
+                      </label>
+                      <label className="space-y-0.5">Tope pactado (% del valor)
+                        <input value={multaTope} onChange={(e) => setMultaTope(e.target.value.replace(/[^\d.]/g, ''))} className="w-full px-2 py-1 rounded-lg border border-slate-300 font-mono" />
+                      </label>
+                    </div>
+                    {(() => {
+                      const m = ContractExecutionLifecycleEngine.calcularMultaPorRetraso(
+                        valorAdjudicado,
+                        parseFloat(multaPlazoDias || '0'),
+                        parseFloat(multaRetrasoPct || '0'),
+                        parseFloat(multaTasaDiaria || '0'),
+                        parseFloat(multaTope || '0')
+                      );
+                      return (
+                        <div className="text-[11px] text-amber-900 bg-amber-50 border border-amber-200 rounded-xl p-2">
+                          {m.diasRetraso} días de retraso → multa calculada {fmtCOP(m.multaBrutaCOP)}; tope {fmtCOP(m.topeCOP)}.{' '}
+                          <strong>Multa aplicable: {fmtCOP(m.multaAplicableCOP)}</strong>{m.seAplicoTope ? ' (limitada por el tope pactado)' : ''}
+                        </div>
+                      );
+                    })()}
                     <div className="grid grid-cols-1 sm:grid-cols-5 gap-2 text-[10px] font-mono pt-1">
                       <div className="p-2 bg-emerald-50 rounded-xl border border-emerald-200 text-emerald-900">
                         1. Informe Supervisor con tasación de daños
@@ -4248,7 +4390,7 @@ export const ContractFlowchartView: React.FC = () => {
                         3. Descargos orales en audiencia pública
                       </div>
                       <div className="p-2 bg-emerald-50 rounded-xl border border-emerald-200 text-emerald-900">
-                        4. Resolución de Multa ($7.900.000 COP)
+                        4. Resolución motivada de multa (valor según cálculo)
                       </div>
                       <div className="p-2 bg-emerald-50 rounded-xl border border-emerald-200 text-emerald-900">
                         5. Recurso de Reposición resuelto
@@ -4336,8 +4478,23 @@ export const ContractFlowchartView: React.FC = () => {
                   Recibido 100%
                 </span>
               </div>
+              <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-600">
+                <label htmlFor="tipologia-objeto" className="font-bold">Tipo de objeto:</label>
+                <select
+                  id="tipologia-objeto"
+                  value={tipologiaObjeto ?? ''}
+                  onChange={(e) => setTipologiaManual((e.target.value || null) as TipologiaObjeto | null)}
+                  className="px-2 py-1 rounded-lg border border-slate-300 bg-white"
+                >
+                  <option value="">Sin definir</option>
+                  {(Object.keys(ETIQUETAS_TIPOLOGIA) as TipologiaObjeto[]).map((k) => (
+                    <option key={k} value={k}>{ETIQUETAS_TIPOLOGIA[k]}</option>
+                  ))}
+                </select>
+                {!tipologiaManual && tipologiaInferida && <span className="text-slate-400">(inferido de tu necesidad; puedes cambiarlo)</span>}
+              </div>
               <p className="text-[11px] text-slate-600">
-                El Supervisor y el Contratista certifican que el 100% de los bienes y servicios fueron entregados, instalados y probados de conformidad con la ficha técnica de los pliegos de condiciones.
+                El Supervisor y el Contratista suscriben la siguiente cláusula de recibo: {constanciaRecibo}
               </p>
             </div>
 
@@ -4443,7 +4600,7 @@ export const ContractFlowchartView: React.FC = () => {
                   </div>
                   <div>
                     <span className="text-[10px] text-slate-400 block">Estado Contable</span>
-                    <strong className="text-emerald-400">Paz y Salvo Total</strong>
+                    <strong className="text-amber-300">Por conciliar en la liquidación</strong>
                   </div>
                 </div>
               </div>
@@ -4472,6 +4629,27 @@ export const ContractFlowchartView: React.FC = () => {
                   <p className="text-emerald-950/90 leading-snug">
                     Se publicó el documento de liquidación en SECOP II, se remitieron copias a Contabilidad y Tesorería, se activaron los amparos de estabilidad y calidad poscontractuales, y el expediente electrónico quedó formalmente archivado sin hallazgos preventivos.
                   </p>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      descargarActaLiquidacionWord({
+                        entidad: entidadSeleccionada?.nombreCompleto || '',
+                        nit: entidadSeleccionada?.nit || '',
+                        contratista: proveedorSeleccionado?.nombre || '',
+                        objeto: necesidad,
+                        numeroContrato: `${(entidadSeleccionada?.nit || '').replace(/\D/g, '').slice(-3) || '048'}-2026`,
+                        valorContrato: valorAdjudicado,
+                        tipoLiquidacion,
+                        constanciaRecibo,
+                        etiquetaTipologia: tipologiaObjeto ? ETIQUETAS_TIPOLOGIA[tipologiaObjeto] : 'Sin definir',
+                        salvedades: incluyeSalvedades ? textoSalvedades : '',
+                        supervisor: supervisorNombre
+                      })
+                    }
+                    className="mt-2 px-4 py-2 bg-white border border-emerald-400 text-emerald-800 rounded-xl font-bold text-xs cursor-pointer"
+                  >
+                    Descargar borrador del {tipoLiquidacion === 'BILATERAL_MUTUO_ACUERDO' ? 'Acta de Liquidación' : 'Resolución de Liquidación'} (.docx)
+                  </button>
                 </div>
               )}
             </div>

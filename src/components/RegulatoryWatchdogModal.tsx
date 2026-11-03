@@ -15,7 +15,8 @@ import {
   XCircle,
   HelpCircle,
   Clock,
-  Sparkles
+  Sparkles,
+  ClipboardList
 } from 'lucide-react';
 import { useProcurementStore } from '../store/useProcurementStore';
 import {
@@ -37,10 +38,16 @@ export const RegulatoryWatchdogModal: React.FC<RegulatoryWatchdogModalProps> = (
     parametrosRegulatorios,
     conmutarHitoRegulatorio,
     actualizarParametroRegulatorio,
-    restablecerParametrosRegulatorios
+    restablecerParametrosRegulatorios,
+    bitacoraObservaciones,
+    registrarObservacionBitacora
   } = useProcurementStore();
 
-  const [pestana, setPestana] = useState<'RADAR_NORMAS' | 'CALIBRADOR_VARIABLES' | 'SANDBOX_REFORMAS'>('RADAR_NORMAS');
+  const [pestana, setPestana] = useState<'RADAR_NORMAS' | 'CALIBRADOR_VARIABLES' | 'SANDBOX_REFORMAS' | 'BITACORA'>('RADAR_NORMAS');
+  const [obsOrigen, setObsOrigen] = useState<'VEEDURIA_CIUDADANA' | 'CONTRALORIA' | 'PROCURADURIA' | 'OTRO'>('VEEDURIA_CIUDADANA');
+  const [obsTexto, setObsTexto] = useState('');
+  const [obsNorma, setObsNorma] = useState('');
+  const [obsRiesgo, setObsRiesgo] = useState<'BAJO' | 'MEDIO' | 'ALTO' | 'CRITICO'>('MEDIO');
   const [filtroTipo, setFiltroTipo] = useState<string>('TODOS');
 
   if (!abierto) return null;
@@ -150,6 +157,19 @@ export const RegulatoryWatchdogModal: React.FC<RegulatoryWatchdogModalProps> = (
             >
               <Sparkles className="w-3.5 h-3.5 text-amber-300" />
               <span>Sandbox de Reformas</span>
+            </button>
+
+            <button
+              onClick={() => setPestana('BITACORA')}
+              className={`px-3 py-1 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+                pestana === 'BITACORA'
+                  ? 'bg-emerald-600 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+              title="Registro trazable de observaciones de veeduría, Contraloría y decisiones del simulador"
+            >
+              <ClipboardList className="w-3.5 h-3.5" />
+              <span>Bitácora de observaciones ({bitacoraObservaciones.length})</span>
             </button>
           </div>
         </div>
@@ -389,6 +409,73 @@ export const RegulatoryWatchdogModal: React.FC<RegulatoryWatchdogModalProps> = (
           )}
 
           {/* PESTAÑA 3: SANDBOX DE PROYECTOS DE REFORMA EN TRÁMITE */}
+
+          {/* PESTAÑA 4: BITÁCORA DE OBSERVACIONES Y AUDITORÍA */}
+          {pestana === 'BITACORA' && (
+            <div className="space-y-4">
+              <div className="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-3">
+                <strong className="text-slate-900 block">Registrar observación de veeduría o ente de control</strong>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <select value={obsOrigen} onChange={(e) => setObsOrigen(e.target.value as typeof obsOrigen)} className="p-2 rounded-lg border border-slate-300 bg-white">
+                    <option value="VEEDURIA_CIUDADANA">Veeduría ciudadana</option>
+                    <option value="CONTRALORIA">Contraloría</option>
+                    <option value="PROCURADURIA">Procuraduría</option>
+                    <option value="OTRO">Otro</option>
+                  </select>
+                  <select value={obsRiesgo} onChange={(e) => setObsRiesgo(e.target.value as typeof obsRiesgo)} className="p-2 rounded-lg border border-slate-300 bg-white">
+                    <option value="BAJO">Riesgo bajo</option>
+                    <option value="MEDIO">Riesgo medio</option>
+                    <option value="ALTO">Riesgo alto</option>
+                    <option value="CRITICO">Riesgo crítico</option>
+                  </select>
+                </div>
+                <input value={obsNorma} onChange={(e) => setObsNorma(e.target.value)} placeholder="Norma presuntamente infringida (ej. Art. 24 Ley 80 de 1993)" className="w-full p-2 rounded-lg border border-slate-300 bg-white" />
+                <textarea value={obsTexto} onChange={(e) => setObsTexto(e.target.value)} rows={3} placeholder="Descripción de la observación o advertencia" className="w-full p-2 rounded-lg border border-slate-300 bg-white" />
+                <button
+                  type="button"
+                  disabled={!obsTexto.trim() || !obsNorma.trim()}
+                  onClick={() => {
+                    registrarObservacionBitacora({ origen: obsOrigen, descripcion: obsTexto.trim(), normaInfringida: obsNorma.trim(), nivelRiesgo: obsRiesgo, manual: true });
+                    setObsTexto('');
+                    setObsNorma('');
+                  }}
+                  className="px-4 py-2 rounded-lg bg-emerald-600 text-white font-bold disabled:opacity-40 cursor-pointer"
+                >
+                  Registrar en bitácora
+                </button>
+              </div>
+
+              {bitacoraObservaciones.length === 0 ? (
+                <p className="text-slate-500">Aún no hay observaciones registradas. Aparecerán aquí las que digites y las que genere el simulador (observaciones de veeduría en el Paso 9 y decisiones del Paso 10).</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border border-slate-200">
+                    <thead className="bg-slate-100 text-slate-700">
+                      <tr>
+                        <th className="p-2">Fecha</th>
+                        <th className="p-2">Origen</th>
+                        <th className="p-2">Norma infringida</th>
+                        <th className="p-2">Riesgo</th>
+                        <th className="p-2">Descripción</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {bitacoraObservaciones.map((o) => (
+                        <tr key={o.id} className="border-t border-slate-200 align-top">
+                          <td className="p-2 font-mono whitespace-nowrap">{o.fecha}</td>
+                          <td className="p-2">{o.origen.replace(/_/g, ' ')}{o.manual ? '' : ' (simulador)'}</td>
+                          <td className="p-2">{o.normaInfringida}</td>
+                          <td className="p-2 font-bold">{o.nivelRiesgo}</td>
+                          <td className="p-2">{o.descripcion}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
           {pestana === 'SANDBOX_REFORMAS' && (
             <div className="space-y-4">
               <div className="p-4 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-950 space-y-2">

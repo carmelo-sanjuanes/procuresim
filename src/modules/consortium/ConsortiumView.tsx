@@ -82,6 +82,7 @@ export const ConsortiumView: React.FC = () => {
     'DOCUMENTO_CONSTITUCION' | 'PODER_ESPECIAL' | 'ACUERDO_CONFIDENCIALIDAD' | 'MEMORANDO_ENTENDIMIENTO'
   >('DOCUMENTO_CONSTITUCION');
   const [copiado, setCopiado] = useState(false);
+  const [idInhabilitado, setIdInhabilitado] = useState<string>('');
 
   // Objeto temporal para el motor de redacción
   const asociacionParaRedaccion: AsociacionPlural = {
@@ -776,7 +777,7 @@ export const ConsortiumView: React.FC = () => {
                     K-Residual Consolidado
                   </span>
                   <span className="text-[11px] text-indigo-700">
-                    Art. 72 Ley 1682/2013 (Obra Pública)
+                    Estimación didáctica — no reemplaza la fórmula oficial de capacidad residual (Dec. 1082/2015)
                   </span>
                 </div>
                 <div className="text-right">
@@ -789,6 +790,35 @@ export const ConsortiumView: React.FC = () => {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Inhabilidad sobreviniente de un integrante (Art. 9 Ley 80) */}
+          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-3 text-xs">
+            <h2 className="font-bold text-slate-900 text-sm uppercase">Inhabilidad sobreviniente de un integrante</h2>
+            <label htmlFor="integrante-inhabilitado" className="block text-slate-600">Integrante afectado (por ejemplo, reportado en el Boletín de Responsables Fiscales):</label>
+            <select
+              id="integrante-inhabilitado"
+              value={idInhabilitado}
+              onChange={(e) => setIdInhabilitado(e.target.value)}
+              className="px-2 py-1.5 rounded-lg border border-slate-300 bg-white"
+            >
+              <option value="">Selecciona un integrante</option>
+              {miembros.map((m) => (
+                <option key={m.id} value={m.id}>{m.razonSocial || m.id} ({m.porcentajeParticipacion}%)</option>
+              ))}
+            </select>
+            {idInhabilitado && (() => {
+              const r = ConsortiumEngine.evaluarInhabilidadSobreviniente(miembros, idInhabilitado);
+              return (
+                <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 space-y-1.5 text-amber-950">
+                  <strong>{r.fundamento}</strong>
+                  <ol className="list-decimal pl-4 space-y-1">
+                    {r.pasos.map((p, i) => (<li key={i}>{p}</li>))}
+                  </ol>
+                  <div className="text-[11px]">Participación de los demás integrantes antes de la cesión: {r.remanente}</div>
+                </div>
+              );
+            })()}
           </div>
 
           {/* Redactor de Minuta Jurídica de Asociación */}

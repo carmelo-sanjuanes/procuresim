@@ -9,7 +9,7 @@ const textoPlazo = (p: ProcesoContratacion) =>
   p.plazoMeses > 0 ? `${p.plazoMeses} meses` : p.plazoDias > 0 ? `${p.plazoDias} días` : 'Por definir por la entidad';
 const cdpPendiente = (p: ProcesoContratacion) => !p.cdpNumero || p.cdpNumero === 'PENDIENTE_DE_INCORPORACION';
 const textoCdp = (p: ProcesoContratacion) =>
-  cdpPendiente(p) ? 'CDP pendiente de incorporar (aún no expedido)' : `CDP No. ${p.cdpNumero}${p.cdpFecha ? ` expedido el ${p.cdpFecha}` : ''}`;
+  cdpPendiente(p) ? 'CDP: En trámite de expedición ante la Secretaría de Hacienda / Dirección Financiera' : `CDP No. ${p.cdpNumero}${p.cdpFecha ? ` expedido el ${p.cdpFecha}` : ''}`;
 const textoUnspsc = (p: ProcesoContratacion) =>
   p.requisitosHabilitantes.codigosUNSPSCExigidos.length > 0 ? p.requisitosHabilitantes.codigosUNSPSCExigidos.join(', ') : 'Por definir según el objeto (clasificador UNSPSC)';
 const textoLugar = (p: ProcesoContratacion) => p.lugarEjecucion || 'Por definir por la entidad';
