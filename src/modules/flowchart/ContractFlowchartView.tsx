@@ -39,6 +39,8 @@ import {
 } from 'lucide-react';
 import { useProcurementStore } from '../../store/useProcurementStore';
 import { etiquetaPaso, type Expediente } from '../../core/domain/expedientes';
+import { AyudaContextual } from '../../components/AyudaContextual';
+import { abrirHerramienta, type IdHerramienta, type ContextoHerramienta } from '../../core/domain/herramientas';
 import { soundEffects } from '../../utils/soundEffects';
 import { launchConfetti } from '../../utils/confetti';
 import { DocumentEngine } from '../../core/engines/DocumentEngine';
@@ -606,6 +608,7 @@ export const ContractFlowchartView: React.FC = () => {
   const [mostrarSimuladorAdicion, setMostrarSimuladorAdicion] = useState<boolean>(false);
   const [valorAdicionInput, setValorAdicionInput] = useState<string>('');
   const [anioSuscripcion, setAnioSuscripcion] = useState<number>(2026);
+  const [ayudas, setAyudas] = useState<Partial<Record<IdHerramienta, 'SI' | 'NO'>>>({});
   const [anticipoPct, setAnticipoPct] = useState<string>('20');
   const [tipoSancion, setTipoSancion] = useState<'MULTA' | 'CADUCIDAD'>('MULTA');
   const [espValorContrato, setEspValorContrato] = useState<string>('');
@@ -721,11 +724,12 @@ export const ContractFlowchartView: React.FC = () => {
   });
   const [hidratado, setHidratado] = useState<boolean>(!expedienteInicial);
   const camposPersistidos: Record<string, unknown> = {
-    paso, mostrarFlujogramaVisual, modoChecklist, tipoOperacion, nombre, cargo, busquedaLugar, entidadesCoincidentes, entidadSeleccionada, busquedaSinResultados, areaResponsable, codigoCentroCostos, regimenSeleccionado, necesidad, numeroCdp, valorCdp, cdpPendiente, metodoMercado, proveedorSeleccionado, procesoHistoricoRef, precioHistoricoRef, nitManual, mercadoSoportado, fleteEstimado, porcentajeEstampillas, mostrarValidacionesSoberanas, proveedoresDinamicos, estampillasInfo, faseSecop, adendaPublicada, sobresAbiertos, evaluacionPublicada, adjudicacionFinalizada, incidenteActivo, mostrarSelectorIncidentes, accionIncidenteTomada, dilemaEleccion, rpExpedido, numeroRP, polizaAprobada, supervisorNombre, actaInicioSuscrita, avanceEjecucionPct, mostrarSimuladorAdicion, valorAdicionInput, anioSuscripcion, anticipoPct, tipoSancion, espValorContrato, espSubcontratado, espAporteDinero, espAporteEspecie, multaRetrasoPct, multaPlazoDias, multaTasaDiaria, multaTope, resultadoAdicion, mostrarSimuladorSancionatorio, sancionSimulada, tipoLiquidacion, incluyeSalvedades, textoSalvedades, presupuestoAnualEntidad, liquidacionCompletada, tipologiaManual, antiAlucinacionChecks, situacionInicial, mostrarCasosEspeciales,
+    paso,
+    ayudas, mostrarFlujogramaVisual, modoChecklist, tipoOperacion, nombre, cargo, busquedaLugar, entidadesCoincidentes, entidadSeleccionada, busquedaSinResultados, areaResponsable, codigoCentroCostos, regimenSeleccionado, necesidad, numeroCdp, valorCdp, cdpPendiente, metodoMercado, proveedorSeleccionado, procesoHistoricoRef, precioHistoricoRef, nitManual, mercadoSoportado, fleteEstimado, porcentajeEstampillas, mostrarValidacionesSoberanas, proveedoresDinamicos, estampillasInfo, faseSecop, adendaPublicada, sobresAbiertos, evaluacionPublicada, adjudicacionFinalizada, incidenteActivo, mostrarSelectorIncidentes, accionIncidenteTomada, dilemaEleccion, rpExpedido, numeroRP, polizaAprobada, supervisorNombre, actaInicioSuscrita, avanceEjecucionPct, mostrarSimuladorAdicion, valorAdicionInput, anioSuscripcion, anticipoPct, tipoSancion, espValorContrato, espSubcontratado, espAporteDinero, espAporteEspecie, multaRetrasoPct, multaPlazoDias, multaTasaDiaria, multaTope, resultadoAdicion, mostrarSimuladorSancionatorio, sancionSimulada, tipoLiquidacion, incluyeSalvedades, textoSalvedades, presupuestoAnualEntidad, liquidacionCompletada, tipologiaManual, antiAlucinacionChecks, situacionInicial, mostrarCasosEspeciales,
     arquetipoId: arquetipoActivo.id,
     alternativaId: alternativaSeleccionada?.id ?? null
   };
-  const settersPersistidos: Record<string, (v: any) => void> = { paso: setPaso, mostrarFlujogramaVisual: setMostrarFlujogramaVisual, modoChecklist: setModoChecklist, tipoOperacion: setTipoOperacion, nombre: setNombre, cargo: setCargo, busquedaLugar: setBusquedaLugar, entidadesCoincidentes: setEntidadesCoincidentes, entidadSeleccionada: setEntidadSeleccionada, busquedaSinResultados: setBusquedaSinResultados, areaResponsable: setAreaResponsable, codigoCentroCostos: setCodigoCentroCostos, regimenSeleccionado: setRegimenSeleccionado, necesidad: setNecesidad, numeroCdp: setNumeroCdp, valorCdp: setValorCdp, cdpPendiente: setCdpPendiente, metodoMercado: setMetodoMercado, proveedorSeleccionado: setProveedorSeleccionado, procesoHistoricoRef: setProcesoHistoricoRef, precioHistoricoRef: setPrecioHistoricoRef, nitManual: setNitManual, mercadoSoportado: setMercadoSoportado, fleteEstimado: setFleteEstimado, porcentajeEstampillas: setPorcentajeEstampillas, mostrarValidacionesSoberanas: setMostrarValidacionesSoberanas, proveedoresDinamicos: setProveedoresDinamicos, estampillasInfo: setEstampillasInfo, faseSecop: setFaseSecop, adendaPublicada: setAdendaPublicada, sobresAbiertos: setSobresAbiertos, evaluacionPublicada: setEvaluacionPublicada, adjudicacionFinalizada: setAdjudicacionFinalizada, incidenteActivo: setIncidenteActivo, mostrarSelectorIncidentes: setMostrarSelectorIncidentes, accionIncidenteTomada: setAccionIncidenteTomada, dilemaEleccion: setDilemaEleccion, rpExpedido: setRpExpedido, numeroRP: setNumeroRP, polizaAprobada: setPolizaAprobada, supervisorNombre: setSupervisorNombre, actaInicioSuscrita: setActaInicioSuscrita, avanceEjecucionPct: setAvanceEjecucionPct, mostrarSimuladorAdicion: setMostrarSimuladorAdicion, valorAdicionInput: setValorAdicionInput, anioSuscripcion: setAnioSuscripcion, anticipoPct: setAnticipoPct, tipoSancion: setTipoSancion, espValorContrato: setEspValorContrato, espSubcontratado: setEspSubcontratado, espAporteDinero: setEspAporteDinero, espAporteEspecie: setEspAporteEspecie, multaRetrasoPct: setMultaRetrasoPct, multaPlazoDias: setMultaPlazoDias, multaTasaDiaria: setMultaTasaDiaria, multaTope: setMultaTope, resultadoAdicion: setResultadoAdicion, mostrarSimuladorSancionatorio: setMostrarSimuladorSancionatorio, sancionSimulada: setSancionSimulada, tipoLiquidacion: setTipoLiquidacion, incluyeSalvedades: setIncluyeSalvedades, textoSalvedades: setTextoSalvedades, presupuestoAnualEntidad: setPresupuestoAnualEntidad, liquidacionCompletada: setLiquidacionCompletada, tipologiaManual: setTipologiaManual, antiAlucinacionChecks: setAntiAlucinacionChecks, situacionInicial: setSituacionInicial, mostrarCasosEspeciales: setMostrarCasosEspeciales };
+  const settersPersistidos: Record<string, (v: any) => void> = { paso: setPaso, ayudas: setAyudas, mostrarFlujogramaVisual: setMostrarFlujogramaVisual, modoChecklist: setModoChecklist, tipoOperacion: setTipoOperacion, nombre: setNombre, cargo: setCargo, busquedaLugar: setBusquedaLugar, entidadesCoincidentes: setEntidadesCoincidentes, entidadSeleccionada: setEntidadSeleccionada, busquedaSinResultados: setBusquedaSinResultados, areaResponsable: setAreaResponsable, codigoCentroCostos: setCodigoCentroCostos, regimenSeleccionado: setRegimenSeleccionado, necesidad: setNecesidad, numeroCdp: setNumeroCdp, valorCdp: setValorCdp, cdpPendiente: setCdpPendiente, metodoMercado: setMetodoMercado, proveedorSeleccionado: setProveedorSeleccionado, procesoHistoricoRef: setProcesoHistoricoRef, precioHistoricoRef: setPrecioHistoricoRef, nitManual: setNitManual, mercadoSoportado: setMercadoSoportado, fleteEstimado: setFleteEstimado, porcentajeEstampillas: setPorcentajeEstampillas, mostrarValidacionesSoberanas: setMostrarValidacionesSoberanas, proveedoresDinamicos: setProveedoresDinamicos, estampillasInfo: setEstampillasInfo, faseSecop: setFaseSecop, adendaPublicada: setAdendaPublicada, sobresAbiertos: setSobresAbiertos, evaluacionPublicada: setEvaluacionPublicada, adjudicacionFinalizada: setAdjudicacionFinalizada, incidenteActivo: setIncidenteActivo, mostrarSelectorIncidentes: setMostrarSelectorIncidentes, accionIncidenteTomada: setAccionIncidenteTomada, dilemaEleccion: setDilemaEleccion, rpExpedido: setRpExpedido, numeroRP: setNumeroRP, polizaAprobada: setPolizaAprobada, supervisorNombre: setSupervisorNombre, actaInicioSuscrita: setActaInicioSuscrita, avanceEjecucionPct: setAvanceEjecucionPct, mostrarSimuladorAdicion: setMostrarSimuladorAdicion, valorAdicionInput: setValorAdicionInput, anioSuscripcion: setAnioSuscripcion, anticipoPct: setAnticipoPct, tipoSancion: setTipoSancion, espValorContrato: setEspValorContrato, espSubcontratado: setEspSubcontratado, espAporteDinero: setEspAporteDinero, espAporteEspecie: setEspAporteEspecie, multaRetrasoPct: setMultaRetrasoPct, multaPlazoDias: setMultaPlazoDias, multaTasaDiaria: setMultaTasaDiaria, multaTope: setMultaTope, resultadoAdicion: setResultadoAdicion, mostrarSimuladorSancionatorio: setMostrarSimuladorSancionatorio, sancionSimulada: setSancionSimulada, tipoLiquidacion: setTipoLiquidacion, incluyeSalvedades: setIncluyeSalvedades, textoSalvedades: setTextoSalvedades, presupuestoAnualEntidad: setPresupuestoAnualEntidad, liquidacionCompletada: setLiquidacionCompletada, tipologiaManual: setTipologiaManual, antiAlucinacionChecks: setAntiAlucinacionChecks, situacionInicial: setSituacionInicial, mostrarCasosEspeciales: setMostrarCasosEspeciales };
   const instantanea = JSON.stringify(camposPersistidos);
   const valoresInicialesRef = useRef<Record<string, unknown>>(camposPersistidos);
   const instRef = useRef<string>(instantanea);
@@ -745,14 +749,14 @@ export const ContractFlowchartView: React.FC = () => {
     tipoOperacion,
     paso,
     etiquetaPaso: etiquetaPaso(paso, { cdpPendiente, liquidado: liquidacionCompletada }),
-    liquidado: liquidacionCompletada
+    liquidado: liquidacionCompletada,
+    tieneDatos: !!(nombre.trim() || entidadSeleccionada || necesidad.trim() || valorCdp)
   };
 
   const persistirAhora = (permitirCrear: boolean) => {
     if (!hidratadoRef.current) return;
     const m = metaRef.current;
-    const hayProgreso = m.paso > 1 || m.tipoOperacion !== null;
-    if (!hayProgreso) return;
+    if (!m.tieneDatos) return;
     if (instRef.current === ultimaGuardadaRef.current) {
       sucioRef.current = false;
       return;
@@ -760,7 +764,8 @@ export const ContractFlowchartView: React.FC = () => {
     const st = useProcurementStore.getState();
     const id = idExpedienteRef.current;
     if (!id && !permitirCrear) return;
-    const resultado = st.guardarExpediente({ ...(m as any), estado: JSON.parse(instRef.current) }, id);
+    const { tieneDatos: _td, ...meta } = m;
+    const resultado = st.guardarExpediente({ ...(meta as any), estado: JSON.parse(instRef.current) }, id);
     if (resultado) {
       idExpedienteRef.current = resultado;
       ultimaGuardadaRef.current = instRef.current;
@@ -824,6 +829,24 @@ export const ContractFlowchartView: React.FC = () => {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Ayudas contextuales: «¿Lo vas a necesitar?» (Sí deja el botón visible; No indica cómo llamarla después)
+  const modalidadLegal = (): ContextoHerramienta['modalidad'] => {
+    const m = (alternativaSeleccionada?.modalidad || '').toLowerCase();
+    if (m.includes('concurso')) return 'CONCURSO_MERITOS_ABIERTO';
+    if (m.includes('directa')) return 'CONTRATACION_DIRECTA';
+    if (m.includes('licitaci')) return 'LICITACION_PUBLICA';
+    if (m.includes('mínima') || m.includes('minima')) return 'MINIMA_CUANTIA';
+    return nivelCuantia === 'MAYOR' ? 'LICITACION_PUBLICA' : nivelCuantia === 'MINIMA' ? 'MINIMA_CUANTIA' : 'SELECCION_ABREVIADA_MENOR_CUANTIA';
+  };
+  const renderAyuda = (id: IdHerramienta) => (
+    <AyudaContextual
+      id={id}
+      respuesta={ayudas[id]}
+      onResponder={(r) => setAyudas((a) => ({ ...a, [id]: r }))}
+      onAbrir={() => abrirHerramienta(id, { modalidad: modalidadLegal(), presupuestoCOP: presupuestoUsuario })}
+    />
+  );
 
   const handleSeleccionarRegimen = (nuevoRegimen: 'LEY_80' | 'MANUAL_PROPIO' | 'MULTILATERAL') => {
     soundEffects.playClick();
@@ -913,7 +936,7 @@ export const ContractFlowchartView: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 bg-white text-slate-900 overflow-y-auto animate-fadeIn select-none p-4 sm:p-8 flex flex-col items-center justify-start sm:justify-center min-h-full">
+    <div className="flex-1 bg-white text-slate-900 overflow-y-auto animate-fadeIn select-none p-4 sm:p-8 flex flex-col items-center justify-start min-h-full">
       <div className="max-w-2xl w-full mx-auto space-y-6 my-auto py-2">
 
         {/* Barra Superior Contextual: Emerge ÚNICAMENTE cuando ya hay contexto activo (paso > 1 o checklist), nunca al inicio */}
@@ -3055,6 +3078,11 @@ export const ContractFlowchartView: React.FC = () => {
               </div>
             </div>
 
+            <div className="space-y-2 pt-2 border-t border-slate-100">
+              {(tipologiaObjeto === null || tipologiaObjeto === 'SUMINISTRO') && renderAyuda('TVEC')}
+              {renderAyuda('COTIZACIONES')}
+            </div>
+
             <div className="pt-4 flex flex-col sm:flex-row items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <button
@@ -3178,15 +3206,14 @@ export const ContractFlowchartView: React.FC = () => {
               </button>
             </div>
 
+            <div className="pt-1">{renderAyuda('CRONOGRAMA')}</div>
+
             <div className="pt-2 flex items-center justify-between">
               <button
                 onClick={() => {
                   soundEffects.playClick();
-                  setPaso(1);
-                  setEntidadSeleccionada(null);
-                  setMetodoMercado(null);
-                  setProveedorSeleccionado(null);
-                  setModoChecklist(false);
+                  persistirAhora(true);
+                  useProcurementStore.getState().nuevoLienzo();
                 }}
                 className="text-xs text-slate-400 hover:text-slate-900 font-bold cursor-pointer"
               >
@@ -3212,6 +3239,12 @@ export const ContractFlowchartView: React.FC = () => {
         {/* ===================================================================== */}
         {paso === 10 && !modoChecklist && (
           <div className="space-y-6 animate-fadeIn">
+            {sobresAbiertos && (
+              <div className="space-y-2">
+                {renderAyuda('EMPATE')}
+                {tipologiaObjeto === 'OBRA' && renderAyuda('AIU')}
+              </div>
+            )}
             {/* Cabecera SECOP II */}
             <div className="p-5 rounded-3xl bg-slate-900 text-white space-y-3 shadow-xl border border-slate-800">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
@@ -3993,14 +4026,8 @@ export const ContractFlowchartView: React.FC = () => {
                   <button
                     onClick={() => {
                       soundEffects.playClick();
-                      setPaso(1);
-                      setEntidadSeleccionada(null);
-                      setMetodoMercado(null);
-                      setProveedorSeleccionado(null);
-                      setAdendaPublicada(false);
-                      setSobresAbiertos(false);
-                      setAdjudicacionFinalizada(false);
-                      setModoChecklist(false);
+                      persistirAhora(true);
+                  useProcurementStore.getState().nuevoLienzo();
                     }}
                     className="text-xs text-slate-400 hover:text-slate-900 font-bold cursor-pointer"
                   >
@@ -4520,6 +4547,8 @@ export const ContractFlowchartView: React.FC = () => {
                 </div>
               )}
             </div>
+
+            <div className="pt-1">{renderAyuda('COMUNICACIONES')}</div>
 
             {/* Simulador 2: Régimen Sancionatorio Art. 86 Ley 1474 */}
             <div className="p-5 rounded-3xl border border-amber-200 bg-amber-50/30 space-y-3">

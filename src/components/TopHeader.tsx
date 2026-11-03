@@ -123,7 +123,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
 
         {/* Derecha: Botón de cambio de modo y acceso a vista experta */}
         <div className="flex items-center gap-2">
-          {onAbrirExpedientes && (
+          {onAbrirExpedientes && (expedientes.length >= 2 || (expedientes.length === 1 && !expedienteActivoId)) && (
             <button
               onClick={() => {
                 soundEffects.playClick();
@@ -133,7 +133,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
               title="Ver, reanudar, duplicar, exportar o importar tus expedientes guardados"
             >
               <FolderOpen className="w-3.5 h-3.5" />
-              <span>Mis expedientes{expedientes.length > 0 ? ` (${expedientes.length})` : ''}</span>
+              <span>Mis expedientes ({expedientes.length})</span>
             </button>
           )}
 
@@ -259,7 +259,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
               <span>🎓 Aprender</span>
             </button>
 
-            {expedientes.length > 0 ? (
+            {expedientes.length >= 2 ? (
               selectorProceso
             ) : (
               <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 px-3 py-1 rounded-xl shadow-2xs">

@@ -28,16 +28,16 @@ import {
 import { useProcurementStore } from '../../store/useProcurementStore';
 import { soundEffects } from '../../utils/soundEffects';
 
-export const AutomaticTimelineView: React.FC = () => {
+export const AutomaticTimelineView: React.FC<{ modalidadInicial?: ModalidadContratacionLegal; presupuestoInicial?: number }> = ({ modalidadInicial, presupuestoInicial }) => {
   const { setVista, registrarAuditoria } = useProcurementStore();
 
-  const [modalidad, setModalidad] = useState<ModalidadContratacionLegal>('LICITACION_PUBLICA');
-  const [presupuestoCOP, setPresupuestoCOP] = useState(450000000);
+  const [modalidad, setModalidad] = useState<ModalidadContratacionLegal>(modalidadInicial ?? 'LICITACION_PUBLICA');
+  const [presupuestoCOP, setPresupuestoCOP] = useState(presupuestoInicial && presupuestoInicial > 0 ? presupuestoInicial : 450000000);
   const [fechaInicio, setFechaInicio] = useState(new Date().toISOString().split('T')[0]);
   const [hitoSeleccionado, setHitoSeleccionado] = useState<HitoCronogramaLegal | null>(null);
 
   const [cronograma, setCronograma] = useState<CronogramaGenerado>(() =>
-    TimelineGeneratorEngine.generarCronogramaAutomatico('LICITACION_PUBLICA', 450000000, new Date().toISOString().split('T')[0])
+    TimelineGeneratorEngine.generarCronogramaAutomatico(modalidadInicial ?? 'LICITACION_PUBLICA', presupuestoInicial && presupuestoInicial > 0 ? presupuestoInicial : 450000000, new Date().toISOString().split('T')[0])
   );
 
   const handleRecalcular = () => {

@@ -8,6 +8,7 @@ import { CceComplianceModal } from './components/CceComplianceModal';
 import { WelcomeBriefingModal } from './components/WelcomeBriefingModal';
 import { CommandPaletteModal } from './components/CommandPaletteModal';
 import { MisExpedientesModal } from './components/MisExpedientesModal';
+import { HerramientaModal } from './components/HerramientaModal';
 import { RegulatoryWatchdogModal } from './components/RegulatoryWatchdogModal';
 import { GuidedWorkflowBar } from './components/GuidedWorkflowBar';
 import { AwwwardsFloatingHud } from './components/AwwwardsFloatingHud';
@@ -169,6 +170,7 @@ export function App() {
         onCerrar={() => setModalMentorCCE(false)}
       />
       <MisExpedientesModal abierto={modalExpedientes} onCerrar={() => setModalExpedientes(false)} />
+      <HerramientaModal />
       <RegulatoryWatchdogModal
         abierto={modalRadarRegulatorio}
         onCerrar={() => setModalRadarRegulatorio(false)}

@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { useProcurementStore } from '../store/useProcurementStore';
 import type { PlataformaVista } from '../core/domain/types';
+import { HERRAMIENTAS, abrirHerramienta, type IdHerramienta } from '../core/domain/herramientas';
 
 interface CommandPaletteModalProps {
   abierto: boolean;
@@ -61,12 +62,20 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
 
   const {
-    setVista,
+    setVista: setVistaStore,
+    densidadVisual,
+    setDensidadVisual,
     procesos,
     seleccionarProceso,
     proveedores,
     setProveedorActivo
   } = useProcurementStore();
+
+  // Desde la vista limpia, abrir un módulo completo lleva a la Vista Experta (si no, no se vería nada)
+  const setVista = (v: PlataformaVista) => {
+    if (densidadVisual === 'ENFOCADA_SIMPLE') setDensidadVisual('EXPERTO_AVANZADA');
+    setVistaStore(v);
+  };
 
   useEffect(() => {
     if (abierto) {
@@ -75,6 +84,18 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
       setTimeout(() => inputRef.current?.focus(), 50);
     }
   }, [abierto]);
+
+  const ayudasDelFlujo: ItemComando[] = (Object.keys(HERRAMIENTAS) as IdHerramienta[]).map((id) => ({
+    id: `cmd-ayuda-${id.toLowerCase()}`,
+    categoria: 'AUDITORÍA & HERRAMIENTAS',
+    titulo: HERRAMIENTAS[id].titulo,
+    subtitulo: HERRAMIENTAS[id].claves,
+    icono: <Calculator className="w-4 h-4 text-slate-400" />,
+    accion: () => {
+      onCerrar();
+      abrirHerramienta(id);
+    }
+  }));
 
   const comandos: ItemComando[] = [
     // Módulos
@@ -318,7 +339,7 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
   ];
 
   // Filtrado de comandos según la búsqueda
-  const filtrados = comandos.filter((c) => {
+  const filtrados = [...comandos, ...ayudasDelFlujo].filter((c) => {
     const q = busqueda.toLowerCase().trim();
     if (!q) return true;
     return (

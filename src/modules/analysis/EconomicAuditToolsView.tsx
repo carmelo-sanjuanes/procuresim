@@ -22,11 +22,11 @@ import { AiuCalculatorEngine } from '../../core/engines/AiuCalculatorEngine';
 import { OcdsExportEngine } from '../../core/engines/OcdsExportEngine';
 import { useProcurementStore } from '../../store/useProcurementStore';
 
-export const EconomicAuditToolsView: React.FC = () => {
+export const EconomicAuditToolsView: React.FC<{ pestanaInicial?: 'DESEMPATES' | 'PRECIOS_BAJOS' | 'AIU_IVA' | 'EXPORTADOR_OCDS' }> = ({ pestanaInicial }) => {
   const { procesos, procesoSeleccionadoId, proveedores, parametrosRegulatorios } = useProcurementStore();
   const procesoActivo = procesos.find((p) => p.id === procesoSeleccionadoId) || procesos[0];
 
-  const [pestana, setPestana] = useState<'DESEMPATES' | 'PRECIOS_BAJOS' | 'AIU_IVA' | 'EXPORTADOR_OCDS'>('DESEMPATES');
+  const [pestana, setPestana] = useState<'DESEMPATES' | 'PRECIOS_BAJOS' | 'AIU_IVA' | 'EXPORTADOR_OCDS'>(pestanaInicial ?? 'DESEMPATES');
 
   // 1. Estado para Desempates Ley 2069
   const [oferentesEmpatados, setOferentesEmpatados] = useState<OferenteEmpatado[]>([
