@@ -4,7 +4,7 @@ import { X, FolderOpen, Copy, Trash2, Play, Download, Upload, Plus } from 'lucid
 import { saveAs } from 'file-saver';
 import { useProcurementStore } from '../store/useProcurementStore';
 import { soundEffects } from '../utils/soundEffects';
-import { TOTAL_PASOS, MAX_BYTES_IMPORTACION } from '../core/domain/expedientes';
+import { totalPasosDe, MAX_BYTES_IMPORTACION } from '../core/domain/expedientes';
 
 interface Props {
   abierto: boolean;
@@ -38,7 +38,7 @@ export const MisExpedientesModal: React.FC<Props> = ({ abierto, onCerrar }) => {
     soundEffects.playClick();
     guardarAhora();
     st().duplicarExpediente(id);
-    setAviso({ tipo: 'ok', texto: 'Copia creada. Puedes reanudarla para probar otra ruta.' });
+    setAviso({ tipo: 'ok', texto: 'Copia creada.' });
   };
   const eliminar = (id: string) => {
     if (confirmarId !== id) {
@@ -76,14 +76,13 @@ export const MisExpedientesModal: React.FC<Props> = ({ abierto, onCerrar }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/40 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="Mis expedientes">
+    <div className="fixed inset-0 z-50 bg-white/75 backdrop-blur-sm flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="Mis expedientes">
       <div className="bg-white rounded-3xl shadow-xl border border-slate-200 w-full max-w-3xl max-h-[88vh] flex flex-col">
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <FolderOpen className="w-5 h-5 text-slate-500" />
             <div>
               <h2 className="text-sm font-black text-slate-900">Mis expedientes</h2>
-              <p className="text-[11px] text-slate-500">Se guardan solos en este navegador mientras avanzas. Exporta un respaldo para llevarlos a otro equipo.</p>
             </div>
           </div>
           <button onClick={onCerrar} aria-label="Cerrar" className="p-1.5 rounded-xl hover:bg-slate-100 cursor-pointer">
@@ -112,12 +111,10 @@ export const MisExpedientesModal: React.FC<Props> = ({ abierto, onCerrar }) => {
 
         <div className="p-6 overflow-y-auto space-y-3">
           {expedientes.length === 0 && (
-            <div className="text-center text-xs text-slate-500 py-10">
-              Aún no tienes expedientes. Cuando avances más allá de la primera pregunta, el proceso se guarda aquí automáticamente.
-            </div>
+            <div className="text-center text-xs text-slate-400 py-10">Sin expedientes</div>
           )}
           {expedientes.map((e) => {
-            const pct = Math.round((e.paso / TOTAL_PASOS) * 100);
+            const pct = Math.round((e.paso / totalPasosDe(e.tipoOperacion)) * 100);
             return (
               <div key={e.id} data-expediente-id={e.id} className={`rounded-2xl border p-4 space-y-2 ${e.id === activoId ? 'border-sky-300 bg-sky-50/40' : 'border-slate-200'}`}>
                 <div className="flex items-start justify-between gap-3">

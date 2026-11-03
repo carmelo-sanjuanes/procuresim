@@ -41,6 +41,7 @@ import { useProcurementStore } from '../../store/useProcurementStore';
 import { etiquetaPaso, type Expediente } from '../../core/domain/expedientes';
 import { PLATAFORMAS, type IdPlataforma } from '../../core/domain/plataformas';
 import { sugerirPlataforma } from '../../core/engines/PlatformRouterEngine';
+import { VendoFlowView } from '../vendo/VendoFlowView';
 import { AyudaContextual } from '../../components/AyudaContextual';
 import { abrirHerramienta, abrirPlataforma, type IdHerramienta, type ContextoHerramienta } from '../../core/domain/herramientas';
 import { soundEffects } from '../../utils/soundEffects';
@@ -946,6 +947,15 @@ export const ContractFlowchartView: React.FC = () => {
     };
     await DocumentEngine.descargarEstudiosPreviosWord(procesoPersonalizado);
   };
+
+  // Ruta «Vendo»: vista propia con el mismo estilo y autoguardado
+  if (tipoOperacion === 'VENDO' && paso >= 2) {
+    return (
+      <div className="flex-1 bg-white text-slate-900 overflow-y-auto animate-fadeIn p-2 sm:p-4 flex flex-col items-center justify-start min-h-full">
+        <VendoFlowView expedienteInicial={expedienteInicial} onCambiarRol={() => { setTipoOperacion(null); setPaso(1); }} />
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 bg-white text-slate-900 overflow-y-auto animate-fadeIn select-none p-4 sm:p-8 flex flex-col items-center justify-start min-h-full">

@@ -3,6 +3,8 @@
 export const FORMATO_EXPEDIENTES = 'procuresim-expedientes';
 export const VERSION_FORMATO_EXPEDIENTES = 1;
 export const TOTAL_PASOS = 13;
+import { TOTAL_PASOS_VENDO } from './vendo';
+export const totalPasosDe = (t: 'COMPRO' | 'VENDO' | null): number => (t === 'VENDO' ? TOTAL_PASOS_VENDO : TOTAL_PASOS);
 const MAX_EXPEDIENTES_IMPORTADOS = 200;
 export const MAX_BYTES_IMPORTACION = 8 * 1024 * 1024;
 
@@ -77,7 +79,8 @@ export function sanearEstado(v: unknown, prof = 0): unknown {
 export function normalizarExpediente(raw: unknown): Expediente | null {
   if (!esObjetoPlano(raw) || !esObjetoPlano(raw.estado)) return null;
   const ahora = new Date().toISOString();
-  const paso = Math.min(TOTAL_PASOS, Math.max(1, Math.round(numero(raw.paso)) || 1));
+  const tope = totalPasosDe(raw.tipoOperacion === 'VENDO' ? 'VENDO' : null);
+  const paso = Math.min(tope, Math.max(1, Math.round(numero(raw.paso)) || 1));
   const liquidado = raw.liquidado === true;
   return {
     id: texto(raw.id, 80) || crearIdExpediente(),
