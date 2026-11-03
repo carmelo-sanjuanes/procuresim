@@ -1,7 +1,7 @@
 // Herramientas de ayuda que el flujo ofrece en el momento oportuno («¿Lo vas a necesitar?»).
 // Sí → el botón queda visible en ese paso. No → se le indica cómo llamarla después (Ctrl + K).
 
-export type IdHerramienta = 'CRONOGRAMA' | 'TVEC' | 'COTIZACIONES' | 'EMPATE' | 'AIU' | 'COMUNICACIONES';
+export type IdHerramienta = 'CRONOGRAMA' | 'TVEC' | 'COTIZACIONES' | 'EMPATE' | 'AIU' | 'COMUNICACIONES' | 'CONSORCIOS';
 
 export interface DefinicionHerramienta {
   id: IdHerramienta;
@@ -54,6 +54,14 @@ export const HERRAMIENTAS: Record<IdHerramienta, DefinicionHerramienta> = {
     boton: 'Desglosar AIU e IVA',
     busqueda: 'aiu',
     claves: 'aiu administración imprevistos utilidad iva obra'
+  },
+  CONSORCIOS: {
+    id: 'CONSORCIOS',
+    titulo: 'Gestor de consorcios, uniones temporales y minutas',
+    pregunta: '¿Vas a formalizar el acuerdo de consorcio o unión temporal?',
+    boton: 'Abrir el gestor de consorcios y minutas',
+    busqueda: 'consorcio',
+    claves: 'consorcio unión temporal minuta constitución poder confidencialidad memorando alianza plural inhabilidad'
   },
   COMUNICACIONES: {
     id: 'COMUNICACIONES',

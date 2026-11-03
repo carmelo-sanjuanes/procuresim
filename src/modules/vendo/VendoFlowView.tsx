@@ -1,7 +1,11 @@
 // Ruta «Vendo»: el flujo paso a paso del licitante y contratista. Misma filosofía que «Compro»: una pregunta a la vez,
 // cálculos de fondo, autoguardado en «Mis expedientes».
+import { LineaTiempoVendo } from './LineaTiempoVendo';
+import { BuscadorOportunidades } from './BuscadorOportunidades';
+import type { Oportunidad } from '../../core/domain/oportunidades';
+import { construirLineaTiempo } from '../../core/engines/LineaTiempoVendo';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, Copy, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Copy, Plus, Trash2, CalendarDays, Search } from 'lucide-react';
 import { useProcurementStore } from '../../store/useProcurementStore';
 import type { Expediente } from '../../core/domain/expedientes';
 import {
@@ -13,7 +17,7 @@ import {
   decisionGoNoGo, validarAlianza, experienciaPlural, RIESGOS_TIPICOS, CATALOGO_OBSERVACIONES, redactarObservaciones,
   costoUnitario, costoPartida, costoDirectoTotal, calcularOferta, flujoCaja, METODOS_ECONOMICOS, simularEscenarios,
   LISTA_PERSONAL, LISTA_SOBRE1, LISTA_GARANTIA, LISTA_CIERRE,
-  CATALOGO_SUBSANACION, redactarSubsanacion, AMPAROS, garantiaUnica, calcularActa, evaluarAdicion, calcularMulta,
+  perfilAliado, CATALOGO_SUBSANACION, redactarSubsanacion, garantiaUnica, calcularActa, evaluarAdicion, calcularMulta,
   ARGUMENTOS_DEFENSA, redactarDescargos, plazosLiquidacion, LISTA_CONTRATO, LISTA_LIQUIDACION
 } from '../../core/engines/VendoEngine';
 import { descargarPropuesta } from '../../core/engines/PropuestaVendoDocx';
@@ -22,6 +26,8 @@ import { TerminosProcesalesEngine } from '../../core/engines/TerminosProcesalesE
 import { sugerirPlataforma } from '../../core/engines/PlatformRouterEngine';
 import { PLATAFORMAS } from '../../core/domain/plataformas';
 import { abrirHerramienta, abrirPlataforma } from '../../core/domain/herramientas';
+import { ConsortiumEngine } from '../../core/engines/ConsortiumEngine';
+import type { AsociacionPlural, MiembroAsociacion } from '../../core/domain/types';
 
 const LISTA_HABIL = [
   { id: 'h_rut', t: 'RUT actualizado, con la actividad económica del objeto' },
@@ -180,6 +186,57 @@ export const VendoFlowView: React.FC<{ expedienteInicial: Expediente | null; onC
   const setPartida = (id: string, k: string, v: string | number) => setD((p) => ({ ...p, partidas: p.partidas.map((x) => (x.id === id ? { ...x, [k]: v } : x)) }));
   const conteo = (items: { id: string }[]) => items.filter((x) => d.checks[x.id] === 'SI').length;
   const [bajando, setBajando] = useState(false);
+  const [verLinea, setVerLinea] = useState(false);
+  const [verBuscador, setVerBuscador] = useState(false);
+  const usarOportunidad = (o: Oportunidad) => {
+    const modalidad = /licitaci/i.test(o.modalidad) ? 'Licitación pública' : /subasta/i.test(o.modalidad) ? 'Selección abreviada por subasta inversa' : /abreviada/i.test(o.modalidad) ? 'Selección abreviada de menor cuantía' : /concurso/i.test(o.modalidad) ? 'Concurso de méritos' : /m[ií]nima/i.test(o.modalidad) ? 'Mínima cuantía' : '';
+    setD((p) => ({ ...p, campos: { ...p.campos, p_numero: o.referencia || o.id, p_entidad: o.entidad, p_objeto: o.objeto, ...(o.valor > 0 ? { p_presupuesto: String(Math.round(o.valor)) } : {}), ...(modalidad ? { p_modalidad: modalidad } : {}), ...(o.codigo && !p.campos.r_unspsc ? { r_unspsc: o.codigo.replace(/\D/g, '') } : {}), p_enlace: o.enlace, t_publicacion: o.publicada || '', t_cierre: o.cierre || '' } }));
+    setVerBuscador(false); ir(8);
+  };
+  const perfil = perfilAliado(d);
+  const idAsoc = c.asoc_id || '';
+  const firmaMiembros = (tipo: string, ms: { id: string; razonSocial: string; nit: string; porcentaje: number; experienciaSMMLV: number; esLider: boolean; actividades: string }[]) => JSON.stringify([tipo, ms.map((m) => [m.id, m.razonSocial, m.nit, m.porcentaje, m.experienciaSMMLV, m.esLider, m.actividades])]);
+  const ultimaFirmaAsoc = useRef('');
+  const abrirGestor = () => {
+    const id = idAsoc || `VENDO-${nuevoId()}`;
+    if (!idAsoc) setCampo('asoc_id', id);
+    const st = useProcurementStore.getState();
+    const previa = st.asociaciones.find((a) => a.id === id);
+    const tipo = d.tipoAlianza === 'UNION_TEMPORAL' ? 'UNION_TEMPORAL' : 'CONSORCIO';
+    const miembros: MiembroAsociacion[] = d.miembros.map((m) => {
+      const ex = previa?.miembros.find((x) => x.id === m.id);
+      return {
+        id: m.id, razonSocial: m.razonSocial, nit: m.nit, representanteLegal: ex?.representanteLegal ?? (m.esLider ? c.q_rep || '' : ''), cedulaRepresentante: ex?.cedulaRepresentante ?? '',
+        porcentajeParticipacion: m.porcentaje, compromisoObligaciones: m.actividades, aportesFinancierosCOP: ex?.aportesFinancierosCOP ?? 0, experienciaAportadaSMMLV: m.experienciaSMMLV, esLider: m.esLider,
+        activoCorriente: ex?.activoCorriente ?? 0, pasivoCorriente: ex?.pasivoCorriente ?? 0, activoTotal: ex?.activoTotal ?? 0, pasivoTotal: ex?.pasivoTotal ?? 0, patrimonio: ex?.patrimonio ?? 0
+      } as MiembroAsociacion;
+    });
+    const cons = ConsortiumEngine.calcularConsolidacion(miembros);
+    const lider = d.miembros.find((m) => m.esLider);
+    const a: AsociacionPlural = {
+      id, tipo, nombreAsociacion: previa?.nombreAsociacion || `${tipo === 'UNION_TEMPORAL' ? 'Unión Temporal' : 'Consorcio'} ${c.p_numero || ''}`.trim(),
+      objetoLicitacion: c.p_objeto || previa?.objetoLicitacion || '', representanteDesignado: previa?.representanteDesignado || (lider && lider.razonSocial === c.q_razon ? c.q_rep || '' : ''),
+      cedulaRepresentante: previa?.cedulaRepresentante || '', direccionSede: previa?.direccionSede || '', ciudad: previa?.ciudad || 'Neiva', emailNotificacion: previa?.emailNotificacion || '', telefono: previa?.telefono || '',
+      miembros, porcentajeTotal: cons.porcentajeTotal, esValido100Pct: cons.esValido100Pct, indicadoresPonderados: cons.indicadoresPonderados, documentosGenerados: previa?.documentosGenerados || []
+    };
+    ultimaFirmaAsoc.current = firmaMiembros(a.tipo, d.miembros);
+    useProcurementStore.setState({ asociaciones: [a, ...st.asociaciones.filter((x) => x.id !== id)] });
+    abrirHerramienta('CONSORCIOS');
+  };
+  const asociaciones = useProcurementStore((st) => st.asociaciones);
+  useEffect(() => {
+    if (!idAsoc) return;
+    const a = asociaciones.find((x) => x.id === idAsoc);
+    if (!a) return;
+    const nuevos = a.miembros.map((m) => ({ id: m.id, razonSocial: m.razonSocial, nit: m.nit, porcentaje: m.porcentajeParticipacion, experienciaSMMLV: m.experienciaAportadaSMMLV, esLider: m.esLider, actividades: m.compromisoObligaciones }));
+    const tipoV = a.tipo === 'UNION_TEMPORAL' ? 'UNION_TEMPORAL' : 'CONSORCIO';
+    const firma = firmaMiembros(tipoV, nuevos);
+    if (firma === ultimaFirmaAsoc.current) return;
+    ultimaFirmaAsoc.current = firma;
+    setD((p) => ({ ...p, tipoAlianza: tipoV, miembros: nuevos }));
+  }, [asociaciones, idAsoc]);
+  const linea = construirLineaTiempo(c, d.actas);
+  const siguiente = linea.hitos.find((h) => h.proximo);
   const alarmasT = TerminosProcesalesEngine.calcularAlarmas({ publicacionPrepliego: c.t_prepliego, cierre: c.t_cierre, publicacionInforme: c.t_informe, adjudicacion: c.t_adjud });
   const subsanacionTxt = redactarSubsanacion(d);
   const valorContrato = num(c.k_valor) > 0 ? num(c.k_valor) : oferta?.total ?? 0;
@@ -364,6 +421,8 @@ export const VendoFlowView: React.FC<{ expedienteInicial: Expediente | null; onC
               <Campo et="Entidad compradora" v={c.p_entidad || ''} on={(v) => setCampo('p_entidad', v)} />
               <Campo et="Objeto" v={c.p_objeto || ''} on={(v) => setCampo('p_objeto', v)} ancho />
               <Campo et="Presupuesto oficial (COP)" cop v={c.p_presupuesto || ''} on={(v) => setCampo('p_presupuesto', v)} />
+              <Campo et="Publicación del proceso" tipo="date" v={c.t_publicacion || ''} on={(v) => setCampo('t_publicacion', v)} />
+              <Campo et="Cierre de ofertas" tipo="date" v={c.t_cierre || ''} on={(v) => setCampo('t_cierre', v)} />
               <label className="block space-y-1">
                 <span className="text-[11px] font-semibold text-slate-600">Modalidad</span>
                 <select value={c.p_modalidad || ''} onChange={(e) => setCampo('p_modalidad', e.target.value)} className="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm bg-white">
@@ -702,6 +761,29 @@ export const VendoFlowView: React.FC<{ expedienteInicial: Expediente | null; onC
         return (
           <div className="space-y-5">
             <Titulo t="Alianza: consorcio o unión temporal" s="Úsala para completar lo que te falta (experiencia, capacidad), no para reducir la competencia ni coordinar ofertas con competidores." />
+            <div data-perfil-aliado className="p-4 rounded-2xl border border-slate-200 space-y-3">
+              <strong className="text-xs text-slate-900">Qué necesitas de un aliado</strong>
+              {perfil.necesidades.length === 0 ? (
+                <p data-sin-necesidad className="text-xs text-slate-600">Con los datos que registraste cumples los requisitos del pliego sin aliado. Una alianza solo se justifica si te falta algo.</p>
+              ) : (
+                <ul className="space-y-1.5">
+                  {perfil.necesidades.map((n) => (
+                    <li key={n.id} data-necesidad={n.id} className="text-xs text-slate-800"><strong>{n.etiqueta}.</strong> {n.detalle}<span className="block text-slate-600">Busca: {n.criterio}</span></li>
+                  ))}
+                </ul>
+              )}
+              <details className="text-xs text-slate-700">
+                <summary className="cursor-pointer font-bold text-slate-800">Dónde buscar aliados y qué verificar antes de firmar</summary>
+                <div className="mt-2 space-y-2">
+                  <ul className="list-disc pl-4 space-y-1">{perfil.dondeBuscar.map((t) => <li key={t}>{t}</li>)}</ul>
+                  <ul className="list-disc pl-4 space-y-1">{perfil.verificar.map((t) => <li key={t}>{t}</li>)}</ul>
+                </div>
+              </details>
+              {perfil.ficha && (
+                <button data-copiar-ficha onClick={() => copiar(perfil.ficha)} className="flex items-center gap-1.5 text-xs font-bold text-slate-700 cursor-pointer"><Copy className="w-3.5 h-3.5" /> {copiado ? 'Copiado' : 'Copiar ficha de búsqueda de aliado'}</button>
+              )}
+              <p data-blindaje className="text-[11px] text-slate-600 p-3 rounded-xl bg-slate-50">Blindaje de libre competencia: la alianza debe sumar capacidades que individualmente no tienes. Consorciarse entre competidores con capacidad plena para ofertar solos, para repartirse el mercado o eludir la puja, puede constituir un acuerdo restrictivo de la competencia (Art. 410A del Código Penal; Ley 155 de 1959 y Decreto 2153 de 1992). Verifícalo con tu abogado.</p>
+            </div>
             <div className="grid grid-cols-2 gap-2">
               {([['CONSORCIO', 'Consorcio'], ['UNION_TEMPORAL', 'Unión temporal']] as const).map(([k, t]) => (
                 <button key={k} data-alianza={k} aria-pressed={d.tipoAlianza === k} onClick={() => setD((p) => ({ ...p, tipoAlianza: k }))} className={`p-3 rounded-2xl border text-xs font-bold cursor-pointer ${d.tipoAlianza === k ? 'border-slate-900 bg-slate-50' : 'border-slate-200 hover:border-slate-400'}`}>{t}</button>
@@ -725,11 +807,16 @@ export const VendoFlowView: React.FC<{ expedienteInicial: Expediente | null; onC
               ))}
               <button onClick={() => setD((p) => ({ ...p, miembros: [...p.miembros, { id: nuevoId(), razonSocial: '', nit: '', porcentaje: 0, experienciaSMMLV: 0, esLider: p.miembros.length === 0, actividades: '' }] }))} className="flex items-center gap-1.5 text-xs font-bold text-slate-700 cursor-pointer"><Plus className="w-4 h-4" /> Agregar integrante</button>
             </div>
+            <div className="p-4 rounded-2xl border border-slate-200 space-y-2">
+              <p className="text-xs text-slate-800">¿Vas a formalizar el acuerdo de consorcio o unión temporal?</p>
+              <button data-abrir-gestor onClick={abrirGestor} disabled={d.miembros.length === 0} className="px-4 py-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-800 cursor-pointer disabled:opacity-40">Abrir el gestor de consorcios y minutas</button>
+              <p className="text-[10px] text-slate-400">Pasa tus integrantes al gestor: minuta de constitución, poder especial, confidencialidad y memorando. Lo que cambies allá vuelve aquí.</p>
+            </div>
             {d.miembros.length > 0 && (
               <div data-alianza-resumen className="text-xs text-slate-700 space-y-1">
                 {avisosAlianza.map((a, i) => <p key={i} className="text-amber-800">{a}</p>)}
                 {reqsConAlianza.filter((r) => r.id === 'exp').map((r) => <p key={r.id}>Experiencia con la alianza: {r.detalle} <Chip estado={r.estado} /></p>)}
-                <p className="text-[10px] text-slate-400">La forma de sumar la experiencia de los integrantes la define el pliego: verifícala.</p>
+                <p className="text-[10px] text-slate-400">Tu propia experiencia ya se cuenta desde el paso 6: en «Experiencia que aporta» escribe solo la de tus aliados, para no sumarla dos veces. La forma de sumar la define el pliego: verifícala.</p>
               </div>
             )}
             <div data-resumen className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
@@ -835,6 +922,7 @@ export const VendoFlowView: React.FC<{ expedienteInicial: Expediente | null; onC
                 </div>
               ))}
             </div>
+            <Campo et="Fecha del Acta de Inicio" tipo="date" v={c.k_inicio || ''} on={(v) => setCampo('k_inicio', v)} />
             {lista(LISTA_CONTRATO)}
             <p data-conteo className="text-xs text-slate-600">{conteo(LISTA_CONTRATO)} de {LISTA_CONTRATO.length} listos.</p>
             <Nav />
@@ -959,9 +1047,18 @@ export const VendoFlowView: React.FC<{ expedienteInicial: Expediente | null; onC
           <span data-fase>Vendo · {fase.nombre}</span>
           <span data-paso>Paso {paso} de {TOTAL_PASOS_VENDO} · {TITULOS_VENDO[paso]}</span>
         </div>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-4">
+            <button data-abrir-buscador onClick={() => setVerBuscador(true)} className="flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-slate-900 cursor-pointer"><Search className="w-4 h-4" /> Oportunidades</button>
+            <button data-abrir-linea onClick={() => setVerLinea(true)} className="flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-slate-900 cursor-pointer"><CalendarDays className="w-4 h-4" /> Línea de tiempo</button>
+          </div>
+          {siguiente && <span data-siguiente className="text-[11px] text-slate-500 text-right truncate">Siguiente: <strong className="text-slate-800">{siguiente.titulo}</strong> · {siguiente.estado === 'HOY' ? 'hoy' : `${siguiente.diasHabiles} d. háb.`}</span>}
+        </div>
         <div className="h-1 rounded-full bg-slate-100 overflow-hidden"><div className="h-full bg-slate-900" style={{ width: `${(paso / TOTAL_PASOS_VENDO) * 100}%` }} /></div>
       </div>
       {cuerpo}
+      {verBuscador && <BuscadorOportunidades datos={d} hayDatosProceso={!!(c.p_numero || c.p_entidad || c.p_objeto)} onUsar={usarOportunidad} onCerrar={() => setVerBuscador(false)} />}
+      {verLinea && <LineaTiempoVendo hitos={linea.hitos} avisos={linea.avisos} titulo={c.p_numero || c.p_entidad || ''} onCampo={(k, v) => setCampo(k, v)} onIrAlPaso={(n) => { setVerLinea(false); ir(n); }} onCerrar={() => setVerLinea(false)} />}
       <div className="pt-2 text-center">
         <button onClick={() => { persistirAhora(true); useProcurementStore.getState().nuevoLienzo(); }} className="text-[11px] text-slate-400 hover:text-slate-700 cursor-pointer">Empezar otra propuesta</button>
       </div>

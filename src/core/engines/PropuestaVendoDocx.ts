@@ -60,6 +60,20 @@ export function construirPropuesta(d: DatosVendo): Document {
       ['Tamaño empresarial', c.q_tam === 'MIPYME' ? 'Mipyme' : c.q_tam === 'GRANDE' ? 'Gran empresa' : PEND]
     ]),
 
+    ...(d.tipoAlianza && d.miembros.length > 0 ? [
+      h(`2.1 Integrantes del ${d.tipoAlianza === 'CONSORCIO' ? 'consorcio' : 'la unión temporal'}`),
+      tabla([
+        ['Integrante', 'NIT', 'Participación', 'Rol', 'Experiencia aportada (SMMLV)', ...(d.tipoAlianza === 'UNION_TEMPORAL' ? ['Actividades'] : [])],
+        ...d.miembros.map((m) => [v(m.razonSocial), v(m.nit), m.porcentaje ? `${m.porcentaje} %` : PEND, m.esLider ? 'Líder / representante' : 'Integrante', m.experienciaSMMLV ? String(m.experienciaSMMLV) : '—', ...(d.tipoAlianza === 'UNION_TEMPORAL' ? [v(m.actividades)] : [])])
+      ]),
+      ...(Math.round(d.miembros.reduce((x, m) => x + (m.porcentaje || 0), 0)) !== 100 ? [p(`[REVISAR] Las participaciones no suman 100 %.`)] : []),
+      p(`Representante designado: ${v((d.miembros.find((m) => m.esLider)?.razonSocial) || '')}${c.q_rep && d.miembros.find((m) => m.esLider)?.razonSocial === c.q_razon ? `, actuando por medio de ${c.q_rep}` : ''}.`),
+      p(d.tipoAlianza === 'CONSORCIO'
+        ? 'Responsabilidad: en el consorcio, los integrantes responden solidariamente por todas y cada una de las obligaciones derivadas de la propuesta y del contrato; las sanciones por incumplimiento se imponen a todos (Art. 7, numeral 1, Ley 80 de 1993).'
+        : 'Responsabilidad: en la unión temporal, los integrantes responden solidariamente por el cumplimiento de la propuesta y del contrato, pero las sanciones por incumplimiento se imponen de acuerdo con la participación de cada uno en la ejecución, cuyos términos y extensión quedan discriminados en el cuadro anterior (Art. 7, numeral 2, Ley 80 de 1993).'),
+      p('El documento de constitución firmado por todos los integrantes debe anexarse a la propuesta.')
+    ] : []),
+
     h('3. Requisitos habilitantes (estado según tu verificación)'),
     tabla([
       ['Requisito', 'Estado'],

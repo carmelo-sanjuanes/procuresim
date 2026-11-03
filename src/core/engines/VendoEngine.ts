@@ -471,3 +471,49 @@ export const LISTA_LIQUIDACION: CasillaSobre[] = [
   { id: 'l_gar', t: 'Garantías de estabilidad y calidad vigentes y entregadas' },
   { id: 'l_sal', t: 'Salvedades que quieres dejar registradas, sustentadas por escrito' }
 ];
+
+// ================= Perfil del aliado que necesitas (sin sugerir empresas: el operador las busca) =================
+export interface NecesidadAliado { id: string; etiqueta: string; detalle: string; criterio: string }
+export interface PerfilAliado { necesidades: NecesidadAliado[]; dondeBuscar: string[]; verificar: string[]; ficha: string }
+
+export function perfilAliado(d: DatosVendo): PerfilAliado {
+  const c = d.campos;
+  const reqs = evaluarRequisitos(d);
+  const necesidades: NecesidadAliado[] = [];
+  const unspsc = codigosExigidos(c.r_unspsc).join(', ');
+  for (const r of reqs.filter((x) => x.estado === 'NO_CUMPLE')) {
+    let criterio = '';
+    if (r.id === 'exp') {
+      const propia = experiencia(d.contratos, codigosExigidos(c.r_unspsc)).aplicanSMMLV;
+      const falta = Math.max(0, num(c.r_exp) - propia);
+      criterio = `Experiencia de al menos ${falta.toLocaleString('es-CO', { maximumFractionDigits: 1 })} SMMLV${unspsc ? ` en los códigos UNSPSC ${unspsc}` : ''}, inscrita en el RUP.`;
+    } else if (r.id === 'nexp') criterio = `Contratos terminados que completen el número que pide el pliego (${fmt(num(c.r_nexp), 0)}).`;
+    else if (r.id === 'liq') criterio = `Índice de liquidez de ${fmt(num(c.r_liq))} o más (el consolidado se pondera por participación: confirma cómo lo mide el pliego).`;
+    else if (r.id === 'end') criterio = `Nivel de endeudamiento de ${fmt(num(c.r_end), 1)} % o menos.`;
+    else if (r.id === 'cob') criterio = `Cobertura de intereses de ${fmt(num(c.r_cob))} o más.`;
+    else if (r.id === 'ct') criterio = `Capital de trabajo suficiente para completar los $ ${Math.round(num(c.r_ctr)).toLocaleString('es-CO')} exigidos.`;
+    else if (r.id === 'k') {
+      const k = capacidadResidual(c);
+      const falta = k ? Math.max(0, num(c.r_k) - k.crSMMLV) : num(c.r_k);
+      criterio = `Capacidad residual de al menos ${falta.toLocaleString('es-CO', { maximumFractionDigits: 1 })} SMMLV libres para este contrato.`;
+    }
+    necesidades.push({ id: r.id, etiqueta: r.etiqueta, detalle: r.detalle, criterio });
+  }
+  const dondeBuscar = [
+    'Tu propia red: proveedores, subcontratistas y socios de contratos anteriores.',
+    'Consulta pública del RUP y del certificado de existencia en el RUES o la Cámara de Comercio.',
+    'SECOP II: contratos terminados con los mismos códigos UNSPSC y entidades parecidas, para ver quién ya ejecutó algo similar.',
+    'Gremios del sector y Cámaras de Comercio de la región, que organizan encuentros de aliados.',
+    'La lista de interesados o la audiencia de aclaraciones del propio proceso.'
+  ];
+  const verificar = [
+    'Que no sea competidor directo con capacidad plena para ofertar solo (alianza procompetitiva).',
+    'RUP vigente y renovado; experiencia verificable en el RUP o con certificaciones.',
+    'Antecedentes fiscales, disciplinarios y judiciales del aliado y su representante.',
+    'Que no tenga inhabilidades ni conflictos de interés frente a la entidad contratante.',
+    'Que no esté sancionado ni tenga multas vigentes.',
+    'Que aporte lo que dice: evita aliados cuya experiencia no se pueda acreditar.'
+  ];
+  const ficha = necesidades.length === 0 ? '' : `FICHA DE BÚSQUEDA DE ALIADO\nProceso: ${c.p_numero || '[N.º]'} · ${c.p_entidad || '[Entidad]'}\nObjeto: ${c.p_objeto || '[Objeto]'}\nProponente: ${c.q_razon || '[Razón social]'}\n\nLo que necesito de un aliado:\n${necesidades.map((n, i) => `${i + 1}. ${n.criterio}`).join('\n')}\n\nCondiciones: alianza procompetitiva; RUP vigente; sin inhabilidades; documentación verificable.`;
+  return { necesidades, dondeBuscar, verificar, ficha };
+}

@@ -7,6 +7,7 @@ import { TvecStoreView } from '../modules/tvec/TvecStoreView';
 import { MarketStudyView } from '../modules/market-study/MarketStudyView';
 import { EconomicAuditToolsView } from '../modules/analysis/EconomicAuditToolsView';
 import { CentroComunicaciones } from './CentroComunicaciones';
+import { ConsortiumView } from '../modules/consortium/ConsortiumView';
 import { Secop2EntidadView } from '../modules/secop2/Secop2EntidadView';
 import { Secop1View } from '../modules/secop1/Secop1View';
 import { SuplosView } from '../modules/private/SuplosView';
@@ -75,6 +76,7 @@ export const HerramientaModal: React.FC = () => {
       {id === 'EMPATE' && <EconomicAuditToolsView pestanaInicial="DESEMPATES" />}
       {id === 'AIU' && <EconomicAuditToolsView pestanaInicial="AIU_IVA" />}
       {id === 'COMUNICACIONES' && <CentroComunicaciones />}
+      {id === 'CONSORCIOS' && <ConsortiumView />}
     </div>
   );
 };
