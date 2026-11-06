@@ -72,6 +72,21 @@ Diseñada con **Clean Architecture (Domain-Driven Design)** en TypeScript y Reac
    npm run build
    ```
 
+5. Verificar todo (lint, pruebas y compilación) y regenerar la versión portátil:
+   ```bash
+   npm run verificar
+   npm run portatil
+   ```
+
+---
+
+## 🔒 Seguridad y privacidad
+
+* **Tus datos se quedan en tu equipo:** ProcureSim no tiene servidor. Lo que escribes se guarda solo en tu navegador y lo borras con **Tus datos → Borrar mis datos de este equipo**.
+* **Información sensible:** usa la versión portátil `ProcureSim_portatil.html`, que funciona sin internet.
+* **Sin terceros:** política de seguridad de contenido (CSP) estricta, fuentes alojadas con la aplicación y una sola conexión externa: la API pública de Datos Abiertos de Colombia.
+* Controles, limitaciones y cómo reportar una vulnerabilidad: [SECURITY.md](SECURITY.md). Estado frente a ISO/IEC 27001, ISO/IEC 27701 y SOC 2: [docs/seguridad/matriz-de-controles.md](docs/seguridad/matriz-de-controles.md).
+
 ---
 
 ## 🔄 Transición de Entrenamiento a Producción Real

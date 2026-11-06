@@ -30,3 +30,6 @@ _documentos_privados/
 *.pdf
 *.zip
 _tmp_*
+
+# Configuracion local de Claude Code
+.claude/
