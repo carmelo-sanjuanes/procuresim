@@ -13,9 +13,10 @@ on:
 # Por defecto, ningún permiso. Cada trabajo pide solo lo que necesita.
 permissions: {}
 
+# No cancelar una publicación a medio camino.
 concurrency:
   group: pages-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   verificar:
@@ -56,10 +57,6 @@ jobs:
 
       - name: Comprobar que no hay mapas de código fuente publicados
         run: test -z "$(find dist -name '*.map' -print -quit)"
-
-      - name: Preparar Pages
-        if: github.event_name != 'pull_request'
-        uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
 
       - name: Subir el sitio compilado
         if: github.event_name != 'pull_request'
