@@ -1,5 +1,6 @@
 // Motor Dinámico Nacional de Estudio de Mercado, Proveedores y Estampillas Territoriales
 // Conectividad en vivo con SECOP II (Datos Abiertos Colombia) + Análisis Tributario Territorial (32 Departamentos)
+import { patronLikeSoql, urlConsultaSocrata } from '../seguridad/entradaSegura';
 
 export interface ProveedorDinamico {
   nombre: string;
@@ -143,13 +144,16 @@ export class DynamicMarketSupplierEngine {
     const palabraClave = tokens[0] || 'suministro';
 
     try {
-      const qEncoded = encodeURIComponent(palabraClave);
-      let whereClause = `upper(descripcion_del_procedimiento) like upper('%${qEncoded}%')`;
+      let whereClause = `upper(descripcion_del_procedimiento) like upper(${patronLikeSoql(palabraClave)})`;
       if (departamento && departamento !== 'Colombia' && departamento !== 'Territorio Nacional') {
-        whereClause += ` and upper(departamento_entidad) like upper('%${encodeURIComponent(departamento)}%')`;
+        whereClause += ` and upper(departamento_entidad) like upper(${patronLikeSoql(departamento)})`;
       }
 
-      const url = `${this.ENDPOINT_SECOP2}?$where=${whereClause}&$order=fecha_de_publicacion_del_proceso DESC&$limit=${limite}`;
+      const url = urlConsultaSocrata(this.ENDPOINT_SECOP2, {
+        $where: whereClause,
+        $order: 'fecha_de_publicacion_del_proceso DESC',
+        $limit: Math.max(1, Math.min(50, Math.trunc(Number(limite) || 10))),
+      });
 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 4500);

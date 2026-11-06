@@ -27,6 +27,7 @@ import { PROVEEDORES_DEMO } from '../mock-data/proveedoresDemo';
 import { PROCESOS_DEMO } from '../mock-data/procesosDemo';
 import { CONTROVERSIAS_DEMO } from '../mock-data/controversiasDemo';
 import { ASOCIACIONES_DEMO } from '../mock-data/consorciosDemo';
+import { leerJsonImportado, listaDeRegistros } from '../core/seguridad/entradaSegura';
 import {
   LegalWatchdogEngine,
   HitoRegulatorioJurisprudencial,
@@ -667,17 +668,20 @@ export const useProcurementStore = create<ProcurementState>()(
 
   importarEstadoJSON: (jsonString: string) => {
     try {
-      const data = JSON.parse(jsonString);
-      if (data && Array.isArray(data.procesos)) {
+      // Archivo no confiable: límite de tamaño, sin claves que contaminen prototipos y solo registros con id.
+      const data = leerJsonImportado<Record<string, unknown>>(jsonString);
+      const procesos = data ? listaDeRegistros<ProcesoContratacion>(data.procesos) : null;
+      if (data && procesos && procesos.length > 0) {
+        const st = get();
         set({
-          procesos: data.procesos,
-          entidades: data.entidades || get().entidades,
-          proveedores: data.proveedores || get().proveedores,
-          controversias: data.controversias || get().controversias,
-          asociaciones: data.asociaciones || get().asociaciones,
-          estudiosMercado: data.estudiosMercado || get().estudiosMercado,
-          eventosAuditoria: data.eventosAuditoria || get().eventosAuditoria,
-          procesoSeleccionadoId: data.procesos[0]?.id || get().procesoSeleccionadoId
+          procesos,
+          entidades: listaDeRegistros<EntidadContratante>(data.entidades) ?? st.entidades,
+          proveedores: listaDeRegistros<ProponenteDatos>(data.proveedores) ?? st.proveedores,
+          controversias: listaDeRegistros<ControversiaContractual>(data.controversias) ?? st.controversias,
+          asociaciones: listaDeRegistros<AsociacionPlural>(data.asociaciones) ?? st.asociaciones,
+          estudiosMercado: listaDeRegistros<AnalisisEstudioMercado>(data.estudiosMercado) ?? st.estudiosMercado,
+          eventosAuditoria: listaDeRegistros<EventoAuditoria>(data.eventosAuditoria) ?? st.eventosAuditoria,
+          procesoSeleccionadoId: procesos[0]?.id || st.procesoSeleccionadoId
         });
         get().registrarAuditoria('SISTEMA', 'Importación de Escenario', 'Se cargó exitosamente un archivo de escenario formativo.');
         return true;
@@ -689,7 +693,6 @@ export const useProcurementStore = create<ProcurementState>()(
   },
 
   reiniciarDatosDemo: () => {
-    localStorage.removeItem('procuresim-storage-v2');
     set({
       procesos: PROCESOS_DEMO,
       entidades: ENTIDADES_DEMO,

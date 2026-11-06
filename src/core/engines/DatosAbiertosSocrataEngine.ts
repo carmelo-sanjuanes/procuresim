@@ -4,6 +4,7 @@ import { SMMLV_2026 } from '../domain/constants';
 import type { ProcesoContratacion, ModalidadContratacion, EstadoProceso } from '../domain/types';
 import { ENTIDADES_DEMO } from '../../mock-data/entidadesDemo';
 import { RiskMatrixEngine } from './RiskMatrixEngine';
+import { literalSoql, patronLikeSoql, urlConsultaSocrata } from '../seguridad/entradaSegura';
 
 export interface ProcesoDatosAbiertosRaw {
   referencia_del_proceso?: string;
@@ -137,27 +138,29 @@ export class DatosAbiertosSocrataEngine {
     total: number;
     mensaje: string;
   }> {
-    const limite = filtros.limite || 15;
-    let url = `${this.ENDPOINT_SECOP2}?$limit=${limite}&$order=fecha_de_publicacion_del_proceso DESC`;
+    const limite = Math.max(1, Math.min(50, Math.trunc(Number(filtros.limite) || 15)));
 
     const condiciones: string[] = [];
 
     if (filtros.departamento && filtros.departamento !== 'TODOS') {
-      condiciones.push(`departamento_entidad='${encodeURIComponent(filtros.departamento)}'`);
+      condiciones.push(`departamento_entidad=${literalSoql(filtros.departamento)}`);
     }
 
     if (filtros.modalidad && filtros.modalidad !== 'TODAS') {
-      condiciones.push(`modalidad_de_contratacion like '%${encodeURIComponent(filtros.modalidad)}%'`);
+      condiciones.push(`modalidad_de_contratacion like ${patronLikeSoql(filtros.modalidad)}`);
     }
 
     if (filtros.query && filtros.query.trim() !== '') {
-      const q = encodeURIComponent(filtros.query.trim());
-      condiciones.push(`(upper(nombre_entidad) like upper('%${q}%') or upper(descripcion_del_procedimiento) like upper('%${q}%') or referencia_del_proceso like '%${q}%')`);
+      const q = patronLikeSoql(filtros.query);
+      condiciones.push(`(upper(nombre_entidad) like upper(${q}) or upper(descripcion_del_procedimiento) like upper(${q}) or referencia_del_proceso like ${q})`);
     }
 
-    if (condiciones.length > 0) {
-      url += `&$where=${condiciones.join(' AND ')}`;
-    }
+    const parametros: Record<string, string | number> = {
+      $limit: limite,
+      $order: 'fecha_de_publicacion_del_proceso DESC',
+    };
+    if (condiciones.length > 0) parametros.$where = condiciones.join(' AND ');
+    const url = urlConsultaSocrata(this.ENDPOINT_SECOP2, parametros);
 
     try {
       const controller = new AbortController();

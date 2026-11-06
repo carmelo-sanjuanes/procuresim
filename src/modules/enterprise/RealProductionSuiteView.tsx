@@ -24,6 +24,7 @@ import {
 import { useProcurementStore } from '../../store/useProcurementStore';
 import { RupParserEngine } from '../../core/engines/RupParserEngine';
 import { Secop2LiveConnectorEngine } from '../../core/engines/Secop2LiveConnectorEngine';
+import { enlaceSeguro } from '../../core/seguridad/entradaSegura';
 import type {
   CertificadoRUPOficial,
   ProcesoSecop2Real,
@@ -551,9 +552,9 @@ export const RealProductionSuiteView: React.FC = () => {
                     {procesoSeleccionado.numeroProceso} - {procesoSeleccionado.entidadCompradora}
                   </h3>
                 </div>
-                {procesoSeleccionado.urlSecop2 && (
+                {enlaceSeguro(procesoSeleccionado.urlSecop2) && (
                   <a
-                    href={procesoSeleccionado.urlSecop2}
+                    href={enlaceSeguro(procesoSeleccionado.urlSecop2)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1"

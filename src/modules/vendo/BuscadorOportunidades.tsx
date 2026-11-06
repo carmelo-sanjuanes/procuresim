@@ -6,6 +6,7 @@ import type { PerfilBusqueda, Oportunidad, Puntuada, OportunidadGuardada, Estado
 import { construirConsulta, normalizarRegistro, puntuar, etiquetaPuntaje, codigosDe, hoyISO } from '../../core/engines/OportunidadesEngine';
 import { capacidadResidual, codigosExigidos, num } from '../../core/engines/VendoEngine';
 import { diasHabilesEntre, esFechaValida } from '../../core/engines/TerminosProcesalesEngine';
+import { enlaceSeguro } from '../../core/seguridad/entradaSegura';
 
 const CLAVE = 'procuresim-oportunidades-v1';
 interface Guardado { perfiles: PerfilBusqueda[]; activoId: string; guardadas: OportunidadGuardada[] }
@@ -108,7 +109,7 @@ export const BuscadorOportunidades: React.FC<{ datos: DatosVendo; hayDatosProces
       {o.razones.length > 0 && <p className="text-[11px] text-slate-700">{o.razones.join(' · ')}</p>}
       {o.alertas.map((a) => <p key={a} className="text-[11px] text-amber-800">{a}</p>)}
       <div className="flex flex-wrap items-center gap-3 pt-1">
-        {o.enlace && <a href={o.enlace} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-[11px] font-bold text-slate-700 underline underline-offset-2"><ExternalLink className="w-3.5 h-3.5" /> Abrir en {o.plataforma}</a>}
+        {enlaceSeguro(o.enlace) && <a href={enlaceSeguro(o.enlace)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-[11px] font-bold text-slate-700 underline underline-offset-2"><ExternalLink className="w-3.5 h-3.5" /> Abrir en {o.plataforma}</a>}
         <button data-usar={o.id} onClick={() => usar(o)} className="px-3 py-1.5 rounded-xl bg-slate-900 text-white text-[11px] font-bold cursor-pointer">{confirmar === o.id ? 'Confirmar: reemplazar datos del paso 8' : 'Usar en mi propuesta'}</button>
         {extra}
       </div>

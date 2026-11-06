@@ -1,5 +1,6 @@
 // Motor Dinámico Nacional de Clasificación y Detección de Régimen Institucional de Colombia
 // Conectividad en vivo con SECOP II (Datos Abiertos Colombia) + Inferencia Heurística Soberana (Alcance 1.103 municipios y 32 departamentos)
+import { patronLikeSoql, urlConsultaSocrata } from '../seguridad/entradaSegura';
 
 export interface EntidadOficialDinamica {
   nombreCompleto: string;
@@ -251,9 +252,12 @@ export class NationalEntityClassifierEngine {
 
     // 2. Consulta en vivo a la API Socrata de Datos Abiertos de SECOP II
     try {
-      const qEncoded = encodeURIComponent(qLimpia);
       // Traer entidades distintas que coincidan con la búsqueda
-      const url = `${this.SOCRATA_ENDPOINT}?$select=distinct nombre_entidad, nit_entidad, departamento_entidad, ciudad_entidad&$where=upper(nombre_entidad) like upper('%${qEncoded}%')&$limit=8`;
+      const url = urlConsultaSocrata(this.SOCRATA_ENDPOINT, {
+        $select: 'distinct nombre_entidad, nit_entidad, departamento_entidad, ciudad_entidad',
+        $where: `upper(nombre_entidad) like upper(${patronLikeSoql(qLimpia)})`,
+        $limit: 8,
+      });
 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 4000); // 4s timeout

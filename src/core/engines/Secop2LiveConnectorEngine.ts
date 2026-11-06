@@ -2,6 +2,7 @@
 // Interoperabilidad con datos.gov.co (Socrata Open Data API) y Expedientes Oficiales
 import { SMMLV_2026 } from '../domain/constants';
 import type { ProcesoSecop2Real } from '../domain/types';
+import { enlaceSeguro, limpiarTermino, urlConsultaSocrata } from '../seguridad/entradaSegura';
 
 export class Secop2LiveConnectorEngine {
   /**
@@ -88,8 +89,11 @@ export class Secop2LiveConnectorEngine {
    */
   public static async consultarSecop2EnVivo(terminoBusqueda: string): Promise<ProcesoSecop2Real[]> {
     try {
-      const queryLimpia = encodeURIComponent(terminoBusqueda.trim());
-      const url = `https://www.datos.gov.co/resource/jbjy-vk9h.json?$q=${queryLimpia}&$limit=8&$order=fecha_de_publicacion_del DESC`;
+      const url = urlConsultaSocrata('https://www.datos.gov.co/resource/jbjy-vk9h.json', {
+        $q: limpiarTermino(terminoBusqueda),
+        $limit: 8,
+        $order: 'fecha_de_publicacion_del DESC',
+      });
       
       const respuesta = await fetch(url, {
         headers: { Accept: 'application/json' }
@@ -120,7 +124,7 @@ export class Secop2LiveConnectorEngine {
           fechaCierreOfertas: (item.fecha_de_cierre_de_respuestas || new Date(Date.now() + 15 * 86400000).toISOString()).split('T')[0],
           departamento: item.departamento_entidad || 'Colombia',
           municipio: item.ciudad_entidad || 'Nacional',
-          urlSecop2: item.urlproceso?.url || `https://community.secop.gov.co/Public/Tendering/ContractNoticeManagement/Index?ProcessCode=${encodeURIComponent(item.referencia_del_proceso || '')}`,
+          urlSecop2: enlaceSeguro(item.urlproceso?.url) || `https://community.secop.gov.co/Public/Tendering/ContractNoticeManagement/Index?ProcessCode=${encodeURIComponent(item.referencia_del_proceso || '')}`,
           requisitosHabilitantes: {
             experienciaMinimaSMMLV: Math.round(presupuesto / SMMLV_2026 * 0.7), // Estimación 70% del presupuesto en SMMLV
             codigosUNSPSCObligatorios: ['81111800', '43230000'],

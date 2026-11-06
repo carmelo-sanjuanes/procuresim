@@ -2,6 +2,7 @@
 import type { PerfilBusqueda, Oportunidad, Puntuada } from '../domain/oportunidades';
 import { MODALIDADES_BUSQUEDA } from '../domain/oportunidades';
 import { num } from './VendoEngine';
+import { enlaceSeguro } from '../seguridad/entradaSegura';
 
 export const DATASET_SECOP2 = 'https://www.datos.gov.co/resource/p6dx-8zbt.json';
 const q = (t: string) => `'${t.replace(/'/g, "''")}'`;
@@ -46,7 +47,7 @@ export function construirConsulta(p: PerfilBusqueda, hoy = hoyISO()): string {
 type Crudo = Record<string, unknown>;
 export function normalizarRegistro(r: Crudo): Oportunidad {
   const bruta = (r.urlproceso as { url?: unknown } | undefined)?.url;
-  const url = typeof bruta === 'string' && /^https?:\/\//i.test(bruta) ? bruta : '';
+  const url = enlaceSeguro(bruta) ?? '';
   const s = (k: string) => (typeof r[k] === 'string' ? (r[k] as string) : '');
   return {
     id: s('id_del_proceso') || s('referencia_del_proceso') || url,
