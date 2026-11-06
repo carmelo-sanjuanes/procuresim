@@ -85,7 +85,7 @@ Por eso los riesgos principales no son los de un servidor: no hay base de datos 
 | Prueba | Resultado |
 |---|---|
 | `npm run lint` | Sin errores (exit 0). Quedan advertencias anteriores al trabajo, la mayoría en carpetas `_respaldo_*`; ninguna en el código nuevo. |
-| `npm test` (Vitest) | **23 de 23 pruebas pasan**: inyección SoQL, 12 enlaces maliciosos, contaminación de prototipos, archivos grandes o mal formados, borrado selectivo y política CSP. |
+| `npm test` (Vitest) | **28 de 28 pruebas pasan.** 23 de seguridad: inyección SoQL, 12 enlaces maliciosos, contaminación de prototipos, archivos grandes o mal formados, borrado selectivo y política CSP. Otras 5 de los buscadores en vivo. |
 | `npm run build` | Compila sin errores. |
 | `npm audit` | **0 vulnerabilidades.** |
 | Archivos `.map` en la compilación | 0 |
@@ -127,7 +127,15 @@ npm run portatil
 
 ## 5. Hallazgos que no son de seguridad
 
-1. **Cuatro buscadores en vivo fallan desde antes de este trabajo.** El portal responde con error 400 porque piden columnas que el conjunto `jbjy-vk9h` ya no tiene. La aplicación muestra en silencio datos de respaldo. Afecta a los motores `DatosAbiertosSocrataEngine`, `DynamicMarketSupplierEngine`, `NationalEntityClassifierEngine` y `Secop2LiveConnectorEngine`. El Buscador de oportunidades sí funciona (150 resultados reales).
+1. **Cuatro buscadores en vivo fallaban desde antes de este trabajo. Corregido el 06/11/2026.**
+   - **Causa:** tres motores consultaban el conjunto de *contratos* (`jbjy-vk9h`) con columnas que solo existen en el de *procesos* (`p6dx-8zbt`). El cuarto usaba columnas que no existen en ninguno. El portal respondía con error 400 y la aplicación mostraba en silencio datos de respaldo.
+   - **Corrección por motor:**
+     - `DatosAbiertosSocrataEngine` y `Secop2LiveConnectorEngine` consultan ahora el conjunto de procesos, con sus columnas reales.
+     - `DynamicMarketSupplierEngine` sigue en el de contratos, que es donde están el proveedor adjudicado y el valor real. Ahora solo trae empresas con NIT: no trae nombres ni documentos de personas naturales. Tampoco inventa correos ni NIT.
+     - `NationalEntityClassifierEngine` usa las columnas reales del conjunto de contratos y quita los repetidos en la aplicación.
+   - **Rendimiento:** se quitaron `distinct` y `$order` en el conjunto de contratos, y el departamento se compara por su nombre exacto. Con esas formas la consulta pasaba de 4,5 segundos o se vencía; ahora responde en menos de 1,3 s.
+   - **Pruebas:** 5 pruebas nuevas en [tests/buscadores-en-vivo.test.ts](../../tests/buscadores-en-vivo.test.ts). Comprueban el conjunto, que cada columna exista y la traducción de cada fila.
+   - **Prueba contra el portal real:** los cuatro motores trajeron datos en vivo en dos rondas seguidas, sin caer al respaldo. En el navegador, la búsqueda «hospital» de la Suite Real trae procesos reales sin bloqueos de la política de seguridad.
 2. **Rutas absolutas `/sanjuanes/...`.** Algunas imágenes podrían no cargar en el sitio publicado, que vive en `/procuresim/`. En la pantalla inicial no se vio ninguna rota; falta revisar las demás.
 
 ## 6. Limitaciones conocidas
@@ -145,7 +153,7 @@ npm run portatil
 | 3 | Decidir si se retiran las carpetas `_respaldo_*` y `vista_previa_procuresim_vanilla.html`, que son públicas y no tienen estas protecciones. | Dirección | regla de `reestructurar-proyecto` |
 | 4 | Confirmar que el correo y el teléfono de los datos de demostración (`src/mock-data/proveedoresDemo.ts`) son corporativos y pueden ser públicos. | Dirección | — |
 | 5 | Adoptar una política de tratamiento de datos personales (Ley 1581 de 2012) y nombrar un responsable de seguridad y privacidad. Ninguna auditoría SOC 2 o ISO puede empezar sin esto. | Dirección | [matriz-de-controles.md](matriz-de-controles.md) |
-| 6 | Corregir los cuatro buscadores en vivo de la sección 5. | Desarrollo | sección 5 |
+| 6 | ~~Corregir los cuatro buscadores en vivo de la sección 5.~~ Hecho el 06/11/2026. | Desarrollo | sección 5 |
 
 ## 8. Registro de cambios en `master`
 
