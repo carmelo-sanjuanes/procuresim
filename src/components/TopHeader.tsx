@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useProcurementStore } from '../store/useProcurementStore';
 import { soundEffects } from '../utils/soundEffects';
+import { TusDatosPrivacidad } from './TusDatosPrivacidad';
 
 interface TopHeaderProps {
   onToggleSidebar: () => void;
@@ -136,6 +137,8 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
               <span>Mis expedientes ({expedientes.length})</span>
             </button>
           )}
+
+          <TusDatosPrivacidad />
 
           <button
             onClick={() => {
@@ -411,6 +414,8 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
                 {eventosAuditoria.length}
               </span>
             </button>
+
+            <TusDatosPrivacidad compacto />
           </>
         )}
       </div>
