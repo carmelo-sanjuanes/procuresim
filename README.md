@@ -85,7 +85,7 @@ Diseñada con **Clean Architecture (Domain-Driven Design)** en TypeScript y Reac
 * **Tus datos se quedan en tu equipo:** ProcureSim no tiene servidor. Lo que escribes se guarda solo en tu navegador y lo borras con **Tus datos → Borrar mis datos de este equipo**.
 * **Información sensible:** usa la versión portátil `ProcureSim_portatil.html`, que funciona sin internet.
 * **Sin terceros:** política de seguridad de contenido (CSP) estricta, fuentes alojadas con la aplicación y una sola conexión externa: la API pública de Datos Abiertos de Colombia.
-* Controles, limitaciones y cómo reportar una vulnerabilidad: [SECURITY.md](SECURITY.md). Estado frente a ISO/IEC 27001, ISO/IEC 27701 y SOC 2: [docs/seguridad/matriz-de-controles.md](docs/seguridad/matriz-de-controles.md).
+* Controles, limitaciones y cómo reportar una vulnerabilidad: [SECURITY.md](SECURITY.md). Estado frente a ISO/IEC 27001, ISO/IEC 27701 y SOC 2: [docs/seguridad/matriz-de-controles.md](docs/seguridad/matriz-de-controles.md). Qué se cambió y cómo se probó: [docs/seguridad/informe-final-hardening.md](docs/seguridad/informe-final-hardening.md).
 
 ---
 
