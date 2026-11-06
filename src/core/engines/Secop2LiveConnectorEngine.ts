@@ -2,7 +2,7 @@
 // Interoperabilidad con datos.gov.co (Socrata Open Data API) y Expedientes Oficiales
 import { SMMLV_2026 } from '../domain/constants';
 import type { ProcesoSecop2Real } from '../domain/types';
-import { enlaceSeguro, limpiarTermino, urlConsultaSocrata } from '../seguridad/entradaSegura';
+import { enlaceSeguro, limpiarTermino, patronLikeSoql, urlConsultaSocrata } from '../seguridad/entradaSegura';
 
 export class Secop2LiveConnectorEngine {
   /**
@@ -85,19 +85,25 @@ export class Secop2LiveConnectorEngine {
   ];
 
   /**
-   * Consulta en vivo a la API Socrata de Datos Abiertos de SECOP II (jbjy-vk9h)
+   * Consulta en vivo a la API Socrata de Datos Abiertos de SECOP II - Procesos (p6dx-8zbt)
    */
   public static async consultarSecop2EnVivo(terminoBusqueda: string): Promise<ProcesoSecop2Real[]> {
     try {
-      const url = urlConsultaSocrata('https://www.datos.gov.co/resource/jbjy-vk9h.json', {
-        $q: limpiarTermino(terminoBusqueda),
+      const termino = limpiarTermino(terminoBusqueda);
+      if (!termino) return [];
+      const q = patronLikeSoql(termino);
+      const url = urlConsultaSocrata('https://www.datos.gov.co/resource/p6dx-8zbt.json', {
+        $where: `(upper(entidad) like upper(${q}) or upper(nombre_del_procedimiento) like upper(${q}) or upper(descripci_n_del_procedimiento) like upper(${q}) or referencia_del_proceso like ${q})`,
         $limit: 8,
         $order: 'fecha_de_publicacion_del DESC',
       });
-      
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
       const respuesta = await fetch(url, {
-        headers: { Accept: 'application/json' }
-      });
+        headers: { Accept: 'application/json' },
+        signal: controller.signal,
+      }).finally(() => clearTimeout(timeoutId));
 
       if (!respuesta.ok) {
         throw new Error(`Error en API Datos Abiertos: ${respuesta.status}`);
@@ -114,9 +120,9 @@ export class Secop2LiveConnectorEngine {
         return {
           idProceso: `API-SECOP2-${idx}-${item.referencia_del_proceso || 'REF'}`,
           numeroProceso: item.referencia_del_proceso || item.codigo_del_proceso || `PROC-SECOP2-${idx}`,
-          entidadCompradora: item.nombre_de_la_entidad || 'Entidad Estatal de Colombia',
-          nitEntidad: item.nit_de_la_entidad || '899.999.999-1',
-          objetoContrato: item.descripci_n_del_procedimiento || item.objeto_del_contrato || 'Contratación estatal formal',
+          entidadCompradora: item.entidad || 'Entidad Estatal de Colombia',
+          nitEntidad: item.nit_entidad || 'Sin dato en SECOP II',
+          objetoContrato: item.descripci_n_del_procedimiento || item.nombre_del_procedimiento || 'Contratación estatal formal',
           modalidad: item.modalidad_de_contratacion || 'Licitación Pública',
           valorPresupuestoOficialCOP: presupuesto,
           estadoSecop2: item.estado_del_procedimiento || 'Activo en SECOP II',

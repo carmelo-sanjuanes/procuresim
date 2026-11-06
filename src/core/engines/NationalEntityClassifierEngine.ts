@@ -252,15 +252,16 @@ export class NationalEntityClassifierEngine {
 
     // 2. Consulta en vivo a la API Socrata de Datos Abiertos de SECOP II
     try {
-      // Traer entidades distintas que coincidan con la búsqueda
+      // Sin `distinct`: obliga al portal a recorrer todo el conjunto y la consulta se vence.
+      // Se piden más filas y los repetidos se quitan aquí (máximo 8 entidades).
       const url = urlConsultaSocrata(this.SOCRATA_ENDPOINT, {
-        $select: 'distinct nombre_entidad, nit_entidad, departamento_entidad, ciudad_entidad',
+        $select: 'nombre_entidad, nit_entidad, departamento, ciudad',
         $where: `upper(nombre_entidad) like upper(${patronLikeSoql(qLimpia)})`,
-        $limit: 8,
+        $limit: 60,
       });
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 4000); // 4s timeout
+      const timeoutId = setTimeout(() => controller.abort(), 8000); // el portal a veces tarda varios segundos
 
       const res = await fetch(url, {
         headers: { Accept: 'application/json' },
@@ -271,12 +272,27 @@ export class NationalEntityClassifierEngine {
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data) && data.length > 0) {
-          data.forEach((row: any) => {
+          const vistas = new Set<string>();
+          const unicas = data
+            .filter((row: any) => {
+              if (typeof row?.nombre_entidad !== 'string') return false;
+              const clave = `${this.normalizar(row.nombre_entidad)}|${row.nit_entidad ?? ''}`;
+              if (vistas.has(clave)) return false;
+              vistas.add(clave);
+              return true;
+            })
+            .slice(0, 8)
+            .map((row: any) => ({
+              ...row,
+              departamento: row.departamento === 'No Definido' ? undefined : row.departamento,
+              ciudad: row.ciudad === 'No Definido' ? undefined : row.ciudad,
+            }));
+          unicas.forEach((row: any) => {
             if (row.nombre_entidad) {
               const clasificada = this.clasificarEntidad(
                 row.nombre_entidad,
-                row.departamento_entidad,
-                row.ciudad_entidad,
+                row.departamento,
+                row.ciudad,
                 row.nit_entidad
               );
               clasificada.origenDatos = 'SECOP_II_EN_VIVO';
@@ -287,8 +303,8 @@ export class NationalEntityClassifierEngine {
                 // Enriquecer la inferida con los datos reales de SECOP II
                 entidadInferida.nombreCompleto = row.nombre_entidad;
                 entidadInferida.nit = row.nit_entidad || entidadInferida.nit;
-                entidadInferida.departamento = row.departamento_entidad || entidadInferida.departamento;
-                entidadInferida.municipio = row.ciudad_entidad || entidadInferida.municipio;
+                entidadInferida.departamento = row.departamento || entidadInferida.departamento;
+                entidadInferida.municipio = row.ciudad || entidadInferida.municipio;
                 entidadInferida.origenDatos = 'SECOP_II_EN_VIVO';
               }
             }

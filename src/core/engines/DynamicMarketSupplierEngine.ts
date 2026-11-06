@@ -1,6 +1,6 @@
 // Motor Dinámico Nacional de Estudio de Mercado, Proveedores y Estampillas Territoriales
 // Conectividad en vivo con SECOP II (Datos Abiertos Colombia) + Análisis Tributario Territorial (32 Departamentos)
-import { patronLikeSoql, urlConsultaSocrata } from '../seguridad/entradaSegura';
+import { literalSoql, patronLikeSoql, urlConsultaSocrata } from '../seguridad/entradaSegura';
 
 export interface ProveedorDinamico {
   nombre: string;
@@ -21,6 +21,30 @@ export interface EstampillasTerritoriales {
   porcentajeSugerido: number;
   desglose: { nombre: string; tarifaPct: number }[];
   baseLegal: string;
+}
+
+/** Nombres exactos de la columna `departamento` del conjunto jbjy-vk9h. */
+const DEPARTAMENTOS_SECOP2 = [
+  'Amazonas', 'Antioquia', 'Arauca', 'Atlántico', 'Bolívar', 'Boyacá', 'Caldas', 'Caquetá', 'Casanare', 'Cauca',
+  'Cesar', 'Chocó', 'Córdoba', 'Cundinamarca', 'Distrito Capital de Bogotá', 'Guainía', 'Guaviare', 'Huila',
+  'La Guajira', 'Magdalena', 'Meta', 'Nariño', 'Norte de Santander', 'Putumayo', 'Quindío', 'Risaralda',
+  'San Andrés, Providencia y Santa Catalina', 'Santander', 'Sucre', 'Tolima', 'Valle del Cauca', 'Vaupés', 'Vichada',
+];
+
+const sinTildes = (t: string) => t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z ]/g, ' ').replace(/\s+/g, ' ').trim();
+
+/**
+ * Traduce el departamento que escribe la persona al nombre exacto del portal.
+ * La comparación exacta es la única rápida en este conjunto; si no se reconoce, se busca en todo el país.
+ */
+export function departamentoSecop2(entrada: string): string | undefined {
+  const t = sinTildes(entrada);
+  if (!t) return undefined;
+  if (t.includes('bogota')) return 'Distrito Capital de Bogotá';
+  if (t.includes('san andres')) return 'San Andrés, Providencia y Santa Catalina';
+  if (t === 'guajira') return 'La Guajira';
+  if (t === 'valle') return 'Valle del Cauca';
+  return DEPARTAMENTOS_SECOP2.find((d) => sinTildes(d) === t);
 }
 
 export class DynamicMarketSupplierEngine {
@@ -144,19 +168,21 @@ export class DynamicMarketSupplierEngine {
     const palabraClave = tokens[0] || 'suministro';
 
     try {
-      let whereClause = `upper(descripcion_del_procedimiento) like upper(${patronLikeSoql(palabraClave)})`;
-      if (departamento && departamento !== 'Colombia' && departamento !== 'Territorio Nacional') {
-        whereClause += ` and upper(departamento_entidad) like upper(${patronLikeSoql(departamento)})`;
-      }
+      // Conjunto de contratos (jbjy-vk9h): aquí está el proveedor adjudicado y el valor real.
+      // Solo empresas (NIT): no se traen nombres ni documentos de personas naturales.
+      let whereClause = `upper(descripcion_del_proceso) like upper(${patronLikeSoql(palabraClave)}) and tipodocproveedor='NIT'`;
+      const deptoPortal = departamentoSecop2(departamento);
+      if (deptoPortal) whereClause += ` and departamento=${literalSoql(deptoPortal)}`;
 
+      // Sin $order: ordenar obliga al portal a recorrer todo el conjunto y la consulta se vence.
       const url = urlConsultaSocrata(this.ENDPOINT_SECOP2, {
+        $select: 'proveedor_adjudicado, documento_proveedor, descripcion_del_proceso, referencia_del_contrato, estado_contrato, tipo_de_contrato, valor_del_contrato, departamento, ciudad',
         $where: whereClause,
-        $order: 'fecha_de_publicacion_del_proceso DESC',
         $limit: Math.max(1, Math.min(50, Math.trunc(Number(limite) || 10))),
       });
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 4500);
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
 
       const res = await fetch(url, {
         headers: { Accept: 'application/json' },
@@ -167,19 +193,20 @@ export class DynamicMarketSupplierEngine {
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data) && data.length > 0) {
-          return data.map((item: any, idx: number) => {
-            const precioBase = parseFloat(item.precio_base) || 150000000;
+          return data.map((item: any) => {
+            const valor = parseFloat(item.valor_del_contrato) || 0;
+            const descripcion = typeof item.descripcion_del_proceso === 'string' ? item.descripcion_del_proceso : '';
             return {
-              nombre: item.nombre_entidad ? `CONTRATISTA SECOP II (${item.tipo_de_contrato || 'General'})` : `PROVEEDOR REGISTRADO SECOP II`,
-              nit: item.nit_entidad || `901.${Math.floor(100000 + Math.random() * 900000)}-${idx + 1}`,
-              correo: `contacto.licitaciones@proveedorsecop.com.co`,
-              sector: item.descripcion_del_procedimiento?.substring(0, 80) + '...' || 'Sector Contratación Estatal',
-              estado: `Proceso ${item.referencia_del_proceso || 'CO1.REQ'} • ${item.fase || 'Publicado'}`,
-              beneficio: `Antecedente verificado en SECOP II (${item.ciudad_entidad || 'Nacional'} - ${item.departamento_entidad || 'Colombia'}).`,
-              departamento: item.departamento_entidad || departamento || 'Nacional',
-              municipio: item.ciudad_entidad || 'Colombia',
-              valorHistoricoReferenciaCOP: precioBase,
-              procesoSecopRef: item.referencia_del_proceso,
+              nombre: item.proveedor_adjudicado || `Proveedor con contrato en SECOP II (${item.tipo_de_contrato || 'General'})`,
+              nit: item.documento_proveedor || 'Sin dato en SECOP II',
+              correo: 'Consultar en SECOP II',
+              sector: descripcion ? `${descripcion.substring(0, 80)}${descripcion.length > 80 ? '...' : ''}` : 'Sector Contratación Estatal',
+              estado: `Contrato ${item.referencia_del_contrato || 'SECOP II'} • ${item.estado_contrato || 'Registrado'}`,
+              beneficio: `Antecedente verificado en SECOP II (${item.ciudad || 'Nacional'} - ${item.departamento || 'Colombia'}).`,
+              departamento: item.departamento || departamento || 'Nacional',
+              municipio: item.ciudad || 'Colombia',
+              valorHistoricoReferenciaCOP: valor > 0 ? valor : undefined,
+              procesoSecopRef: item.referencia_del_contrato,
               origen: 'SECOP_II_EN_VIVO'
             };
           });

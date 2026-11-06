@@ -1,5 +1,5 @@
 // Servicio de Integración en Vivo con la API Socrata de Datos Abiertos Colombia (SECOP II)
-// Endpoint Oficial: https://www.datos.gov.co/resource/jbjy-vk9h.json
+// Endpoint Oficial: https://www.datos.gov.co/resource/p6dx-8zbt.json (SECOP II - Procesos de contratación)
 import { SMMLV_2026 } from '../domain/constants';
 import type { ProcesoContratacion, ModalidadContratacion, EstadoProceso } from '../domain/types';
 import { ENTIDADES_DEMO } from '../../mock-data/entidadesDemo';
@@ -30,8 +30,47 @@ export interface FiltrosBusquedaSocrata {
   limite?: number;
 }
 
+/** Fila tal como la entrega el conjunto p6dx-8zbt (solo las columnas que se usan). */
+interface FilaProcesoSecop2 {
+  entidad?: string;
+  nit_entidad?: string;
+  departamento_entidad?: string;
+  ciudad_entidad?: string;
+  referencia_del_proceso?: string;
+  descripci_n_del_procedimiento?: string;
+  nombre_del_procedimiento?: string;
+  fase?: string;
+  estado_del_procedimiento?: string;
+  modalidad_de_contratacion?: string;
+  precio_base?: string;
+  tipo_de_contrato?: string;
+  fecha_de_publicacion_del?: string;
+  codigo_principal_de_categoria?: string;
+  urlproceso?: { url: string } | string;
+}
+
+/** Convierte una fila de p6dx-8zbt al formato interno que usan las vistas y la caché. */
+export function filaAProcesoDatosAbiertos(f: FilaProcesoSecop2): ProcesoDatosAbiertosRaw {
+  return {
+    referencia_del_proceso: f.referencia_del_proceso,
+    nombre_entidad: f.entidad,
+    nit_entidad: f.nit_entidad,
+    departamento_entidad: f.departamento_entidad,
+    ciudad_entidad: f.ciudad_entidad,
+    fase: f.fase,
+    modalidad_de_contratacion: f.modalidad_de_contratacion,
+    estado_del_proceso: f.estado_del_procedimiento,
+    precio_base: f.precio_base,
+    descripcion_del_procedimiento: f.descripci_n_del_procedimiento || f.nombre_del_procedimiento,
+    urlproceso: f.urlproceso,
+    tipo_de_contrato: f.tipo_de_contrato,
+    fecha_de_publicacion_del_proceso: f.fecha_de_publicacion_del,
+    codigo_principal_de_categoria: f.codigo_principal_de_categoria,
+  };
+}
+
 export class DatosAbiertosSocrataEngine {
-  private static readonly ENDPOINT_SECOP2 = 'https://www.datos.gov.co/resource/jbjy-vk9h.json';
+  private static readonly ENDPOINT_SECOP2 = 'https://www.datos.gov.co/resource/p6dx-8zbt.json';
 
   // Base de datos representativa de respaldo (Offline Fallback) con procesos reales verificados
   private static readonly PROCESOS_OFFLINE_CACHE: ProcesoDatosAbiertosRaw[] = [
@@ -152,12 +191,12 @@ export class DatosAbiertosSocrataEngine {
 
     if (filtros.query && filtros.query.trim() !== '') {
       const q = patronLikeSoql(filtros.query);
-      condiciones.push(`(upper(nombre_entidad) like upper(${q}) or upper(descripcion_del_procedimiento) like upper(${q}) or referencia_del_proceso like ${q})`);
+      condiciones.push(`(upper(entidad) like upper(${q}) or upper(descripci_n_del_procedimiento) like upper(${q}) or referencia_del_proceso like ${q})`);
     }
 
     const parametros: Record<string, string | number> = {
       $limit: limite,
-      $order: 'fecha_de_publicacion_del_proceso DESC',
+      $order: 'fecha_de_publicacion_del DESC',
     };
     if (condiciones.length > 0) parametros.$where = condiciones.join(' AND ');
     const url = urlConsultaSocrata(this.ENDPOINT_SECOP2, parametros);
@@ -179,7 +218,9 @@ export class DatosAbiertosSocrataEngine {
         throw new Error(`Error en servidor Socrata: HTTP ${response.status}`);
       }
 
-      const data: ProcesoDatosAbiertosRaw[] = await response.json();
+      const filas: unknown = await response.json();
+      if (!Array.isArray(filas)) throw new Error('Respuesta inesperada de Datos Abiertos');
+      const data = (filas as FilaProcesoSecop2[]).map(filaAProcesoDatosAbiertos);
 
       return {
         origen: 'API_EN_VIVO',
